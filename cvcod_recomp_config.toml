@@ -1,0 +1,53 @@
+# Noble Archimedes - CVCoD Static Recompilation Configuration
+# Target: Castlevania - Curse of Darkness (USA) [SLUS_211.68]
+
+[general]
+input = "extracted/SLUS_211.68"
+output = "src/recomp/generated"
+single_file_output = false
+low_memory_mode = true
+output_worker_threads = 4
+patch_syscalls = false
+patch_cop0 = true
+patch_cache = true
+
+# Function stubs and SDK bindings
+stubs = [
+    "printf",
+    "puts",
+]
+
+# Discovered 168 SYSCALL sites
+# Known syscall sites:
+# 0x004001c8 -> syscall 0x003c
+# 0x004001e4 -> syscall 0x003d
+# 0x00400254 -> syscall 0x0023
+# 0x0074e9cc -> syscall 0x0080
+# 0x0075d004 -> syscall 0x0000
+# 0x0075d014 -> syscall 0x0001
+# 0x0075d024 -> syscall 0x0002
+# 0x0075d034 -> syscall 0x0003
+# 0x0075d044 -> syscall 0x0004
+# 0x0075d054 -> syscall 0x0005
+# 0x0075d064 -> syscall 0x0006
+# 0x0075d074 -> syscall 0x0007
+# 0x0075d084 -> syscall 0x0008
+# 0x0075d094 -> syscall 0x0009
+# 0x0075d0a4 -> syscall 0x000a
+# 0x0075d0b4 -> syscall 0x000b
+# 0x0075d0c4 -> syscall 0x000c
+# 0x0075d0d4 -> syscall 0x000d
+# 0x0075d0e4 -> syscall 0x000e
+# 0x0075d0f4 -> syscall 0x000f
+# 0x0075d104 -> syscall 0x0010
+# 0x0075d114 -> syscall 0x0010
+# 0x0075d124 -> syscall 0x0011
+# 0x0075d134 -> syscall 0x0012
+# 0x0075d144 -> syscall 0x0012
+# 0x0075d154 -> syscall 0x0013
+# 0x0075d164 -> syscall 0x0014
+# 0x0075d174 -> syscall 0x0015
+# 0x0075d184 -> syscall 0x0016
+# 0x0075d194 -> syscall 0x0017
+
+# Function entry count detected: 16255

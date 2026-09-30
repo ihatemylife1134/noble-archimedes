@@ -1,0 +1,79 @@
+# Build outputs
+build/
+bin/
+out/
+*.o
+*.obj
+*.exe
+*.dll
+*.a
+*.lib
+*.gch
+imgui.ini
+
+# Recompiled intermediate chunks (can be regenerated with tools/generate_unity_chunks.py)
+src/recomp/chunks/*.o
+
+# Tools build directories
+tools/PS2Recomp/build/
+tools/PS2Recomp/out/
+
+# Extracted ISO temporary files
+extracted/
+
+# ---- Copyrighted / game-derived material: never commit ----
+# Game image and anything extracted from it
+*.iso
+*.bin
+*.pss
+*.elf
+extracted/
+# Recompiled game code is a translation of the game's machine code
+src/recomp/generated/
+src/recomp/chunks/
+# Captured game output (screenshots, frame dumps, VRAM/RAM dumps)
+*.png
+*.ppm
+*.dmp
+*.raw
+*.jpg
+# Logs, dumps and scratch output
+*.log
+*.tmp
+*.o.d
+*.o.flags
+dump*.txt
+debug_output*.txt
+stdout*.txt
+# Diagnostic / candidate output (keep only the written notes below)
+output/*
+!output/HANDOFF.md
+!output/render-fix-notes.md
+!output/perf-notes.md
+# Local runtime state
+mc0/
+mc1/
+graphify-out/
+NobleArchimedes*.exe
+
+# Python caches and secrets
+__pycache__/
+*.py[cod]
+.env
+.env.*
+*.pem
+*.key
+# Additional game/media/archive formats
+*.irx
+*.rom
+*.zip
+*.7z
+*.rar
+*.mp4
+*.wav
+*.mp3
+*.ogg
+*.dds
+*.bmp
+*.webp
+*.suprx
