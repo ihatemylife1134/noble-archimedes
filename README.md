@@ -26,4 +26,14 @@ See [BUILDING.md](BUILDING.md) for the existing Windows build workflow. A fresh 
 
 This repository contains no game ISO, extracted game files, translated/recompiled game implementation, game artwork, screenshots, audio, movies, memory dumps, saved games, compiled game executable, or bundled dependency binaries. Game-derived sources must be regenerated locally and stay ignored. No proprietary SDK or third-party asset bundle is included. Runtime modifications are distributed as source patches with the upstream dependency referenced separately.
 
-Verified snapshot checks: 8 build-helper tests and 2 optimizer tests passed. Full game/runtime validation remains described in the investigation notes.
+The current snapshot includes bounded render-wait polling, optional diagnostics,
+Vulkan rendering integration, bounded MPEG decoding, and VU rounding optimization.
+It remains a work in progress: the latest clean probe measured about 55 actual
+main-menu updates/s and 41 name-entry updates/s. Audio and first-cutscene rendering
+remain unresolved; this is not a completed 60 FPS release.
+
+Verified snapshot checks: 28 host/build/generation/RAM-reader tests and 2 optimizer tests
+passed. The CPU PS2 suite passed 353 of 356 tests; the three existing failures
+cover IOP cycle initialization and emulated/hybrid RPC binding. Headless ordinary
+New Game navigation reached the post-cutscene state. Detailed validation and
+local executable hashes are recorded in `output/HANDOFF.md`.

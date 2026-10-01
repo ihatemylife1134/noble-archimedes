@@ -46,11 +46,12 @@ def dll_symbol(name, rva):
             import pefile
             pe = pefile.PE(name, fast_load=True)
             pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_EXPORT']])
-            export_cache[name] = sorted((e.address, (e.name or b'?').decode()) for e in pe.DIRECTORY_ENTRY_EXPORT.symbols)
+            exports = sorted((e.address, (e.name or b'?').decode()) for e in pe.DIRECTORY_ENTRY_EXPORT.symbols)
+            export_cache[name] = (exports, [entry[0] for entry in exports])
         except Exception:
-            export_cache[name] = []
-    exports = export_cache[name]
-    i = bisect_right([e[0] for e in exports], rva) - 1
+            export_cache[name] = ([], [])
+    exports, addresses = export_cache[name]
+    i = bisect_right(addresses, rva) - 1
     return f'{ntpath.basename(name)}!{exports[i][1]}' if i >= 0 else ntpath.basename(name)
 
 

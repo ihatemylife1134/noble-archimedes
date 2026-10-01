@@ -30,6 +30,28 @@ LIBRARIES = (
     Path("tools/PS2Recomp/build/ps2xIOP/libps2_iop.a"),
     Path("tools/PS2Recomp/build/_deps/raylib-build/raylib/libraylib.a"),
 )
+PGS_LINK_INPUTS = Path("tools/PS2Recomp/build/ps2xRuntime/pgs_link_inputs.txt")
+
+
+def optional_gpu_link_inputs(root):
+    manifest = Path(root) / PGS_LINK_INPUTS
+    if not manifest.is_file():
+        return []
+    inputs = []
+    for line in manifest.read_text(encoding="utf-8-sig").splitlines():
+        value = line.strip()
+        if not value or value.startswith("#"):
+            continue
+        if value.startswith("-l"):
+            inputs.append(value)
+            continue
+        archive = Path(value)
+        if not archive.is_absolute():
+            archive = Path(root) / archive
+        if not archive.is_file():
+            raise FileNotFoundError(f"Missing GPU link input: {archive}")
+        inputs.append(archive.as_posix())
+    return inputs
 
 
 def host_objects(root=Path.cwd()):
@@ -77,6 +99,9 @@ def build_link_command(output_path, root=Path.cwd()):
     command.extend(path.relative_to(root).as_posix() for path in host_objs)
     command.extend(path.relative_to(root).as_posix() for path in chunk_objs)
     command.extend(path.as_posix() for path in LIBRARIES)
+    gpu_inputs = optional_gpu_link_inputs(root)
+    if gpu_inputs:
+        command.extend(("-Wl,--start-group", *gpu_inputs, "-Wl,--end-group"))
     command.extend(("-Wl,--allow-multiple-definition", "-lwinmm", "-lgdi32", "-lopengl32", "-lkernel32", "-luser32", "-lshell32"))
     return command
 

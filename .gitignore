@@ -31,6 +31,7 @@ extracted/
 # Recompiled game code is a translation of the game's machine code
 src/recomp/generated/
 src/recomp/chunks/
+src/recomp/guest_entry_compat.hpp
 # Captured game output (screenshots, frame dumps, VRAM/RAM dumps)
 *.png
 *.ppm

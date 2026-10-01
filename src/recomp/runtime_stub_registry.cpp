@@ -1,5 +1,8 @@
 #include "runtime_stub_registry.hpp"
 #include "ps2_runtime.h"
+#include "sound_bank_callbacks.hpp"
+#include "guest_entry_compat.hpp"
+#include "resource_entry_aliases.hpp"
 #include <iostream>
 
 // Forward declare runtime stubs
@@ -72,6 +75,18 @@ namespace ps2_syscalls {
 
 namespace NobleArchimedes {
 void registerAllRuntimeStubs(PS2Runtime *runtime) {
+    noble_sound::installCallbacks(runtime);
+    noble_entries::install(runtime);
+    for (uint32_t address : {0x7A7098u, 0x7A7328u, 0x7A7358u})
+        runtime->registerFunction(address, noble_resource_entries);
+    runtime->registerFunction(0x79C930u, noble_resource_texture_entries);
+    runtime->registerFunction(0x79C960u, noble_resource_mesh_entries);
+    runtime->registerFunction(0x79C9F8u, noble_resource_material_entries);
+    runtime->registerFunction(0x79CB28u, noble_resource_record_release_entries);
+    runtime->registerFunction(0x924828u, noble_resource_animation_entries);
+    runtime->registerFunction(0x794EA0u, noble_resource_animation_update_entries);
+    runtime->registerFunction(0x487B68u, noble_resource_resolve_entries);
+    runtime->registerFunction(0x471DB8u, noble_scene_object_entries);
     std::cout << "[Stubs] Registering 60 Sony SDK runtime stubs into function table..." << std::endl;
     runtime->registerFunction(0x0074BE30u, ps2_stubs::sceSdTransToIOP);
     runtime->registerFunction(0x0074DFC0u, ps2_stubs::sceCdSeek);

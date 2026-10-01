@@ -30,7 +30,9 @@ INCLUDE_FLAGS = [
 # Generated guest code type-puns guest memory and relies on two's-complement
 # wrap-around (MIPS addu/subu), so optimize without those assumptions.
 GUEST_OPT_FLAGS = ["-O2", "-fno-strict-aliasing", "-fwrapv"]
-HOST_OPT_FLAGS = ["-O0"]
+# Host callbacks and generated entry aliases execute on the guest hot path too.
+# Keep the same memory-aliasing and arithmetic guarantees as the guest chunks.
+HOST_OPT_FLAGS = ["-O2", "-fno-strict-aliasing", "-fwrapv"]
 HOST_OBJECTS = (
     (Path("src/main.cpp"), Path("src/main.o")),
     (Path("src/camera/camera_controller.cpp"), Path("src/camera/camera_controller.o")),
@@ -39,6 +41,7 @@ HOST_OBJECTS = (
     (Path("src/vfs/iso_vfs.cpp"), Path("src/vfs/iso_vfs.o")),
     (Path("src/recomp/generated/register_functions.cpp"), Path("src/recomp/register_functions.o")),
     (Path("src/recomp/runtime_stub_registry.cpp"), Path("src/recomp/runtime_stub_registry.o")),
+    (Path("src/recomp/sound_bank_compat.cpp"), Path("src/recomp/sound_bank_compat.o")),
 )
 
 

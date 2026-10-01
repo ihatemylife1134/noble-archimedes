@@ -25,6 +25,7 @@ add_subdirectory(tools/PS2Recomp)
 # Main Native Application
 set(NOBLE_APP_SOURCES
     src/main.cpp
+    src/recomp/sound_bank_compat.cpp
 )
 
 add_executable(NobleArchimedes ${NOBLE_APP_SOURCES})

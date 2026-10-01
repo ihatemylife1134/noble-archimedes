@@ -62,6 +62,21 @@ static void configureDefaultMemoryCardMode()
 #endif
 }
 
+static void configureDefaultRendererWorkers()
+{
+    const char *workers = std::getenv("PS2_GS_THREADS");
+    if (workers && *workers)
+        return;
+    // This game's many small menu draws spend more time coordinating eight
+    // workers than rasterizing. Two workers measured faster on the menu and
+    // retain parallel drawing; keep explicit user settings authoritative.
+#ifdef _WIN32
+    _putenv_s("PS2_GS_THREADS", "2");
+#else
+    setenv("PS2_GS_THREADS", "2", 0);
+#endif
+}
+
 int main(int argc, char *argv[])
 {
 #ifdef _WIN32
@@ -82,6 +97,7 @@ int main(int argc, char *argv[])
     // console/log file never stalls the emulation thread (PS2_SYNC_STDIO=1 disables).
     ps2_async_stdio::install();
     configureDefaultMemoryCardMode();
+    configureDefaultRendererWorkers();
 
     std::cout << "=======================================================\n";
     std::cout << "  Noble Archimedes - Castlevania: Curse of Darkness   \n";
@@ -157,7 +173,12 @@ int main(int argc, char *argv[])
                 ctx->overlay.draw(rt, ctx->camera, ctx->input);
 
                 static int s_frameCount = 0;
-                if (++s_frameCount % 60 == 1) {
+                static const bool kernelDiagnostics = [] {
+                    const char *value = std::getenv("PS2_KERNEL_DIAGNOSTICS");
+                    return value && *value && std::string(value) != "0";
+                }();
+                ++s_frameCount;
+                if (kernelDiagnostics && s_frameCount % 60 == 1) {
                     const auto snapshot = rt.eeScheduler().snapshot();
                     const auto &gs = rt.memory().gs();
                     std::cout << "[Kernel Diag] Frame=" << s_frameCount
@@ -186,7 +207,13 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                if (s_frameCount == 30 || s_frameCount % 60 == 0) {
+                // PNG readback/encoding is a diagnostic operation; doing it
+                // every second stalls input and presentation during normal play.
+                static const bool captureFrames = [] {
+                    const char *value = std::getenv("NOBLE_FRAME_CAPTURE");
+                    return value && *value && std::string(value) != "0";
+                }();
+                if (captureFrames && (s_frameCount == 30 || s_frameCount % 60 == 0)) {
                     TakeScreenshot("noble_archimedes_preview.png");
                     if (s_frameCount <= 1200 && s_frameCount % 300 == 0) {
                         std::string framePath = "noble_archimedes_frame_" + std::to_string(s_frameCount) + ".png";
