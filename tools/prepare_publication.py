@@ -10,7 +10,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "tools/PS2Recomp"
 PIN = "75d729ce40d7eed9649fd4bb05628dee520f3d0c"
-DOCS = ["README.md", "BUILDING.md", "CONTRIBUTING.md", "THIRD_PARTY_NOTICES.md", "docs/BUILD_VARIANTS.md",
+DOCS = ["README.md", "BUILDING.md", "CHANGELOG.md", "CONTRIBUTING.md", "THIRD_PARTY_NOTICES.md", "docs/BUILD_VARIANTS.md",
         "docs/PROJECT_STATUS.md", "docs/PUBLICATION.md", "docs/DEVELOPMENT_BUILD_NOTES.md"]
 ROOT_FILES = [".gitattributes", ".gitmodules", "CMakeLists.txt",
               "cvcod_ps2recomp_config.toml", "cvcod_recomp_config.toml"]

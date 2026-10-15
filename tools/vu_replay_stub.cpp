@@ -8,6 +8,11 @@
 #include <cstring>
 #include <cstdlib>
 #include <stdexcept>
+#include <atomic>
+
+// The runtime's frame-index diagnostics stay inactive in offline replay.
+std::atomic<uint32_t> g_presentFrameCount{0};
+namespace { PS2Memory *replayMemory = nullptr; }
 
 PS2Memory::PS2Memory()
     : m_rdram(nullptr), m_scratchpad(nullptr), iop_ram(nullptr),
@@ -17,6 +22,8 @@ PS2Memory::PS2Memory()
 
 PS2Memory::~PS2Memory()
 {
+    if (replayMemory == this)
+        replayMemory = nullptr;
     delete[] m_vu0Code;
     delete[] m_vu0Data;
     delete[] m_vu1Code;
@@ -31,6 +38,7 @@ bool PS2Memory::initialize(size_t)
     m_vu0Data = new uint8_t[PS2_VU0_DATA_SIZE]{};
     m_vu1Code = new uint8_t[PS2_VU1_CODE_SIZE]{};
     m_vu1Data = new uint8_t[PS2_VU1_DATA_SIZE]{};
+    replayMemory = this;
     return true;
 }
 
@@ -65,9 +73,11 @@ void PS2Memory::submitGifPacket(GifPathId path, const uint8_t *data,
 
 GS::GS() = default;
 void GS::init(uint8_t *, uint32_t, GSRegisters *) {}
-void GS::processGIFPacket(const uint8_t *, uint32_t)
+void GS::processGIFPacket(const uint8_t *data, uint32_t size)
 {
-    throw std::runtime_error("minimal replay must capture PATH1 through tracked memory");
+    if (!replayMemory)
+        throw std::runtime_error("minimal replay requires initialized memory");
+    replayMemory->submitGifPacket(GifPathId::Path1, data, size);
 }
 
 void register_ps2_vu1_tests()

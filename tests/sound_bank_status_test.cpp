@@ -126,8 +126,12 @@ int main()
         SET_GPR_U32(&ctx, 29, 0x1FFF000u);
         SET_GPR_U32(&ctx, 31, 0x400000u);
         sub_0042F790_0x42f790(ram.data(), &ctx, &runtime);
-        if (ctx.pc != 0x400000u || *reinterpret_cast<uint32_t*>(ram.data() + 0xAD8000u) != expected)
+        if (ctx.pc != 0x400000u || *reinterpret_cast<uint32_t*>(ram.data() + 0xAD8000u) != expected) {
+            std::cerr << "loader state: expected=" << expected << " actual="
+                      << *reinterpret_cast<uint32_t*>(ram.data() + 0xAD8000u)
+                      << " pc=0x" << std::hex << ctx.pc << std::dec << '\n';
             return 8;
+        }
         std::memset(ram.data() + 0x93A4A0u, 0, 4u);
         R5900Context callback{};
         callback.pc = 0x431718u;

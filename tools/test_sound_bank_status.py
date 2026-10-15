@@ -30,7 +30,7 @@ def main():
                           '#include "../../src/recomp/sound_bank_compat.hpp"\n' + content)
         sources.append(str(target))
     exe = out / ("legacy.exe" if args.legacy else "test.exe")
-    cmd = ["g++", "-std=c++20", "-O2", "-fno-strict-aliasing", "-DNDEBUG", "-msse4.1",
+    cmd = ["g++", "-std=c++20", "-O0", "-fno-strict-aliasing", "-DNDEBUG", "-msse4.1",
            *INCLUDE_FLAGS, "tests/sound_bank_status_test.cpp", "src/recomp/sound_bank_compat.cpp", *sources,
            *map(str, LIBRARIES)]
     gpu_inputs = optional_gpu_link_inputs(root)

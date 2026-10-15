@@ -26,7 +26,11 @@ parser.add_argument("--capture-gate-state", type=int, nargs=4, default=(4, 10, 3
                     help="Observed state that opens the capture gate; four decimal words")
 parser.add_argument("--skip-movie-after", type=float,
                     help="Diagnostic only: request ordinary movie skip after this many seconds")
+parser.add_argument("--skip-movie-hold", type=float, default=2.0,
+                    help="Duration of the ordinary movie-skip Start press, default 2 seconds")
 args = parser.parse_args()
+if not 0.05 <= args.skip_movie_hold <= 2.0:
+    parser.error("--skip-movie-hold must be between 0.05 and 2 seconds")
 if args.menu_only and args.name_only:
     parser.error("--menu-only and --name-only select different screens")
 if args.capture_gate_file and args.capture_gate_file.exists():
@@ -43,6 +47,10 @@ gate_words = (0xAD3F80, 0x9395C0, 0x9395B8, 0x9395BC, 0xA3DD30, 0xA3DD34,
 last = None
 notice_done = menu_done = name_done = save_done = False
 notice_sent_at = 0.0
+menu_sent_at = 0.0
+name_sent_at = 0.0
+save_sent_at = 0.0
+save_attempts = 0
 movie_seen_at = None
 movie_skip_sent_at = None
 capture_gate_open = False
@@ -55,9 +63,11 @@ with (out / "navigation.log").open("w", buffering=1) as log, \
         if timing.get("pid") == pid:
             print(f"probe_time_offset={start - timing['started_monotonic']:.3f}", file=log)
     while time.monotonic() - start < 600:
+        reader_start_monotonic = time.monotonic()
         result = subprocess.run([sys.executable, str(reader),
                                  "--base-file", str(out / "rdram_base.txt"), str(pid),
                                  *[hex(w) for w in (*words, *gate_words)]], capture_output=True, text=True)
+        reader_end_monotonic = time.monotonic()
         if result.returncode:
             # pid.txt precedes ELF loading; wait for the anchor during boot.
             if time.monotonic() - start < 30:
@@ -71,6 +81,9 @@ with (out / "navigation.log").open("w", buffering=1) as log, \
         phase = re.search(r"phase=0x([0-9A-F]+) phase_frames=(\d+)", result.stdout)
         if phase_index:
             print(json.dumps({"monotonic": time.monotonic(), "driver_seconds": time.monotonic() - start,
+                              "reader_start_monotonic": reader_start_monotonic,
+                              "reader_end_monotonic": reader_end_monotonic,
+                              "reader_duration_seconds": reader_end_monotonic - reader_start_monotonic,
                               "phase_index": int(phase_index[1]), "phase_invalid": phase is None,
                               "phase": int(phase[1], 16) if phase else None,
                               "phase_frames": int(phase[2]) if phase else None, "state": state,
@@ -89,9 +102,9 @@ with (out / "navigation.log").open("w", buffering=1) as log, \
                 movie_seen_at = time.monotonic()
             if args.skip_movie_after is not None and time.monotonic() - movie_seen_at >= args.skip_movie_after \
                     and (movie_skip_sent_at is None or time.monotonic() - movie_skip_sent_at >= 15):
-                send_button(pid, "start", 0.3)
-                time.sleep(0.5)
-                send_button(pid, "cross", 0.3)
+                send_button(pid, "start", args.skip_movie_hold)
+                time.sleep(1.0)
+                send_button(pid, "cross", 2.0)
                 movie_skip_sent_at = time.monotonic()
                 print(f"t={time.monotonic()-start:.1f} diagnostic movie skip requested", file=log)
         if args.menu_only and state == (4, 7, 2, 0):
@@ -126,6 +139,13 @@ with (out / "navigation.log").open("w", buffering=1) as log, \
                 print("menu cursor inputs completed", file=log)
             send_button(pid, "cross", 0.3)
             menu_done = True
+            menu_sent_at = time.monotonic()
+        elif state == (4, 7, 2, 0) and menu_done and not name_done and time.monotonic() - menu_sent_at >= 15:
+            # A short input can miss the guest's menu poll during a slow frame.
+            # Retry only after observing the title menu again.
+            send_button(pid, "cross", 2)
+            menu_sent_at = time.monotonic()
+            print("new-game menu confirmation retried", file=log)
         elif state == (4, 7, 3, 1) and not name_done:
             # The cursor initially selects A. Enter one character before Accept.
             time.sleep(args.name_seconds)
@@ -137,8 +157,22 @@ with (out / "navigation.log").open("w", buffering=1) as log, \
             time.sleep(3)
             send_button(pid, "cross", 2)
             name_done = True
-            print("name confirmation accepted", file=log)
-        elif state == (4, 7, 3, 2) and not save_done:
+            name_sent_at = time.monotonic()
+            print("name confirmation inputs sent", file=log)
+        elif state == (4, 7, 3, 1) and name_done and time.monotonic() - name_sent_at >= 15:
+            # A missed first character leaves Accept selected with an empty name.
+            # Move to a character, enter it, and return to Accept in this phase.
+            send_button(pid, "up", 0.25)
+            time.sleep(0.7)
+            send_button(pid, "cross", 0.5)
+            time.sleep(0.7)
+            send_button(pid, "start", 0.5)
+            time.sleep(0.7)
+            send_button(pid, "cross", 0.5)
+            name_sent_at = time.monotonic()
+            print("name confirmation retried", file=log)
+        elif state == (4, 7, 3, 2) and (not save_done or
+                (save_attempts < 5 and time.monotonic() - save_sent_at >= 15)):
             time.sleep(5)
             send_button(pid, "triangle", 2)
             time.sleep(3)
@@ -146,5 +180,7 @@ with (out / "navigation.log").open("w", buffering=1) as log, \
             time.sleep(2)
             send_button(pid, "cross", 2)
             save_done = True
-            print("start without saving accepted; observing loading", file=log)
+            save_attempts += 1
+            save_sent_at = time.monotonic()
+            print(f"start without saving inputs sent; attempt={save_attempts}; awaiting observed transition", file=log)
         time.sleep(1)
