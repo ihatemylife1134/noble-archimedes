@@ -320,6 +320,8 @@ class LinkOutputTests(unittest.TestCase):
     def _create_link_inputs(self, root):
         host_sources = {
             "src/main.o": "src/main.cpp",
+            "src/render/renderer_settings.o": "src/render/renderer_settings.cpp",
+            "src/platform/host_timer_resolution.o": "src/platform/host_timer_resolution.cpp",
             "src/camera/camera_controller.o": "src/camera/camera_controller.cpp",
             "src/input/input_manager.o": "src/input/input_manager.cpp",
             "src/ui/modern_overlay.o": "src/ui/modern_overlay.cpp",

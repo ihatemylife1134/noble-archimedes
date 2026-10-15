@@ -1,189 +1,139 @@
-# Building Noble Archimedes
+# Build and play — developer workflow
 
-The native executable is built with the repository scripts and the configured
-CMake cache under `tools/PS2Recomp/build`. The verified Windows toolchain is
-MinGW-w64 GCC/G++ 15.2, Python 3.12, and CMake/Ninja. The configured build tree
-already contains the runtime and third-party dependencies; the game ISO must
-remain in the repository root for a normal launch.
+Choose a configuration in [build variants](docs/BUILD_VARIANTS.md). The common setup and generation steps below apply to each public configuration. To work on a fork and submit changes, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-From the repository root in PowerShell, rebuild the runtime and IOP libraries,
-then compile generated guest chunks and native host objects, and link the
-executable:
+## Scope
 
-```powershell
-cmake --build tools/PS2Recomp/build --config Release --target ps2_runtime ps2_iop --parallel 2
-python tools/build_recomp_chunks.py --jobs 2
-python tools/link_noble_archimedes.py
-```
+Established target: Windows x64, MinGW-w64 GCC/G++ 15.2, Python 3.12, CMake 3.24+, Ninja and a Vulkan driver. Incremental builds were used during development. **Clean public generation/build/play has not been qualified end-to-end.** Private optimized VU DLLs and game-specific GPU translations are excluded; these instructions do not reproduce the private benchmark binary.
 
-The linker writes `NobleArchimedes.exe` in the repository root. To keep the
-existing executable untouched while checking a candidate, pass an output path:
+Only USA PS2 **SLUS-21168** is targeted. Supply your own lawfully obtained game. Keep every game input, generated body, capture and binary local and ignored.
+
+## Fetch and restore the runtime
 
 ```powershell
-python tools/link_noble_archimedes.py output/candidate/NobleArchimedes.exe
+git clone --recurse-submodules https://github.com/sergiomanzur/noble-archimedes.git
+cd noble-archimedes
+git -C tools/PS2Recomp apply --check ../../patches/ps2recomp-progress.patch
+git -C tools/PS2Recomp apply ../../patches/ps2recomp-progress.patch
 ```
 
-The link helper checks that all 32 numbered guest chunks and the entries chunk
-are present, and that every object has a current GCC dependency file before it
-links. The build script refreshes generated unity chunks, rebuilds stale guest
-and host objects, and writes those dependency files. A complete guest chunk
-rebuild took about 20 minutes on the verified host; use `--jobs 2` on memory-
-constrained Windows hosts.
+Apply once to the pinned clean submodule. Inspect a failed check; do not force it over another runtime version.
 
-Both guest chunks and native host callbacks are compiled with `-O2`,
-`-fno-strict-aliasing`, and `-fwrapv`. The `.o.flags` files record those options,
-so changing optimization flags rebuilds the affected objects.
+## Local game input
 
-Run the build-helper regression suite with:
+Place the disc image at the root as `Castlevania - Curse of Darkness (USA).iso`. Extract the boot executable locally:
 
 ```powershell
-python -m unittest discover -s tests -p test_build_helpers.py
+@'
+from pathlib import Path
+from tools.ps2_iso_reader import PS2IsoReader
+iso = PS2IsoReader("Castlevania - Curse of Darkness (USA).iso")
+try:
+    target = Path("extracted/SLUS_211.68")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(iso.read_file("SLUS_211.68"))
+finally:
+    iso.close()
+'@ | python -
 ```
 
-The sound-bank regression compiles the local generated guest routines and
-checks the startup command, per-channel status, rejected queue writes, and the
-level bank loader's request/finish/data submission sequence. It also checks
-the resource callback at `0x454B40` and the stack/register restoration at
-the previously missing level setup return entry `0x500004`:
+Keep the ISO for streamed assets. An ELF alone is insufficient. The executable changes its working directory to its own directory, so the asset/dependency layout must be beside it.
 
-```powershell
-python tools/test_sound_bank_status.py
-```
+## Configure dependencies and compiler
 
-Resource callback aliases are emitted by `tools/generate_resource_entries.py`
-from the locally generated guest code. Unity generation refreshes this header
-automatically; after updating aliases alone, regenerate it and rebuild
-`runtime_stub_registry.cpp` before linking.
-
-The two missed guest entry helpers in `src/recomp/guest_entry_compat.hpp` are
-also generated locally by `tools/generate_guest_entries.py` from the ignored
-guest instruction records. Unity generation refreshes them before compiling.
-The translated header stays ignored; only its generator is published.
-
-To reproduce New Game on Windows without showing a game window, start a bounded
-headless probe, then run its menu driver in another terminal after `pid.txt`
-appears:
-
-```powershell
-python tools/probe_headless.py output/candidate/NobleArchimedes.exe output/new_game_probe --seconds 600
-python tools/probe_new_game.py output/new_game_probe
-```
-
-The probe copies the candidate beside the local assets, sends input only to
-that process's hidden window, and removes its temporary executable on exit.
-The driver enters a name and chooses to start without saving. Logs, captured
-frames, and observed guest menu states remain in the specified output folder.
-It reads guest RAM to navigate; it does not write guest RAM or send global
-keyboard input. `tools/probe_guest_ram.py` also supports explicit read-only
-inspection of a running probe by PID. Keep RAM dumps and game frames local.
-
-Normal play avoids automatic PNG screenshots. Set `NOBLE_FRAME_CAPTURE=1`
-to restore the periodic window screenshots; the headless probe's guest-frame
-captures remain controlled separately by `PS2_FRAME_DUMP_PREFIX`.
-
-GS register/draw history is paused by default during normal play. Set
-`PS2_GS_HISTORY=1` to collect it from startup, or resume history in the GS debug
-panel. Set `PS2_GUEST_PC_PROFILE=1` for the sampled guest-PC histogram. These
-diagnostics add work to hot paths and should stay off for FPS measurements.
-Detailed guest phase tracing requires `PS2_GUEST_FLOW_TRACE=1`; the tiny IOP-call
-timing diagnostic requires `PS2_IOP_PROFILE=1`. Both are off during normal play.
-Periodic window-side thread/GS diagnostics require `PS2_KERNEL_DIAGNOSTICS=1`;
-memory-card operation logs require `PS2_MC_TRACE=1`.
-Detailed host timers and counters are also off by default. Set
-`PS2_HOST_PROFILE=1` for the full report, or `PS2_HOST_PROFILE=rate` for a
-lightweight guest VBlank rate report without timing every scheduler operation.
-
-For serial ordinary-input menu and name-entry measurements, use
-`python tools/probe_menu_scenarios.py output/candidate/NobleArchimedes.exe output/menu_measurement --seconds 80 --observe-render-gate`.
-The optional `--power-plan UUID` comparison restores the original Windows plan
-in `finally`; omit it to measure the user's current settings. Each run saves
-the executable hash, navigation states, VBlank rates, and original completion
-gate/swap counters. These probes read guest RAM and send input only to their
-own hidden game window. Add `--cursor-test` to exercise Up/Down movement in
-the name-entry menu; the main-menu probe already exercises cursor movement.
-
-VBlank rate and guest updates are separate measurements. The effective swap
-interval depends on both the stored interval and the game's override flags;
-MPEG contains 29.97 unique pictures/s. Measure both the VBlank counter and main
-updates when checking full-speed 59–60 Hz execution. The render
-gate at 9395B8 is cleared by the guest's queued completion callback. Its read-only
-polling loop can fold complete 32-cycle polls, bounded by the next scheduler
-event, EE timer, thread timeslice, and IOP batch; it never forces the gate clear.
-The normal menu setting `A3DD30=0x01020100` has interval 1 and mode 2,
-which permits one update per VBlank. `PS2_EE_RENDER_WAIT_DIAGNOSTICS=1`
-reports why host pacing is rejected, including timer state and event deadlines;
-leave it off for performance measurements. Sampled `PS2_MPEG_TRACE=1`
-picture logs include monotonic milliseconds, delivered picture count, and
-VBlank count for measuring actual playback speed.
-Providing `PS2_HOST_PROFILE_FILE` alone retains the full diagnostic mode for
-existing scripts. Headless probes select `rate` by default; add
-`--env PS2_HOST_PROFILE=1` when investigating a time breakdown.
-
-The optional Vulkan GS backend uses a pinned paraLLEl-GS checkout and retained
-license notices under `ps2xRuntime/third_party`. Fetch and enable it before
-building the runtime:
+Run where `g++`, `cmake`, `ninja`, `python` and `git` are available. This is the expected setup rather than a newly certified clean-build recipe:
 
 ```powershell
 python tools/PS2Recomp/ps2xRuntime/scripts/fetch_parallel_gs.py
-cmake -S tools/PS2Recomp -B tools/PS2Recomp/build -DPS2X_ENABLE_PGS=ON
-cmake --build tools/PS2Recomp/build --target ps2_runtime --parallel 4
-python tools/link_noble_archimedes.py output/candidate/NobleArchimedes.exe
+cmake -S tools/PS2Recomp -B tools/PS2Recomp/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DPS2X_BUILD_STUDIO=OFF -DPS2X_BUILD_TEST=OFF -DPS2X_ENABLE_PGS=ON
+cmake --build tools/PS2Recomp/build --target ps2_recomp ps2_runtime ps2_iop --parallel 2
 ```
 
-With that option enabled, the runtime tries Vulkan at startup and falls back to
-the CPU renderer if initialization fails. Set `PS2_GS_BACKEND=cpu` to select the
-CPU renderer explicitly. The GPU performs rasterization and uses GPU display
-conversion for supported progressive logical displays (CT32/24/16/16S up to
-640x448, a single source or identical display circuits). Unsupported layouts use
-the compatibility presenter, preserving display dimensions and movie-source rules.
-`PS2_GS_PGS_SCANOUT=compat` forces compatibility presentation for comparison;
-`PS2_GS_PGS_SCANOUT=native` enables the upstream analog scanout for timing experiments.
-Neither renderer changes guest cycle accounting or the native movie frame rate.
+CMake fetches window/UI libraries and Windows FFmpeg; network and upstream toolchain requirements apply. The manual linker expects these paths relative to `tools/PS2Recomp/build`:
 
-Headless probes write `rdram_base.txt` as an allocation hint. The read-only RAM
-tool validates the game anchor and phase tables inside the supplied PID before
-using this hint, avoiding a scan through unrelated Vulkan allocations:
+- `ps2xRuntime/libps2_runtime.a`, `librlImGui.a`, `libimgui.a`;
+- `ps2xIOP/libps2_iop.a`;
+- `_deps/raylib-build/raylib/libraylib.a`;
+- `ThirdParty/ffmpeg-prefix/src/ffmpeg_external/bin/{avcodec,avformat,avutil,swresample,swscale}.lib`;
+- optional GPU archive list `ps2xRuntime/pgs_link_inputs.txt`.
+
+A portable dependency/install manifest remains missing. The root CMake target is not the established generated-chunk entry point.
+
+## Generate guest C++ locally
+
+Locate the built compiler and invoke it from the root:
 
 ```powershell
-python tools/probe_guest_ram.py --base-file output/new_game_probe/rdram_base.txt 12345 0xAC23A4
+$recompiler = Get-ChildItem tools/PS2Recomp/build -Filter ps2_recomp.exe -Recurse | Select-Object -First 1
+if (-not $recompiler) { throw "Compiler not built" }
+& $recompiler.FullName cvcod_ps2recomp_config.toml
+if ($LASTEXITCODE -ne 0) { throw "Guest generation failed" }
+python tools/generate_stub_registry.py
+python tools/optimize_register_functions.py
+python tools/generate_entry_chunk.py
 ```
 
-Use `PS2_GS_BACKEND=cpu` when running the CPU raster/VRAM unit suites. Dedicated
-GPU tests live under `ps2xRuntime/tests/pgs` and require a Vulkan device.
+The TOML supplies discovery/binding metadata; the ELF supplies instructions. Generated bodies, entry adapters, registration and chunks stay local. Stripped-game discovery and locally maintained guest compatibility changes still need reproducibility work. Completing generation does not prove complete gameplay.
 
-`PS2_GS_PGS_PROFILE=1` separates raw GIF processing, backend mutex wait, readback,
-display conversion, clear, and Finish costs. Use a separate diagnostic run when
-collecting these timings. To capture resumable VU workloads for offline replay,
-create the output parent first, then use `PS2_VU_CAPTURE_PREFIX`,
-`PS2_VU_CAPTURE_CHAIN=1`, `PS2_VU_CAPTURE_RESUME_ENTRY=14a0`,
-`PS2_VU_CAPTURE_CHAIN_CALLS=1024`, and `PS2_VU_CAPTURE_COUNT=2`.
-These bounded captures include a fresh execute followed by its ordered resumes;
-the replay checks registers, data, cycle deltas, and emitted PATH1 packets.
-Set `PS2_VU_CAPTURE_GATE_FILE` to a fresh, initially absent marker path to delay
-capture until a chosen observed state. The driver can create that marker with
-`--capture-gate-file` and `--capture-gate-state 4 7 3 1` for name entry. Select
-`PS2_VU_CAPTURE_RESUME_ENTRY=140` for its hot draw chains; the older `14a0`
-captures came from loading, not name entry. `--name-only` holds on that screen;
-`--menu-only` exercises the title cursor and prevents the attract sequence.
-Use the default short main-menu dwell when starting a new game, since a long
-dwell can enter the attract movie before Cross is delivered.
-
-MPEG decoding keeps at most four decoded RGBA pictures ahead. Incoming compressed
-packets retain their original order, timestamps, and guest demux callbacks in an
-owned queue; no frames are dropped. EOF waits for queued input and delayed frames
-to drain. This bounds decoded-picture memory without changing native movie timing.
-
-The RAM reader reports an invalid phase index from a validated allocation hint
-without using it as an array offset. It can continue reading explicit guest words
-for diagnostics; it does not modify the phase stack or enlarge its sixteen entries.
-
-The render-completion observer has a synthetic regression covering normal
-returns, pre-call yields, unwinding, deferred transfers and merged callbacks.
-After building the runtime, run it with diagnostics off and on:
+## Build and launch
 
 ```powershell
-python tools/PS2Recomp/ps2xRuntime/tests/run_ee_render_completion_observer_test.py
+python tools/build_recomp_chunks.py --jobs 2
+python tools/link_noble_archimedes.py
+$env:PS2_GS_BACKEND = "pgs"
+Remove-Item Env:PS2_VU_BACKEND -ErrorAction SilentlyContinue
+.\NobleArchimedes.exe
 ```
 
-It compiles only the fixture and compares guest-state fingerprints and cycle
-counts. It requires no game source or assets and leaves runtime archives intact.
+The scripts compile 32 chunks plus the entries chunk and host objects. Full chunk builds previously took about 20 minutes on the development host. Linking rejects missing/stale objects and dependency files.
+
+Acquire required FFmpeg/window/compiler-runtime DLLs from your dependency build or authorized packages; keep them beside the executable as required by its imports. No DLL bundle is included. Keep the ISO and `extracted/SLUS_211.68` beside the executable. An alternate ELF path can be passed as argument one.
+
+Use arrows/game buttons to select New Game, enter a name and follow prompts. See README for controls. Sound, movies, saves and whole-game behavior remain unfinished. `PS2_GS_BACKEND=cpu` selects diagnostic CPU rendering. Overlay renderer settings apply on restart; the environment override wins.
+
+## Optional PCSX2 GS-only hybrid
+
+Requirements: MSVC **14.40.33807**, Windows SDK **10.0.22621.0**, CMake/Ninja and 7-Zip. `tools/pcsx2_gs/build.py` uses standard BuildTools/SDK paths from the development machine; adapt its constants for different installations.
+
+```powershell
+git clone --no-checkout https://github.com/PCSX2/pcsx2.git output/reference_sources/pcsx2
+git -C output/reference_sources/pcsx2 checkout --detach 646df006a4688063e56c0826e7ea4b8bb0c112c4
+git -C output/reference_sources/pcsx2 submodule update --init --recursive
+python tools/pcsx2_gs/build.py toolchain
+python tools/pcsx2_gs/bootstrap.py
+python tools/pcsx2_gs/build.py consumer
+cmake -S tools/PS2Recomp -B tools/PS2Recomp/build -DPS2X_ENABLE_PCSX2_GS=ON
+cmake --build tools/PS2Recomp/build --target ps2_runtime --parallel 2
+```
+
+Bootstrap verifies the official release asset's SHA256 but resolves the asset at run time instead of pinning an immutable dependency digest in this snapshot. Toolchain/dependency reproducibility remains incomplete.
+
+The manual host builder does not inherit CMake's `NOBLE_HAVE_PCSX2_GS=1`. Compile host objects with that definition, then link:
+
+```powershell
+@'
+from tools import build_recomp_chunks as build
+build.HOST_OPT_FLAGS.append("-DNOBLE_HAVE_PCSX2_GS=1")
+results = build.build_host_objects()
+for name, ok, seconds, message in results:
+    print(name, ok, message)
+if not all(row[1] for row in results):
+    raise SystemExit(1)
+'@ | python -
+python tools/link_noble_archimedes.py
+$env:PS2_PCSX2_GS_ADAPTER = (Resolve-Path output/fps60/pcsx2_gs_consumer_v1/bin/noble_pcsx2_gs.dll).Path
+$env:PS2_PCSX2_GS_RESOURCES = (Resolve-Path output/reference_sources/pcsx2/bin/resources).Path
+$env:PS2_GS_BACKEND = "pcsx2"
+.\NobleArchimedes.exe
+```
+
+Keep package-provided transitive DLLs beside the module. Missing module/resources/ABI support is an initialization error. The adapter does not start a PCSX2 VM: this project's EE/VU/gameplay remain active. No 60 FPS gameplay claim is made. See [adapter details](tools/pcsx2_gs/README.md).
+
+## Validation and diagnostics
+
+```powershell
+python -m unittest discover -s tests -p test_build_helpers.py
+python -m unittest discover -s tests -p test_guest_entries_generation.py
+```
+
+These qualify helpers, not gameplay. Benchmark with screenshots, GS history and detailed tracing disabled. Measure actual guest updates and fresh images with ordinary movement, known module identities and normal shutdown; window FPS or VBlank alone is insufficient. See [status](docs/PROJECT_STATUS.md) and [historical notes](docs/DEVELOPMENT_BUILD_NOTES.md).

@@ -1,39 +1,83 @@
-# Noble Archimedes
+# Noble Archimedes - Castlevania CoD Recomp
 
-Work-in-progress native Windows recompilation host for Castlevania: Curse of Darkness (USA, SLUS-21168).
+An experimental Windows x64 recompilation project for **Castlevania: Curse of Darkness**, USA PlayStation 2 release, **SLUS-21168**. The goal is native gameplay at 58–60 updates per second while preserving the game's behavior.
 
-## Preserved progress
+**Status, 2026-10-15: playable development builds exist, but sustained 58–60 FPS gameplay has NOT been achieved.** A newly recovered VU-correct native run measured **31.50 gameplay updates/s** (1,232 updates in 39.110 seconds). An older private-development ledger run reached **35.83 gameplay updates/s** and **58.44 fresh presented images/s**, using different measurement windows. This source publication is not a finished port or a ready-to-play download.
 
-- Native host, camera, input, overlay, and ISO virtual filesystem integration.
-- Recompilation analysis, generation, incremental build, and linking helpers.
-- PS2 runtime and IOP changes covering scheduling, interrupts, asynchronous I/O, CD/MPEG, memory cards, controllers, GS rendering, and VIF handling.
-- Regression tests and investigation notes in `output/`. These dated notes describe experiments and known limitations; they are not a claim that gameplay is complete.
+No game ISO, executable, assets, translated game implementation, game microcode, captures, saves, or compiled binaries are distributed here. Supply your own lawfully obtained game copy and generate guest code locally. See [BUILDING.md](BUILDING.md) for the workflow and its limitations.
 
-## Restore the runtime changes
+## Why “Noble Archimedes”?
 
-The upstream PS2Recomp source is referenced as a submodule rather than vendored. Its local changes and new runtime tests are preserved in `patches/ps2recomp-progress.patch`.
+The name is a thematic codename, not a Castlevania character or official subtitle. “Archimedes” evokes engineering, mechanics and discovering how a complicated machine works; “Noble” expresses the preservation aim. The Castlevania connection is rebuilding and forging: Hector's Devil Forgery provides a metaphor for assembling a new host around the original game's behavior. The owner confirmed that the connection is thematic; this is an interpretation of the name, not a claim about its historical origin or game lore. Konami's [official game page](https://www.konami.com/games/castlevania/us/en-us/page/history_2005_ps2) describes Devil Forgery and the Innocent Devils.
 
-```sh
-git submodule update --init --recursive
-git -C tools/PS2Recomp apply --unidiff-zero ../../patches/ps2recomp-progress.patch
-```
+## Architecture and renderer paths
 
-Upstream base: `75d729ce40d7eed9649fd4bb05628dee520f3d0c` at https://github.com/ran-j/PS2Recomp . Upstream is GPL-3.0 licensed; its terms continue to apply to modifications. No new blanket license is assigned by this snapshot.
+The EE executable is translated locally from MIPS to C++ and compiled into host machine code. The runtime supplies scheduling, memory, VIF/GIF, controllers, storage and other compatibility services. Native CPU execution does not imply that all PS2 hardware semantics have disappeared.
 
-See [BUILDING.md](BUILDING.md) for the existing Windows build workflow. A fresh checkout also needs the upstream dependencies/toolchain configured and guest sources generated locally from your own legally obtained game copy. The build documentation reflects the development machine's configured build tree.
+| Path | CPU / VU | Graphics | Status |
+| --- | --- | --- | --- |
+| Native default | Recompiled EE; generic VU compatibility execution in this public snapshot, with native VU optimizations developed separately | Vulkan paraLLEl-GS; CPU GS for diagnostics | Working development path; gameplay target unmet |
+| Hybrid — PCSX2 GS | This project's EE/VU and scheduling stay in control | Actual PCSX2 GS through a C-ABI DLL, initially surfaceless D3D11 | Adapter and bridge implemented; no demonstrated 60 FPS gameplay solution |
+| Full native engine seam, intended destination | Recompiled gameplay plus owned GPU mesh processing, preserving consumed VU effects | Native GPU processing integrated with a coherent renderer | Component math validated privately; complete gameplay replacement unfinished |
 
-## Game material excluded
+Hybrid mode does not run the whole PCSX2 emulator. It is a recompilation with an emulated GS renderer. The default also retains GS hardware compatibility through paraLLEl-GS; “Native” is a UI label, not a claim that every device has become a conventional PC engine.
 
-This repository contains no game ISO, extracted game files, translated/recompiled game implementation, game artwork, screenshots, audio, movies, memory dumps, saved games, compiled game executable, or bundled dependency binaries. Game-derived sources must be regenerated locally and stay ignored. No proprietary SDK or third-party asset bundle is included. Runtime modifications are distributed as source patches with the upstream dependency referenced separately.
+## What “near 60 FPS” actually means here
 
-The current snapshot includes bounded render-wait polling, optional diagnostics,
-Vulkan rendering integration, bounded MPEG decoding, and VU rounding optimization.
-It remains a work in progress: the latest clean probe measured about 55 actual
-main-menu updates/s and 41 name-entry updates/s. Audio and first-cutscene rendering
-remain unresolved; this is not a completed 60 FPS release.
+Host presentation pacing was improved: ordinary wake-up jitter remains on the scheduled VBlank phase, while missed-period behavior and virtual cycle accounting are retained. A Windows timer-resolution helper also addresses the platform ignoring the requested resolution. VU state, ordered packets and guest completion remain correctness requirements.
 
-Verified snapshot checks: 28 host/build/generation/RAM-reader tests and 2 optimizer tests
-passed. The CPU PS2 suite passed 353 of 356 tests; the three existing failures
-cover IOP cycle initialization and emulated/hybrid RPC binding. Headless ordinary
-New Game navigation reached the post-cutscene state. Detailed validation and
-local executable hashes are recorded in `output/HANDOFF.md`.
+| Latest recorded native gameplay run | Result |
+| --- | ---: |
+| Gameplay updates | 1,566 / 43.703 seconds = **35.83/s** |
+| Fresh presented images | 3,215 / 55.016 seconds = **58.44/s** |
+| Presentation requests / repeated images | 3,301 / 86 |
+| Reported capacity, stale or age drops | 0 |
+| Exit / movement check | Normal exit; ordinary movement observed |
+
+The newest recovery run used the native VIF1 worker, a VU-correct experimental module and an EE scheduler that skips proven-empty event drains and retains event/deadline scratch capacity. Its protected gameplay state stayed `[4, 10, 3, 1]` from the first to last sample; process use was 1.916 CPU cores and host busy time was 19.86%. The run's prior-build paired control was interrupted, so **31.50/s is a measured candidate result, not a proven isolated speedup**. Scheduler concurrency/deadline and VIF1 worker restore/GIF-order fixtures passed.
+
+The 35.83 and 58.44 measurements above use different windows; do not divide one counter by the other's interval. The user accepted existing background load. Captures, executables, game inputs and the game-derived optimized VU module are excluded. Earlier gameplay candidates varied around 43–45 FPS but did not establish the current VU-correct configuration. A full-PCSX2 reference recorded 59.91 guest updates/s, but does not establish GS-only speed or a controlled comparison of identical builds and load.
+
+**Near-60 presentation has been observed. Near-60 gameplay has not.** See [detailed status and remaining work](docs/PROJECT_STATUS.md).
+
+## Build and start playing
+
+This is a developer workflow. Established tools: Windows x64, MinGW-w64 GCC/G++ 15.2, Python 3.12, CMake/Ninja and a Vulkan driver. The optional GS DLL uses a separate MSVC toolchain.
+
+1. Clone recursively and apply the supplied runtime patch.
+2. Supply your own USA game ISO and extract `SLUS_211.68` locally.
+3. Build PS2Recomp and generate guest C++ from the local ELF/configuration.
+4. Build the runtime, generated chunks and host; link `NobleArchimedes.exe`. The native VIF1 worker is an opt-in runtime path through `PS2_NATIVE_VIF1_WORKER=1`.
+5. Keep the local ISO, `extracted/SLUS_211.68` and locally acquired dependency DLLs beside the executable, then launch it.
+
+Commands, dependencies, settings and unresolved clean-setup steps are in [BUILDING.md](BUILDING.md). **A clean public checkout has not yet been qualified end-to-end through gameplay.** Private optimized VU modules and game-specific GPU translations are excluded; neither the 31.50 recovery result nor the 35.83/58.44 ledger result is a benchmark of a fresh public build.
+
+For individual configurations, see [build variants](docs/BUILD_VARIANTS.md): native Vulkan, CPU diagnostics, PCSX2 GS hybrid, and the availability limits of native VU/engine-seam research.
+
+## Fork it and help build the port
+
+**Forks, experiments and pull requests are welcome.** Help us make the public build reproducible, preserve VU correctness and reach real 58–60 FPS gameplay. Build-system fixes, documentation, synthetic tests and carefully measured performance work all move the project forward; you do not need to solve the entire renderer to contribute.
+
+Start with [CONTRIBUTING.md](CONTRIBUTING.md) for a fork-and-branch workflow, useful first tasks, runtime-patch instructions and what to include in a performance report. If a clean build fails, a precise report is useful too. Share source changes and aggregate measurements while keeping game inputs and generated game implementations local.
+
+Keyboard defaults: WASD movement; arrows D-pad/menu; J/left mouse attack; K/right mouse special; Space jump; E/L action; Shift guard; Enter/Escape Start/menu; M map; V experimental camera toggle. Supported controllers can be used. Camera modes, sound, movies, saves and broader game coverage still need validation; reaching the courtyard does not prove the entire game works.
+
+The overlay saves `Native` or `Hybrid — PCSX2 GS`; restart to apply. Settings: `%APPDATA%/NobleArchimedes/renderer.cfg`, or `noble-renderer.cfg` when APPDATA is unavailable. `PS2_GS_BACKEND=pgs`, `cpu`, or `pcsx2` overrides the choice. Missing PCSX2 support reports an error.
+
+## What is missing for native 58–60 FPS?
+
+1. Complete skinning → triangle normals → extrusion → projection → clipping → packet/cache writes. Later launches consume earlier writes; isolated fresh-mesh inputs are insufficient.
+2. Preserve consumed VU registers/flags and pipelines, Q/P timing, data memory, parser state, cycles, packet ordering and exactly-once completion.
+3. Integrate the complete GPU job with admission guards and a correct fallback. Small GPU math tests are not installed gameplay replacements.
+4. Beat CPU cost including ownership, packing/upload, dispatch, synchronization, readback/state publication and renderer interoperation. Previous affine-only and packet-copy experiments failed this test.
+5. Benchmark moving gameplay again with both guest updates and fresh images at 58–60/s, then broaden scene and whole-game coverage.
+
+PCSX2 accelerates more than rasterization: CPU/VU execution, scheduling and rendering work together. A GS-only swap leaves our VIF/VU work and ordering waits in the critical path. OpenGOAL demonstrates a mature game-specific native engine; its engine code is not a transferable replacement for this game's different pipeline.
+
+## Publication and dependencies
+
+This repository starts with a **new sanitized Git history** containing host/glue, build/generation tools, dependency references and licensed runtime modifications. Generated game C++, literal microcode/GPU translations, research captures and binaries stay local. The exploratory research directory is not bulk-published.
+
+PS2Recomp is pinned at `75d729ce40d7eed9649fd4bb05628dee520f3d0c`; runtime modifications are supplied as a patch. PCSX2 GS builds against `646df006a4688063e56c0826e7ea4b8bb0c112c4`. See [third-party notices](THIRD_PARTY_NOTICES.md) and [publication scope](docs/PUBLICATION.md). Upstream licenses continue to apply. This snapshot assigns no new blanket license or rights to the game.
+
+Independent fan research, unaffiliated with Konami, Sony, PCSX2 or other upstream projects. Castlevania and its content belong to their respective rights holders.

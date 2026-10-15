@@ -3,6 +3,7 @@
 #include "rlImGui.h"
 #include "raylib.h"
 #include "ps2_runtime.h"
+#include "runtime/ee_scheduler.h"
 #include <cstdlib>
 #include <iomanip>
 #include <sstream>
@@ -21,6 +22,9 @@ void ModernOverlay::initialize()
     }
     const char* visible = std::getenv("NOBLE_OVERLAY");
     m_visible = visible && *visible != '0';
+    m_rendererSettings = loadRendererSettings(rendererSettingsPath(), &m_rendererSettingsError);
+    const char* active = std::getenv("PS2_GS_ACTIVE_BACKEND");
+    m_activeRenderer = active && *active ? active : resolveRendererBackend(m_rendererSettings, std::getenv("PS2_GS_BACKEND"));
 }
 
 void ModernOverlay::shutdown()
@@ -58,14 +62,50 @@ void ModernOverlay::draw(PS2Runtime& runtime, CameraController& camera, InputMan
     if (ImGui::Begin("Noble Archimedes // 2026 Enhanced Recompilation", &m_visible, ImGuiWindowFlags_NoCollapse))
     {
         ImGui::TextColored(ImVec4(0.85f, 0.25f, 0.25f, 1.0f), "Castlevania: Curse of Darkness (SLUS-21168)");
-        ImGui::TextDisabled("100% Native Windows 64-bit Recompilation | No Emulation");
+        ImGui::TextDisabled("Native gameplay | Active renderer: %s", m_activeRenderer.c_str());
         ImGui::Separator();
 
         // Performance statistics
-        float fps = static_cast<float>(GetFPS());
-        float frameMs = GetFrameTime() * 1000.0f;
-        ImGui::Text("Render: %.1f FPS (%.2f ms) | Host: Direct3D/OpenGL/Vulkan Native", fps, frameMs);
+        float hostFps = static_cast<float>(GetFPS());
+        float hostFrameMs = GetFrameTime() * 1000.0f;
+
+        double now = GetTime();
+        if (m_lastVsyncTime == 0.0)
+        {
+            m_lastVsyncTime = now;
+            m_lastVsyncTick = runtime.eeScheduler().currentVSyncTick();
+        }
+        else if (now - m_lastVsyncTime >= 0.25)
+        {
+            uint64_t currentTick = runtime.eeScheduler().currentVSyncTick();
+            m_guestFps = static_cast<float>(static_cast<double>(currentTick - m_lastVsyncTick) / (now - m_lastVsyncTime));
+            m_lastVsyncTick = currentTick;
+            m_lastVsyncTime = now;
+        }
+
+        ImGui::Text("Guest Simulation: %.1f FPS (Target: 60.0) | Host Render: %.1f FPS (%.2f ms)",
+                    m_guestFps, hostFps, hostFrameMs);
         ImGui::Separator();
+
+        if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            const char* rendererNames[] = {"Native", "Hybrid (PCSX2 GS)"};
+            int selected = m_rendererSettings.mode == RendererMode::Pcsx2Gs ? 1 : 0;
+            if (ImGui::Combo("Renderer", &selected, rendererNames, IM_ARRAYSIZE(rendererNames)))
+            {
+                RendererSettings requested;
+                requested.mode = selected == 1 ? RendererMode::Pcsx2Gs : RendererMode::Native;
+                if (saveRendererSettings(rendererSettingsPath(), requested, &m_rendererSettingsError))
+                    m_rendererSettings = requested;
+            }
+            ImGui::TextWrapped("Changes take effect after restarting the game.");
+#if !defined(NOBLE_HAVE_PCSX2_GS) || !NOBLE_HAVE_PCSX2_GS
+            if (m_rendererSettings.mode == RendererMode::Pcsx2Gs)
+                ImGui::TextWrapped("PCSX2 GS is unavailable in this build.");
+#endif
+            if (!m_rendererSettingsError.empty())
+                ImGui::TextWrapped("%s", m_rendererSettingsError.c_str());
+        }
 
         // CAMERA SYSTEMS
         if (ImGui::CollapsingHeader("Camera Systems (2026 Modern Controls)", ImGuiTreeNodeFlags_DefaultOpen))

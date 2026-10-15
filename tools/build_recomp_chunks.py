@@ -35,6 +35,8 @@ GUEST_OPT_FLAGS = ["-O2", "-fno-strict-aliasing", "-fwrapv"]
 HOST_OPT_FLAGS = ["-O2", "-fno-strict-aliasing", "-fwrapv"]
 HOST_OBJECTS = (
     (Path("src/main.cpp"), Path("src/main.o")),
+    (Path("src/render/renderer_settings.cpp"), Path("src/render/renderer_settings.o")),
+    (Path("src/platform/host_timer_resolution.cpp"), Path("src/platform/host_timer_resolution.o")),
     (Path("src/camera/camera_controller.cpp"), Path("src/camera/camera_controller.o")),
     (Path("src/input/input_manager.cpp"), Path("src/input/input_manager.o")),
     (Path("src/ui/modern_overlay.cpp"), Path("src/ui/modern_overlay.o")),

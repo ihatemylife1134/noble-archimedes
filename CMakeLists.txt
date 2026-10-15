@@ -26,6 +26,8 @@ add_subdirectory(tools/PS2Recomp)
 set(NOBLE_APP_SOURCES
     src/main.cpp
     src/recomp/sound_bank_compat.cpp
+    src/render/renderer_settings.cpp
+    src/platform/host_timer_resolution.cpp
 )
 
 add_executable(NobleArchimedes ${NOBLE_APP_SOURCES})

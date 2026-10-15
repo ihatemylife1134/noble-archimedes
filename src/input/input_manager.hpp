@@ -7,6 +7,24 @@
 namespace NobleArchimedes
 {
 
+// PS2 DualShock 2 active-low bitmasks
+constexpr uint16_t PAD_SELECT   = 1u << 0;  // 0x0001
+constexpr uint16_t PAD_L3       = 1u << 1;  // 0x0002
+constexpr uint16_t PAD_R3       = 1u << 2;  // 0x0004
+constexpr uint16_t PAD_START    = 1u << 3;  // 0x0008
+constexpr uint16_t PAD_UP       = 1u << 4;  // 0x0010
+constexpr uint16_t PAD_RIGHT    = 1u << 5;  // 0x0020
+constexpr uint16_t PAD_DOWN     = 1u << 6;  // 0x0040
+constexpr uint16_t PAD_LEFT     = 1u << 7;  // 0x0080
+constexpr uint16_t PAD_L2       = 1u << 8;  // 0x0100
+constexpr uint16_t PAD_R2       = 1u << 9;  // 0x0200
+constexpr uint16_t PAD_L1       = 1u << 10; // 0x0400
+constexpr uint16_t PAD_R1       = 1u << 11; // 0x0800
+constexpr uint16_t PAD_TRIANGLE = 1u << 12; // 0x1000
+constexpr uint16_t PAD_CIRCLE   = 1u << 13; // 0x2000
+constexpr uint16_t PAD_CROSS    = 1u << 14; // 0x4000
+constexpr uint16_t PAD_SQUARE   = 1u << 15; // 0x8000
+
 struct ModernInputState
 {
     // Raw analog stick inputs [-1.0f, +1.0f]

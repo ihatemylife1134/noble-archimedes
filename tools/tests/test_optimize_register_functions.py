@@ -10,6 +10,8 @@ from tools.optimize_register_functions import optimize_register_functions
 class FunctionTableRangeTests(unittest.TestCase):
     def test_generated_table_ranges_stay_within_capacity(self):
         table_path = Path(__file__).resolve().parents[2] / "src/recomp/generated/register_functions.cpp"
+        if not table_path.is_file():
+            self.skipTest("local game-derived inputs are intentionally absent from a fresh checkout")
         generated = table_path.read_text(encoding="utf-8")
         capacity = int(re.search(r"FunctionTableSlotCount = (\d+)u", generated).group(1))
         ends = [int(end) for end in re.findall(r"\{\s*\d+u,\s*(\d+)u,", generated)]

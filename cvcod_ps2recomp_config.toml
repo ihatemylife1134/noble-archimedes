@@ -26,6 +26,7 @@ stubs = [
   "sceSdRemote@0x0074BED8",
   "sceCdCallback@0x0074C600",
   "sceCdInitEeCB@0x0074C7D8",
+  "sceCdSearchFile@0x0074CF08",
   "sceCdNcmdDiskReady@0x0074D080",
   # "sceCdSync@0x0074D118", # Note: 0x0074D118 is internal SIF DMA / RPC status checker, not sceCdSync
   "sceCdSyncS@0x0074D1B8",

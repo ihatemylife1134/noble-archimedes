@@ -23,6 +23,9 @@
 #include "ui/modern_overlay.hpp"
 #include "vfs/iso_vfs.hpp"
 #include "recomp/runtime_stub_registry.hpp"
+#include "render/renderer_settings.hpp"
+#include "platform/host_timer_resolution.hpp"
+#include "Stubs/CD.h"
 #include "raylib.h"
 
 // Forward declaration from Pad stub in runtime
@@ -44,7 +47,21 @@ struct NobleAppContext
 };
 
 #ifdef _WIN32
-extern "C" __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void* hModule, char* lpFilename, unsigned long nSize);
+extern "C" {
+__declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(void* hModule, char* lpFilename, unsigned long nSize);
+__declspec(dllimport) unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+__declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
+}
+
+struct ScopedTimerResolution
+{
+    ScopedTimerResolution()
+    {
+        timeBeginPeriod(1);
+        NobleArchimedes::honorHostTimerResolution();
+    }
+    ~ScopedTimerResolution() { timeEndPeriod(1); }
+};
 #endif
 
 static void configureDefaultMemoryCardMode()
@@ -77,9 +94,44 @@ static void configureDefaultRendererWorkers()
 #endif
 }
 
+static bool configureRendererSettings()
+{
+    std::string error;
+    const auto settings = NobleArchimedes::loadRendererSettings(
+        NobleArchimedes::rendererSettingsPath(), &error);
+    if (!error.empty())
+        std::cerr << "[Renderer] " << error << "; using the native default." << std::endl;
+
+    const char *overrideBackend = std::getenv("PS2_GS_BACKEND");
+    const std::string backend = NobleArchimedes::resolveRendererBackend(settings, overrideBackend);
+    if (!overrideBackend || !*overrideBackend)
+    {
+#ifdef _WIN32
+        if (_putenv_s("PS2_GS_BACKEND", backend.c_str()) != 0)
+#else
+        if (setenv("PS2_GS_BACKEND", backend.c_str(), 1) != 0)
+#endif
+        {
+            std::cerr << "[Renderer] Could not apply the selected backend." << std::endl;
+            return false;
+        }
+    }
+    std::cout << "[Renderer] Selected backend: " << backend << std::endl;
+#if !defined(NOBLE_HAVE_PCSX2_GS) || !NOBLE_HAVE_PCSX2_GS
+    if (backend == "pcsx2")
+    {
+        std::cerr << "[Renderer] PCSX2 GS adapter is unavailable in this build. "
+                     "Select Native or use a build containing the GS adapter." << std::endl;
+        return false;
+    }
+#endif
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
 #ifdef _WIN32
+    ScopedTimerResolution timerResolution;
     char exePathBuf[1024] = {0};
     if (GetModuleFileNameA(nullptr, exePathBuf, sizeof(exePathBuf)) > 0) {
         std::filesystem::path fullExePath(exePathBuf);
@@ -98,6 +150,8 @@ int main(int argc, char *argv[])
     ps2_async_stdio::install();
     configureDefaultMemoryCardMode();
     configureDefaultRendererWorkers();
+    if (!configureRendererSettings())
+        return 1;
 
     std::cout << "=======================================================\n";
     std::cout << "  Noble Archimedes - Castlevania: Curse of Darkness   \n";
@@ -129,7 +183,19 @@ int main(int argc, char *argv[])
         if (std::filesystem::exists(isoFile))
         {
             std::cout << "[VFS] Mounting disc stream from " << isoFile.string() << "..." << std::endl;
-            app.vfs.mountIso(isoFile);
+            if (app.vfs.mountIso(isoFile))
+            {
+                std::vector<ps2_stubs::CdImageFileEntry> cdEntries;
+                cdEntries.reserve(app.vfs.getEntries().size());
+                for (const auto &[path, entry] : app.vfs.getEntries())
+                {
+                    if (!entry.isDirectory)
+                        cdEntries.push_back({path, entry.startSector, entry.sizeBytes});
+                }
+                ps2_stubs::configureCdImageIndex(isoFile, cdEntries);
+                std::cout << "[VFS] Connected " << cdEntries.size()
+                          << " ISO files to the native CD runtime." << std::endl;
+            }
         }
 
         PS2Runtime runtime;
@@ -167,6 +233,15 @@ int main(int argc, char *argv[])
                         st.ps2RightStickX,
                         st.ps2RightStickY
                     );
+                }
+
+                // Check for movie skip when Start / Escape / Enter is pressed
+                if ((st.ps2Buttons & NobleArchimedes::PAD_START) == 0) {
+                    const uint32_t movieBase = rt.memory().read32(0x009B7B70u);
+                    if (movieBase != 0 && (movieBase & 3) == 0 && movieBase < (PS2_RAM_SIZE - 0x69200u)) {
+                        rt.memory().write32(movieBase + 0x690B8u + 0x60u, 1);
+                        rt.memory().write32(movieBase + 0x69414u, 1);
+                    }
                 }
 
                 // Render 2026 Enhanced HUD & UI

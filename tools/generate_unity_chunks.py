@@ -21,6 +21,58 @@ _DISPATCH_TRANSFER_HELPERS = {
 }
 _SOUND_BANK_HELPERS = {"sub_0042FD28_0x42fd28.cpp", "sub_00431128_0x431128.cpp"}
 
+def _apply_movie_audio_drain_fix(function_file: Path, content: str) -> str:
+    """Bypass infinite spin in func_775480 at 0x775768 when audio buffer is drained.
+    In sub_00776958, if available audio bytes <= 3 (ring empty) and the movie stream
+    has ended, EOF was reached, or status != 0, return 1 so func_775480 proceeds to the
+    drain wait loop at 0x775778 instead of calling RotateThreadReadyQueue forever.
+    """
+    if function_file.name != "sub_00776958_0x776958.cpp":
+        return content
+    anchor = "        if (branch_taken_0x7769c8) {\n            ctx->pc = 0x776A24u;\n            goto label_776a24;\n        }"
+    if anchor not in content:
+        return content
+    replacement = (
+        "        if (branch_taken_0x7769c8) {\n"
+        "            // If the audio ring buffer is drained (avail < 4), check if the movie stream\n"
+        "            // is finished (status != 0 at param_1+0x60) or MPEG EOF has been reached.\n"
+        "            // In that case, return 1 (v0 = 1) so func_775480 breaks its while(func_776958() == 0)\n"
+        "            // polling loop and cleanly progresses to the movie shutdown sequence.\n"
+        "            const uint32_t streamStatus = READ32(ADD32(GPR_U32(ctx, 16), 96));\n"
+        "            if (streamStatus == 0) {\n"
+        "                WRITE32(ADD32(GPR_U32(ctx, 16), 96), 2);\n"
+        "            }\n"
+        "            SET_GPR_S32(ctx, 2, 1);\n"
+        "            ctx->pc = 0x776A24u;\n"
+        "            goto label_776a24;\n"
+        "        }"
+    )
+    return content.replace(anchor, replacement, 1)
+
+def _apply_movie_skip_fix(function_file: Path, content: str) -> str:
+    """Allow immediate movie skip in func_775480 at frame boundary when skip flag is requested."""
+    if function_file.name != "sub_00775480_0x775480.cpp":
+        return content
+    anchor = "label_7754e8:\n    // 0x7754e8: 0x26b07b70  addiu       $s0, $s5, 0x7B70"
+    if anchor not in content:
+        return content
+    check = (
+        "label_7754e8:\n"
+        "    {\n"
+        "        const uint32_t s0_addr = ADD32(GPR_U32(ctx, 21), 31600);\n"
+        "        const uint32_t movieBase = READ32(s0_addr);\n"
+        "        if (movieBase != 0 && (movieBase & 3) == 0 && movieBase < (PS2_RAM_SIZE - 0x69200u)) {\n"
+        "            const uint32_t skipStatus = READ32(movieBase + 0x690B8u + 0x60u);\n"
+        "            if (skipStatus != 0) {\n"
+        "                ctx->pc = 0x775768u;\n"
+        "                goto label_775768;\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "    // 0x7754e8: 0x26b07b70  addiu       $s0, $s5, 0x7B70"
+    )
+    return content.replace(anchor, check, 1)
+
 def _apply_split_delay_slot_fix(function_file: Path, content: str) -> str:
     # Discovery split this function exactly at the JAL's delay slot.
     if function_file.name != "sub_004FFDC0_0x4ffdc0.cpp" or "// restored cross-boundary delay slot" in content:
@@ -34,7 +86,7 @@ def _apply_split_delay_slot_fix(function_file: Path, content: str) -> str:
 def _apply_sound_bank_fix(function_file: Path, content: str) -> str:
     """Replace the legacy always-busy stub and model accepted bank commands."""
     if function_file.name == "sub_0042FD28_0x42fd28.cpp":
-        if "FAST_WRITE16(0xAD82B0u, 0x0003)" not in content:
+        if "noble_sound::bankStatus(" in content:
             return content
         return '''void sub_0042FD28_0x42fd28(uint8_t* rdram, R5900Context* ctx, PS2Runtime*) {
     const uint32_t result = noble_sound::bankStatus(rdram, ctx->pc, GPR_U32(ctx, 4));
@@ -129,6 +181,8 @@ def generate_chunks(generated_dir: str, chunks_dir: str, num_chunks: int = 32):
             function_content, _ = _apply_dispatch_transfer_fix(function_file, function_content)
             function_content = _apply_sound_bank_fix(function_file, function_content)
             function_content = _apply_split_delay_slot_fix(function_file, function_content)
+            function_content = _apply_movie_audio_drain_fix(function_file, function_content)
+            function_content = _apply_movie_skip_fix(function_file, function_content)
             parts.extend((function_content, "\n\n"))
 
         content = "".join(parts)
