@@ -4,6 +4,8 @@ An experimental Windows x64 recompilation project for **Castlevania: Curse of Da
 
 **Status, 2026-10-15: playable development builds exist, but sustained 58–60 FPS gameplay has NOT been achieved.** A newly recovered VU-correct native run measured **31.50 gameplay updates/s** (1,232 updates in 39.110 seconds). An older private-development ledger run reached **35.83 gameplay updates/s** and **58.44 fresh presented images/s**, using different measurement windows. This source publication is not a finished port or a ready-to-play download.
 
+Alpha 0.1.0 release instructions and limitations are recorded in the [changelog](CHANGELOG.md).
+
 No game ISO, executable, assets, translated game implementation, game microcode, captures, saves, or compiled binaries are distributed here. Supply your own lawfully obtained game copy and generate guest code locally. See [BUILDING.md](BUILDING.md) for the workflow and its limitations.
 
 ## Why “Noble Archimedes”?
