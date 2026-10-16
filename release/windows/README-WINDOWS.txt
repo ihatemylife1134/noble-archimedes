@@ -1,4 +1,4 @@
-NOBLE ARCHIMEDES - ALPHA 0.2.0 WINDOWS KIT
+NOBLE ARCHIMEDES - ALPHA 0.2.1 WINDOWS KIT
 ==========================================
 
 This public kit contains source, launchers and documentation. It deliberately

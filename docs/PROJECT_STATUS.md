@@ -39,7 +39,8 @@ Following the pipeline ablation, all-thread CPU sampling showed the VU worker sp
   - Implemented a 64K direct-mapped L1 block cache (`fastLookupBlock`) in `EeScheduler.cpp` for $O(1)$ fast block lookup without hash map overhead.
   - Required **zero guest recompilation**: all 32 compiled guest chunks (`recomp_chunk_*.o`) and `class EeScheduler` header ABI layout remained completely untouched.
 - **Measured Result**: During boot, menus, name entry, and 3D world transition, `phase_frames` advanced from 2,616 to 3,528 in 17.218s—measuring **52.97 FPS (~53.0 FPS)**, a **>2x speedup** over the 26.381 FPS baseline.
-- **Deadlock Hardening**: Resolved a frame 3528 / vsync 3621 deadlock where cycle-due events waiting on host pacing cleared `m_nextDeadlineCycle` to 0, trapping Thread 1 in an infinite DMA allocation spin loop (`0xAC3CF8` free list exhaustion). Added fallback cycle advancement (`kVBlankPeriodCycles`) in `checkpointDue()` when `isQueueSpin` is active, guaranteeing virtual time progresses smoothly under DMA buffer starvation.
+- **Deadlock Hardening & Pacing Resolution**: Resolved an issue where cycle-due events waiting on host pacing continuously triggered `m_checkpointPending`, causing 968,000 scheduler dispatches per second and burning 76% of CPU in dispatch loops. Gating `cycleEventDue` with `!cyclePaced` reduced dispatches to ~3,900/s while preserving 60 Hz VSync. Restored clean `std::min_element` deadline selection in `updateNextDeadline()` to eliminate DMA queue lockups in `sub_0041FFF0`. Replaced artificial cycle jumps with cooperative yields when the DMA free pool (`freeHead == 0u`) is temporarily exhausted.
+- **Steady-State Courtyard Profiling**: In steady-state 3D courtyard (`[4, 10, 3, 1]`), measured 14.43 FPS across 922 frames (63.9s) at 0.54 host CPU cores, proving host scheduler overhead is eliminated and isolating remaining frame time to GPU/VIF1 rasterization and draw calls.
 
 ## What helped
 

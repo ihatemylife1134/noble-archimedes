@@ -2,7 +2,7 @@
 
 An experimental Windows x64 recompilation project for **Castlevania: Curse of Darkness**, USA PlayStation 2 release, **SLUS-21168**. The goal is native gameplay at 58–60 updates per second while preserving the game's behavior.
 
-**Status, 2026-10-15: playable development builds exist, with measured framerates reaching ~53.0 FPS in gameplay transitions under Stage A scheduler optimization and native VIF1 worker (advancing past previous 20.5–26.4 FPS and 31.50 FPS baselines toward the 58–60 FPS target).** Release notes, setup instructions, and limitations are recorded in the [changelog](CHANGELOG.md). Alpha 0.2.0 release artifacts are available on GitHub.
+**Status, 2026-10-15: playable development builds exist, with measured framerates reaching ~53.0 FPS in gameplay transitions under Stage A scheduler optimization and native VIF1 worker (advancing past previous 20.5–26.4 FPS and 31.50 FPS baselines toward the 58–60 FPS target).** Release notes, setup instructions, and limitations are recorded in the [changelog](CHANGELOG.md). Alpha 0.2.1 release artifacts are available on GitHub.
 
 Alpha 0.1.0 release instructions and limitations are recorded in the [changelog](CHANGELOG.md).
 

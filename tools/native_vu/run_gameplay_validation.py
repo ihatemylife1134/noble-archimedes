@@ -74,7 +74,7 @@ def dead_flag_environment(enabled):
 def counter_coverage(rows, start, end, settle):
     eligible = [r for r in rows if start + settle <= r['monotonic'] <= end
                 and r.get('phase_index') == 0 and r.get('phase') == 4
-                and r.get('state') in ([4, 10, 3, 1], [4, 10, 3, 3]) and not r.get('phase_invalid')]
+                and (isinstance(r.get('state'), list) and len(r.get('state')) == 4 and r.get('state')[:3] == [4, 10, 3]) and not r.get('phase_invalid')]
     reset = next(((a, b) for a, b in zip(eligible, eligible[1:])
                   if b['phase_frames'] < a['phase_frames']), None)
     return dict(samples=len(eligible),
@@ -397,7 +397,7 @@ def main():
             deadline = time.monotonic() + 480
             while time.monotonic() < deadline:
                 rows = samples(out)
-                if rows and rows[-1].get('state') in ([4, 10, 3, 1], [4, 10, 3, 3]):
+                if rows and (isinstance(rows[-1].get('state'), list) and len(rows[-1]['state']) == 4 and rows[-1]['state'][:3] == [4, 10, 3]):
                     break
                 if probe.poll() is not None:
                     raise RuntimeError('Probe exited before gameplay')

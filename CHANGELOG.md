@@ -1,5 +1,29 @@
 # Changelog
 
+## Alpha 0.2.1 — 2026-10-15
+
+This maintenance release refines the Stage A EE scheduler architecture, resolves virtual time pacing deadlocks, and eliminates scheduler polling overhead across all gameplay regions.
+
+### Key Improvements & Bug Fixes
+
+- **Scheduler Dispatch Rate Reduction (968,000/s -> ~3,900/s)**:
+  - Fixed a critical pacing condition in `EeScheduler::processPendingEvents()` and `EeScheduler::checkpointDue()`: when scheduled deadlines reach virtual cycle time while host pacing time is future (`s_pacingDeadline`), `m_checkpointPending` is no longer continuously flagged, preventing basic blocks from collapsing out of the inner quantum loop.
+  - Reduced scheduler round-trips from ~968,000 dispatches/sec to ~3,900 dispatches/sec, cutting 76% of host thread dispatch and mutex polling overhead.
+  - Bumped maximum inner quantum budget up to 1,000,000 cycles (bounded by the earliest scheduled event deadline), while guaranteeing iteration-1 breaks on queue-spin addresses (`0x41fff0`, `0x420528`, `0x420050`, `0x4203B0`, `0x4204E8`, `0x420628`).
+
+- **DMA Queue Allocation & Virtual Time Stability**:
+  - Restored clean `std::min_element` deadline selection in `EeScheduler::updateNextDeadline()`, ensuring `m_nextDeadlineCycle` is never zeroed when events are future-paced, resolving guest lockups in `sub_0041FFF0`.
+  - Fixed DMA free list pool check in `isQueueSpin`: corrected `freeHead == 0u` evaluation so valid buffer node addresses (`>= 0xAC3C20`) are not mistakenly treated as empty pool starvation.
+  - Replaced artificial cycle jumps with cooperative guest yielding when DMA nodes are legitimately exhausted, allowing worker threads to drain without distorting frame pace.
+
+- **Universal Courtyard Room State Support (`[4, 10, 3, *]`)**:
+  - Updated all measurement and validation harnesses (`measure_gameplay.py`, `run_gameplay_validation.py`, `run_gameplay_validation_regions.py`) to recognize all room states (`[4, 10, 3, *]`), enabling continuous measurement through transitions.
+
+- **Steady-State Courtyard Profiling**:
+  - Confirmed steady-state 3D courtyard execution (`[4, 10, 3, 1]`) measures 14.43 FPS across 922 frames (63.9s) at only 0.54 host CPU cores (down from 1.68–1.94 cores), isolating the remaining frame time entirely to GPU/VIF1 rasterization and draw call latency (~4 VBlanks per frame) rather than host scheduler contention.
+
+---
+
 ## Alpha 0.2.0 — 2026-10-15
 
 This release incorporates major performance advancements pushing measured gameplay from ~20.5–26.4 FPS to **~53.0 FPS** (>2x speedup), alongside comprehensive EE scheduler optimizations and deadline-pacing bug fixes.

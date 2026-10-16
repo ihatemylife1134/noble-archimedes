@@ -28,7 +28,7 @@ def samples(out):
 def calculate(rows, start, end, settle=10):
     rows = [r for r in rows if start + settle <= r['monotonic'] <= end
             and r.get('phase_index') == 0 and r.get('phase') == 4
-            and r.get('state') == [4, 10, 3, 1]
+            and (isinstance(r.get('state'), list) and len(r.get('state')) == 4 and r.get('state')[:3] == [4, 10, 3])
             and not r.get('phase_invalid')]
     if len(rows) < 2:
         raise RuntimeError('No sustained gameplay counter interval was captured')
@@ -52,7 +52,7 @@ def main():
     deadline = time.monotonic() + 600
     while time.monotonic() < deadline:
         rows = samples(args.out)
-        if rows and rows[-1].get('state') == [4, 10, 3, 1] and rows[-1]['driver_seconds'] >= args.start_after:
+        if rows and (isinstance(rows[-1].get('state'), list) and len(rows[-1]['state']) == 4 and rows[-1]['state'][:3] == [4, 10, 3]) and rows[-1]['driver_seconds'] >= args.start_after:
             break
         if (args.out / 'exit.json').exists():
             raise RuntimeError('Probe ended before the sustained gameplay measurement')
