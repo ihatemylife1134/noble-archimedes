@@ -94,6 +94,37 @@ static void configureDefaultRendererWorkers()
 #endif
 }
 
+static void configureDefaultNativeRuntimeOptions()
+{
+    const char *headless = std::getenv("PS2_HEADLESS");
+    if (headless && *headless && *headless != '0')
+    {
+        return;
+    }
+
+    auto setDefaultEnv = [](const char *name, const char *value) {
+        const char *existing = std::getenv(name);
+        if (existing && *existing)
+        {
+            return;
+        }
+#ifdef _WIN32
+        _putenv_s(name, value);
+#else
+        setenv(name, value, 0);
+#endif
+    };
+
+    setDefaultEnv("PS2_GS_BACKEND", "pgs");
+    setDefaultEnv("PS2_NATIVE_VIF1_WORKER", "1");
+    setDefaultEnv("PS2_VU_BACKEND", "play");
+    setDefaultEnv("NOBLE_VU_DEAD_FLAG_ELIMINATION", "1");
+    setDefaultEnv("PGS_SKIP_COMPILATION_TASKS", "1");
+    setDefaultEnv("PS2_PAD_TRACE", "0");
+    setDefaultEnv("PS2_MPEG_TRACE", "0");
+    setDefaultEnv("PS2_HOST_PROFILE", "0");
+}
+
 static bool configureRendererSettings()
 {
     std::string error;
@@ -148,6 +179,7 @@ int main(int argc, char *argv[])
     // Unbuffered writes go to an in-process relay, so a slow or paused
     // console/log file never stalls the emulation thread (PS2_SYNC_STDIO=1 disables).
     ps2_async_stdio::install();
+    configureDefaultNativeRuntimeOptions();
     configureDefaultMemoryCardMode();
     configureDefaultRendererWorkers();
     if (!configureRendererSettings())
