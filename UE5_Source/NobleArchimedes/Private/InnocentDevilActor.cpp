@@ -110,7 +110,10 @@ void AInnocentDevilActor::FollowOwner()
 		float DistanceToOwner = FVector::Dist(GetActorLocation(), OwnerHector->GetActorLocation());
 		if (DistanceToOwner > 300.0f)
 		{
-			UNavigationSystem::SimpleMoveToLocation(GetController(), OwnerHector->GetActorLocation());
+			if (AController* Controller = GetController())
+			{
+				Controller->MoveToLocation(OwnerHector->GetActorLocation());
+			}
 		}
 	}
 }

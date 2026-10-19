@@ -100,14 +100,9 @@ void AEnemyBase::MoveToPlayer()
 
 	if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
-		UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-		if (NavSys)
+		if (AController* Controller = GetController())
 		{
-			FNavLocation NavLocation;
-			if (NavSys->ProjectPointToNavigation(Player->GetActorLocation(), NavLocation))
-			{
-				UNavigationSystem::SimpleMoveToLocation(GetController(), NavLocation.Location);
-			}
+			Controller->MoveToLocation(Player->GetActorLocation());
 		}
 	}
 }
