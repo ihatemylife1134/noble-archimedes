@@ -6,8 +6,6 @@ public class NobleArchimedes : ModuleRules
 {
 	public NobleArchimedes(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = PCHUsageMode::UseExplicitOrSharedPCHs;
-
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",
 			"CoreUObject",
