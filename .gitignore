@@ -21,6 +21,9 @@ tools/PS2Recomp/out/
 # Extracted ISO temporary files
 extracted/
 
+# macOS system files
+.DS_Store
+
 # ---- Copyrighted / game-derived material: never commit ----
 # Game image and anything extracted from it
 *.iso

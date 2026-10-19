@@ -117,7 +117,9 @@ static void configureDefaultNativeRuntimeOptions()
 
     setDefaultEnv("PS2_GS_BACKEND", "pgs");
     setDefaultEnv("PS2_NATIVE_VIF1_WORKER", "1");
-    setDefaultEnv("PS2_VU_BACKEND", "play");
+    // Public kit ships generic VU compatibility execution by default.
+    // To try a self-built optimized VU module, set PS2_VU_BACKEND=play locally
+    // and place a compatible module beside the executable (not shipped here).
     setDefaultEnv("NOBLE_VU_DEAD_FLAG_ELIMINATION", "1");
     setDefaultEnv("PGS_SKIP_COMPILATION_TASKS", "1");
     setDefaultEnv("PS2_PAD_TRACE", "0");

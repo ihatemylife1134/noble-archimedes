@@ -101,8 +101,7 @@ new_budget_code = """    auto computeSafeQuantumBudget = [this](const GuestThrea
         if (m_checkpointPending.load(std::memory_order_relaxed) ||
             m_stopRequested.load(std::memory_order_relaxed) ||
             m_rescheduleRequested ||
-            m_pendingEeTimerInterrupts != 0u ||
-            nobleDmacCompletionPending())
+            m_pendingEeTimerInterrupts != 0u)
         {
             return 0u;
         }
@@ -145,7 +144,7 @@ if "auto computeSafeQuantumBudget = " in normalized:
         normalized = normalized[:pos_start] + new_budget_code + "\n\n" + normalized[pos_end:]
         print("3. Replaced computeSafeQuantumBudget with fixed non-stalling version")
 else:
-    anchor_budget = "    while (!m_stopRequested.load(std::memory_order_acquire))\n    {\n        HostProfile::maybeReport"
+    anchor_budget = "        PS2Runtime::RecompiledFunction function = m_runtime.lookupFunction(context.pc);\n"
     normalized = normalized.replace(anchor_budget, new_budget_code + "\n\n" + anchor_budget, 1)
     print("3. Added fixed computeSafeQuantumBudget lambda in EeScheduler::run")
 
@@ -160,11 +159,9 @@ pacing_check = """        if (s_pacingDeadline != std::chrono::steady_clock::tim
         }
         processPendingEvents();"""
 
-old_loop_entry = """        HostProfile::Scope loopProfileScope(HostProfile::LoopIteration);
-        processPendingEvents();"""
+old_loop_entry = """        processPendingEvents();"""
 
-new_loop_entry = """        HostProfile::Scope loopProfileScope(HostProfile::LoopIteration);
-        if (s_pacingDeadline != std::chrono::steady_clock::time_point{})
+new_loop_entry = """        if (s_pacingDeadline != std::chrono::steady_clock::time_point{})
         {
             if (std::chrono::steady_clock::now() >= s_pacingDeadline)
             {
@@ -183,18 +180,20 @@ elif "s_pacingDeadline != std::chrono::steady_clock::time_point{}" in normalized
 # 5. In processDueDeadlines, record s_pacingDeadline when now < pacingDeadline
 old_due_pacing = """            if (now < pacingDeadline)
             {
-                // A cycle-due event can still be host-future. Waiting here
-                // holds the dispatcher while guest threads are Ready; leave
-                // pacing to the outer idle wait after they get a turn.
-                updateNextDeadline();
-                return;
+                m_eventCv.wait_until(lock, pacingDeadline, [this]()
+                                     { return !m_events.empty() ||
+                                              m_stopRequested.load(std::memory_order_acquire); });
+                if (!m_events.empty() || m_stopRequested.load(std::memory_order_acquire))
+                {
+                    updateNextDeadline();
+                    return;
+                }
             }"""
 
 new_due_pacing = """            if (now < pacingDeadline)
             {
-                // A cycle-due event can still be host-future. Waiting here
-                // holds the dispatcher while guest threads are Ready; leave
-                // pacing to the outer idle wait after they get a turn.
+                // A cycle-due event can still be host-future. Leave pacing to
+                // the outer idle wait after guest threads get a turn.
                 s_pacingDeadline = pacingDeadline;
                 updateNextDeadline();
                 return;

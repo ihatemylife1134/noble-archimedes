@@ -29,6 +29,13 @@ PS2X_ENABLE_PCSX2_GS=ON. It does not start the complete PCSX2 emulator.
 Inside a running build, press F1, open Graphics, choose Native or Hybrid
 (PCSX2 GS), exit, and restart. The saved setting applies on the next launch.
 
+VU BACKEND
+----------
+The public kit uses generic VU compatibility execution by default. An
+experimentally optimized VU module (`PS2_VU_BACKEND=play`) is NOT shipped and
+must be built separately by you from your own game. Remove that variable to
+return to the public generic default; do not expect a bundled DLL.
+
 STATUS
 ------
 This is a development alpha. Sustained 58-60 gameplay updates/s has not been

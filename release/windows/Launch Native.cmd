@@ -6,7 +6,9 @@ if not exist "Castlevania - Curse of Darkness (USA).iso" goto :missing_game
 if not exist "extracted\SLUS_211.68" goto :missing_game
 set "PS2_GS_BACKEND=pgs"
 set "PS2_NATIVE_VIF1_WORKER=1"
-set "PS2_VU_BACKEND=play"
+rem Public kit ships generic VU compatibility execution by default.
+rem To try a self-built optimized VU module, set PS2_VU_BACKEND=play locally
+rem and place a compatible module beside this executable (not shipped here).
 set "NOBLE_VU_DEAD_FLAG_ELIMINATION=1"
 set "PGS_SKIP_COMPILATION_TASKS=1"
 set "PS2_PAD_TRACE=0"
