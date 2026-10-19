@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NobleArchimedesGameInstance.h"
+#include "HectorCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Paths.h"
 
@@ -28,7 +29,7 @@ void UNobleArchimedesGameInstance::SaveGame(int32 SlotIndex)
 	// Capture current game state from world
 	if (UWorld* World = GetWorld())
 	{
-		if (ANobleArchimedesCharacter* Player = Cast<ANobleArchimedesCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
+		if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
 		{
 			CurrentSaveGame->PlayerLocation = Player->GetActorLocation();
 			CurrentSaveGame->PlayerRotation = Player->GetActorRotation();

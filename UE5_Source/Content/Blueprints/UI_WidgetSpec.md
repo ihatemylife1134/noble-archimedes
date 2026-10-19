@@ -11,7 +11,7 @@
 - Mana Bar: Blue, top-left below health
 - Combo Counter: Center-top, shows current combo stage (1-3)
 - Weapon Icon: Top-right, shows equipped weapon type
-- Companion Status: Top-right below weapon, shows active companion + mode
+- Innocent Devil Status: Top-right below weapon, shows active innocent devil + mode
 - Chapter Indicator: Bottom-left, shows current chapter name
 - Mini-map: Bottom-right, shows room layout with X markers
 
@@ -33,14 +33,14 @@
 - Buttons: Forge, Cancel, Material Details
 - Message: "Weapon Forged!" or "Missing Materials"
 
-## WB_CompanionStatus
-- Companion portrait: 3D model or 2D artwork
-- Companion name: Text
+## WB_Innocent DevilStatus
+- Innocent Devil portrait: 3D model or 2D artwork
+- Innocent Devil name: Text
 - Level: Number with XP bar
 - Health: Green bar
 - Mode selector: Auto / Command / Guard buttons
 - Evolution button: Shows when Evo Crystals available
-- Active abilities: Icons for current companion abilities
+- Active abilities: Icons for current innocent devil abilities
 
 ## WB_ComboCounter
 - Display: "COMBO x3" with timing ring

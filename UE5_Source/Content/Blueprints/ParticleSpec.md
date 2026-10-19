@@ -98,21 +98,21 @@ Create these in UE5 using Niagara Editor.
 - **Lifetime**: 0.15s
 - **Spawn**: Player guard block
 
-## 4. Companion VFX
+## 4. Innocent Devil VFX
 
-### P_CompanionSummon_Fairy
+### P_Innocent DevilSummon_Fairy
 - **Type**: Sprite + Light
 - **Color**: Light blue → white → transparent
 - **Particles**: 20 sparkles
 - **Lifetime**: 1.0s
 
-### P_CompanionEvolve
+### P_Innocent DevilEvolve
 - **Type**: Sphere burst + Light
 - **Color**: Gold → white → transparent
 - **Radius**: 100 → 200 UU
 - **Lifetime**: 1.5s
 
-### P_CompanionAttack_Fire
+### P_Innocent DevilAttack_Fire
 - **Type**: Sprite trail
 - **Color**: Orange → red → transparent
 - **Lifetime**: 0.4s

@@ -23,7 +23,6 @@ void UNobleArchimedesAudioComponent::ApplyVolumeSettings()
 void UNobleArchimedesAudioComponent::PlayWeaponSwing(EWeaponType WeaponType)
 {
 	// Play weapon-specific swing sound via Sound Cue
-	// Implementation: switch on WeaponType, spawn appropriate SoundCue at owner location
 }
 
 void UNobleArchimedesAudioComponent::PlayWeaponHit(EWeaponType WeaponType, EDamageType DamageType)
@@ -51,19 +50,19 @@ void UNobleArchimedesAudioComponent::PlayPerfectGuard()
 	// Play perfect guard parry sound
 }
 
-void UNobleArchimedesAudioComponent::PlayCompanionSummon(ECompanionType Type)
+void UNobleArchimedesAudioComponent::PlayInnocentDevilSummon(EInnocentDevilType Type)
 {
-	// Play companion summon sound
+	// Play Innocent Devil summon sound
 }
 
-void UNobleArchimedesAudioComponent::PlayCompanionAttack(ECompanionType Type)
+void UNobleArchimedesAudioComponent::PlayInnocentDevilAttack(EInnocentDevilType Type)
 {
-	// Play companion attack sound
+	// Play Innocent Devil attack sound
 }
 
-void UNobleArchimedesAudioComponent::PlayCompanionEvolve(ECompanionType Type)
+void UNobleArchimedesAudioComponent::PlayInnocentDevilEvolve(EInnocentDevilType Type)
 {
-	// Play companion evolution sound
+	// Play Innocent Devil evolution sound
 }
 
 void UNobleArchimedesAudioComponent::PlayItemPickup()

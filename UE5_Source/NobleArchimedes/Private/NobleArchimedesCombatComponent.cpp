@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NobleArchimedesCombatComponent.h"
-#include "NobleArchimedesCharacter.h"
+#include "HectorCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -24,6 +24,7 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	SwordData.AttackSpeed = 1.0f;
 	SwordData.BaseDamage = 15.0f;
 	SwordData.DamageType = EDamageType::Slash;
+	SwordData.EvoCrystalColor = EInnocentDevilType::Light;
 	WeaponDataTable.Add(EWeaponType::Sword, SwordData);
 
 	FWeaponData AxeData;
@@ -33,6 +34,7 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	AxeData.AttackSpeed = 0.7f;
 	AxeData.BaseDamage = 25.0f;
 	AxeData.DamageType = EDamageType::Blunt;
+	AxeData.EvoCrystalColor = EInnocentDevilType::Dark;
 	WeaponDataTable.Add(EWeaponType::Axe, AxeData);
 
 	FWeaponData SpearData;
@@ -42,6 +44,7 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	SpearData.AttackSpeed = 0.8f;
 	SpearData.BaseDamage = 18.0f;
 	SpearData.DamageType = EDamageType::Slash;
+	SpearData.EvoCrystalColor = EInnocentDevilType::Fire;
 	WeaponDataTable.Add(EWeaponType::Spear, SpearData);
 
 	FWeaponData KnucklesData;
@@ -51,7 +54,18 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	KnucklesData.AttackSpeed = 1.3f;
 	KnucklesData.BaseDamage = 12.0f;
 	KnucklesData.DamageType = EDamageType::Blunt;
+	KnucklesData.EvoCrystalColor = EInnocentDevilType::Ice;
 	WeaponDataTable.Add(EWeaponType::Knuckles, KnucklesData);
+
+	FWeaponData SpecialData;
+	SpecialData.WeaponName = "Shuriken";
+	SpecialData.WeaponType = EWeaponType::Special;
+	SpecialData.AttackRange = 400.0f;
+	SpecialData.AttackSpeed = 0.5f;
+	SpecialData.BaseDamage = 10.0f;
+	SpecialData.DamageType = EDamageType::Magic;
+	SpecialData.EvoCrystalColor = EInnocentDevilType::None;
+	WeaponDataTable.Add(EWeaponType::Special, SpecialData);
 
 	CurrentWeaponData = SwordData;
 }
@@ -118,8 +132,6 @@ void UNobleArchimedesCombatComponent::EndGuard()
 	float GuardDuration = GetWorld()->GetTimeSeconds() - GuardStartTime;
 
 	// Check perfect guard: release within window before enemy impact
-	// The actual impact check is done by the enemy attack system
-	// For now, mark as potential perfect guard if released quickly
 	if (GuardDuration <= PerfectGuardWindow)
 	{
 		bPerfectGuard = true;
@@ -149,7 +161,7 @@ void UNobleArchimedesCombatComponent::QuickStep(FVector Direction)
 	LastQuickStepTime = GetWorld()->GetTimeSeconds();
 
 	// Apply movement
-	if (ANobleArchimedesCharacter* Char = Cast<ANobleArchimedesCharacter>(GetOwner()))
+	if (AHectorCharacter* Char = Cast<AHectorCharacter>(GetOwner()))
 	{
 		FVector LaunchDir = Direction;
 		LaunchDir.Z = 0.0f;
@@ -177,6 +189,15 @@ void UNobleArchimedesCombatComponent::TakeDamage(float DamageAmount, EDamageType
 
 	CurrentHealth = FMath::Max(0.0f, CurrentHealth - FinalDamage);
 
+	// Death Doll activation - Hector dies instead of player
+	if (CurrentHealth <= 0.0f && bHasDeathDoll)
+	{
+		CurrentHealth = MaxHealth * 0.5f; // Revive at half health
+		bHasDeathDoll = false;
+		// Death Doll is consumed
+		return;
+	}
+
 	if (CurrentHealth <= 0.0f)
 	{
 		// Death handled by character
@@ -186,6 +207,16 @@ void UNobleArchimedesCombatComponent::TakeDamage(float DamageAmount, EDamageType
 void UNobleArchimedesCombatComponent::SetHealth(float NewHealth)
 {
 	CurrentHealth = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
+}
+
+void UNobleArchimedesCombatComponent::ApplyDeathDoll()
+{
+	// Death Doll consumed on next death instead of game over
+}
+
+void UNobleArchimedesCombatComponent::SetDeathDoll(bool bHas)
+{
+	bHasDeathDoll = bHas;
 }
 
 void UNobleArchimedesCombatComponent::EquipWeapon(EWeaponType NewWeaponType)
@@ -240,10 +271,10 @@ void UNobleArchimedesCombatComponent::ApplyDamageReduction(float& Damage, EDamag
 {
 	// Weakness/tolerance logic
 	// Fire <-> Ice, Light <-> Dark
-	if ((DamageType == EDamageType::Fire && CurrentWeaponData.DamageType == EDamageType::Ice) ||
-		(DamageType == EDamageType::Ice && CurrentWeaponData.DamageType == EDamageType::Fire) ||
-		(DamageType == EDamageType::Light && CurrentWeaponData.DamageType == EDamageType::Dark) ||
-		(DamageType == EDamageType::Dark && CurrentWeaponData.DamageType == EDamageType::Light))
+	if ((DamageType == EDamageType::Fire && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Ice) ||
+		(DamageType == EDamageType::Ice && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Fire) ||
+		(DamageType == EDamageType::Light && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Dark) ||
+		(DamageType == EDamageType::Dark && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Light))
 	{
 		Damage *= 1.5f; // Weakness bonus
 	}
@@ -251,7 +282,7 @@ void UNobleArchimedesCombatComponent::ApplyDamageReduction(float& Damage, EDamag
 
 void UNobleArchimedesCombatComponent::PlayAttackMontage(int32 Stage)
 {
-	if (ANobleArchimedesCharacter* Char = Cast<ANobleArchimedesCharacter>(GetOwner()))
+	if (AHectorCharacter* Char = Cast<AHectorCharacter>(GetOwner()))
 	{
 		if (CurrentWeaponData.ComboAnimations.IsValidIndex(Stage - 1))
 		{
@@ -262,7 +293,7 @@ void UNobleArchimedesCombatComponent::PlayAttackMontage(int32 Stage)
 
 void UNobleArchimedesCombatComponent::PlayFinalAttackMontage(int32 Stage)
 {
-	if (ANobleArchimedesCharacter* Char = Cast<ANobleArchimedesCharacter>(GetOwner()))
+	if (AHectorCharacter* Char = Cast<AHectorCharacter>(GetOwner()))
 	{
 		if (CurrentWeaponData.FinalAttackAnimations.IsValidIndex(Stage - 1))
 		{

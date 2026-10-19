@@ -1,21 +1,21 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "NobleArchimedesCharacter.h"
+#include "HectorCharacter.h"
 #include "NobleArchimedesCameraComponent.h"
-#include "NobleArchimedesCompanionComponent.h"
+#include "NobleArchimedesInnocentDevilComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystem.h"
 
-ANobleArchimedesCharacter::ANobleArchimedesCharacter()
+AHectorCharacter::AHectorCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Components
 	CombatComponent = CreateDefaultSubobject<UNobleArchimedesCombatComponent>(TEXT("CombatComponent"));
 	CameraComponent = CreateDefaultSubobject<UNobleArchimedesCameraComponent>(TEXT("CameraComponent"));
-	CompanionComponent = CreateDefaultSubobject<UNobleArchimedesCompanionComponent>(TEXT("CompanionComponent"));
+	InnocentDevilComponent = CreateDefaultSubobject<UNobleArchimedesInnocentDevilComponent>(TEXT("InnocentDevilComponent"));
 
 	// Setup camera boom
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -34,7 +34,7 @@ ANobleArchimedesCharacter::ANobleArchimedesCharacter()
 	GetCharacterMovement()->AirControl = 0.2f;
 }
 
-void ANobleArchimedesCharacter::BeginPlay()
+void AHectorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -48,7 +48,7 @@ void ANobleArchimedesCharacter::BeginPlay()
 	}
 }
 
-void ANobleArchimedesCharacter::Tick(float DeltaTime)
+void AHectorCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -66,30 +66,28 @@ void ANobleArchimedesCharacter::Tick(float DeltaTime)
 	}
 }
 
-void ANobleArchimedesCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AHectorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		// Input actions would be bound here in Blueprint
-		// Example structure:
-		// EnhancedInput->BindAction(IA_Move, ETriggerEvent::Triggered, this, &ANobleArchimedesCharacter::Move);
 	}
 }
 
-void ANobleArchimedesCharacter::Move(float ValueX, float ValueY)
+void AHectorCharacter::Move(float ValueX, float ValueY)
 {
 	MoveInputVector = FVector(ValueY, ValueX, 0.0f);
 	MoveInputVector.Normalize();
 }
 
-void ANobleArchimedesCharacter::Look(float ValueX, float ValueY)
+void AHectorCharacter::Look(float ValueX, float ValueY)
 {
 	LookInputVector = FVector(ValueX, ValueY, 0.0f);
 }
 
-void ANobleArchimedesCharacter::SetCameraMode(ECameraMode NewMode)
+void AHectorCharacter::SetCameraMode(ECameraMode NewMode)
 {
 	if (CameraComponent)
 	{
@@ -97,28 +95,28 @@ void ANobleArchimedesCharacter::SetCameraMode(ECameraMode NewMode)
 	}
 }
 
-ECameraMode ANobleArchimedesCharacter::GetCameraMode() const
+ECameraMode AHectorCharacter::GetCameraMode() const
 {
 	return CameraComponent ? CameraComponent->GetMode() : ECameraMode::Classic;
 }
 
-void ANobleArchimedesCharacter::SummonCompanion(ECompanionType Type)
+void AHectorCharacter::SummonInnocentDevil(EInnocentDevilType Type)
 {
-	if (CompanionComponent)
+	if (InnocentDevilComponent)
 	{
-		CompanionComponent->SummonCompanion(Type);
+		InnocentDevilComponent->SummonInnocentDevil(Type);
 	}
 }
 
-void ANobleArchimedesCharacter::SetCompanionMode(ECompanionMode Mode)
+void AHectorCharacter::SetInnocentDevilMode(EInnocentDevilMode Mode)
 {
-	if (CompanionComponent)
+	if (InnocentDevilComponent)
 	{
-		CompanionComponent->SetMode(Mode);
+		InnocentDevilComponent->SetMode(Mode);
 	}
 }
 
-TArray<FCompanionData> ANobleArchimedesCharacter::GetCompanions() const
+TArray<FInnocentDevilData> AHectorCharacter::GetInnocentDevils() const
 {
-	return CompanionComponent ? CompanionComponent->GetCompanions() : TArray<FCompanionData>();
+	return InnocentDevilComponent ? InnocentDevilComponent->GetInnocentDevils() : TArray<FInnocentDevilData>();
 }

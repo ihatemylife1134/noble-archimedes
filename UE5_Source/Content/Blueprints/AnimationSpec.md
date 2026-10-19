@@ -76,7 +76,7 @@ the Mannequin skeleton or import custom FBX animations.
 | Animation | Notes |
 |-----------|-------|
 | Interact | Use items, open doors |
-| SummonCompanion | Call companion |
+| SummonInnocent Devil | Call innocent devil |
 | SwitchWeapon | Change equipped weapon |
 | Victory | Win pose |
 | Defeat | Lose pose |
@@ -106,9 +106,9 @@ the Mannequin skeleton or import custom FBX animations.
 | Death | Boss defeat |
 | Intro | Boss entrance cutscene |
 
-## 3. Companions (Innocent Devils)
+## 3. Innocent Devils (Innocent Devils)
 
-### Generic Companion
+### Generic Innocent Devil
 | Animation | Notes |
 |-----------|-------|
 | Idle | Floating/standing idle |
@@ -116,13 +116,13 @@ the Mannequin skeleton or import custom FBX animations.
 | Attack | Attack enemy |
 | Guard | Block attacks |
 | HitReaction | React to damage |
-| Death | Companion defeated |
+| Death | Innocent Devil defeated |
 | Summon | Appear from summon circle |
 | Evolve | Transform to next form |
 | Dismiss | Return to summon |
 
-### Companion-Specific
-| Companion | Unique Animation |
+### Innocent Devil-Specific
+| Innocent Devil | Unique Animation |
 |-----------|-----------------|
 | Fairy | Fly, hover, sparkle trail |
 | Griffin | Wing flap, dive attack |
@@ -160,5 +160,5 @@ the Mannequin skeleton or import custom FBX animations.
 ## Performance
 - LOD 0: Full quality (player, bosses)
 - LOD 1: Medium quality (enemies)
-- LOD 2: Low quality (distant companions)
+- LOD 2: Low quality (distant innocent devils)
 - Max 60 animations per character (keep lean)

@@ -5,7 +5,7 @@
 - **Rooms**: Courtyard, Entrance Hall, Armory, Chapel, Save Room, Boss Arena
 - **Enemies**: Skeletons, Zombies, Ghouls
 - **Boss**: Sentinel Knight
-- **Companion**: First companion (Fairy) acquired in green door room
+- **Innocent Devil**: First innocent devil (Fairy) acquired in green door room
 - **Teaches**: Movement, basic attacks, guard, quick step, save rooms
 - **Key Items**: Short Sword recipe, Potion x3
 
@@ -14,7 +14,7 @@
 - **Rooms**: Mountain Pass, Cliffside Cave, Summit, Save Room, Boss Arena
 - **Enemies**: Harpies, Bats, Mountain Beasts
 - **Boss**: Sky Drake
-- **Companion**: Griffin (flying companion)
+- **Innocent Devil**: Griffin (flying innocent devil)
 - **Teaches**: Vertical movement, flying enemies, weather effects
 - **Key Items**: Broad Sword recipe, High Potion x2
 
@@ -23,7 +23,7 @@
 - **Rooms**: Nave, Crypt, Bell Tower, Save Room, Boss Arena
 - **Enemies**: Temple Guardians, Cultists, Dark Priests
 - **Boss**: High Inquisitor
-- **Companion**: Salamander (fire companion)
+- **Innocent Devil**: Salamander (fire innocent devil)
 - **Teaches**: Light/dark mechanics, puzzle switches, environmental hazards
 - **Key Items**: Battle Axe recipe, Uncurse x3
 
@@ -32,7 +32,7 @@
 - **Rooms**: Upper Aqueduct, Water Chamber, Bridge Crossing, Save Room, Boss Arena
 - **Enemies**: Water Creatures, Aqueduct Guards
 - **Boss**: Aqueduct Sentinel
-- **Companion**: Ogre (tank companion)
+- **Innocent Devil**: Ogre (tank innocent devil)
 - **Teaches**: Water mechanics, bridge traversal, steam hazards
 - **Key Items**: Long Spear recipe, Serum x5
 
@@ -41,7 +41,7 @@
 - **Rooms**: Forest Edge, Deep Forest, Grove, Save Room, Boss Arena
 - **Enemies**: Forest Stalkers, Nature Spirits
 - **Boss**: Forest Warden
-- **Companion**: Skeleton Devil (stealth companion)
+- **Innocent Devil**: Skeleton Devil (stealth innocent devil)
 - **Teaches**: Stealth mechanics, nature puzzles, hidden paths
 - **Key Items**: Halberd recipe, Fairy Dust x10
 
@@ -50,7 +50,7 @@
 - **Rooms**: Town Square, Market, Julia's Shop, Save Room, Boss Arena
 - **Enemies**: Town Guards, Citizens (non-combat)
 - **Boss**: Town Captain
-- **Companion**: Witch Devil (magic companion)
+- **Innocent Devil**: Witch Devil (magic innocent devil)
 - **Teaches**: NPC interaction, weapon forging, shopping, town navigation
 - **Key Items**: Julia's Shop (weapon forge), Pike recipe
 
@@ -59,7 +59,7 @@
 - **Rooms**: Gear Chamber, Elevator Shaft, Steam Room, Save Room, Boss Arena
 - **Enemies**: Clockwork Soldiers, Mechanical Traps
 - **Boss**: Tower Automaton
-- **Companion**: Pumpkin (secret, requires special weapon)
+- **Innocent Devil**: Pumpkin (secret, requires special weapon)
 - **Teaches**: Mechanical traps, moving platforms, timing puzzles
 - **Key Items**: Gatling Gun recipe, Gear Component x20
 
@@ -68,7 +68,7 @@
 - **Rooms**: Ruin Entrance, Glyph Chamber, Sunken Courtyard, Save Room, Boss Arena
 - **Enemies**: Ruin Guardians, Ancient Constructs
 - **Boss**: Ruin Sentinel
-- **Companion**: All companions available
+- **Innocent Devil**: All innocent devils available
 - **Teaches**: Glyph puzzles, environmental storytelling, secret areas
 - **Key Items**: Ancient Relic, Map Checker upgrade
 
@@ -77,7 +77,7 @@
 - **Rooms**: Corridor Loop, Mirror Chamber, Void Space, Save Room, Boss Arena
 - **Enemies**: Corridor Phantoms, Surreal Entities
 - **Boss**: Mirror Entity
-- **Companion**: Any companion
+- **Innocent Devil**: Any innocent devil
 - **Teaches**: Looping level design, surreal mechanics, perception puzzles
 - **Key Items**: Ethereal Dust, Surreal Fragment
 
@@ -86,7 +86,7 @@
 - **Rooms**: Grand Hall, Throne Room, Final Arena, Save Room, Boss Rush Area
 - **Enemies**: Castle Elite, all previous enemy types
 - **Bosses**: Boss Rush (all previous bosses) + Final Boss
-- **Companion**: All companions
+- **Innocent Devil**: All innocent devils
 - **Teaches**: All mechanics combined, endurance, mastery
 - **Key Items**: Final weapon upgrade, Ending cutscene trigger
 
@@ -97,7 +97,7 @@
 - Save rooms are always unlocked
 
 ## Save Room Mechanics
-- Fully heal player and all companions
+- Fully heal player and all innocent devils
 - Auto-save on entry
 - Manual save available from pause menu
 - Visual: glowing floor tile

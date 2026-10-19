@@ -61,7 +61,7 @@ enum class ECameraMode : uint8
 };
 
 UENUM(BlueprintType)
-enum class ECompanionMode : uint8
+enum class EInnocentDevilMode : uint8
 {
 	Auto,
 	Command,
@@ -69,7 +69,7 @@ enum class ECompanionMode : uint8
 };
 
 UENUM(BlueprintType)
-enum class ECompanionType : uint8
+enum class EInnocentDevilType : uint8
 {
 	Fairy,
 	Griffin,
@@ -77,7 +77,7 @@ enum class ECompanionType : uint8
 	Ogre,
 	Skeleton,
 	Witch,
-	Pumpkin, // Secret companion
+	Pumpkin, // Secret Innocent Devil
 	None
 };
 
@@ -121,7 +121,7 @@ struct FWeaponData
 	EDamageType DamageType = EDamageType::Slash;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	ECompanionType EvoCrystalColor = ECompanionType::None;
+	EInnocentDevilType EvoCrystalColor = EInnocentDevilType::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TArray<FAnimMontage> ComboAnimations;
@@ -170,35 +170,35 @@ struct FMaterialData
 };
 
 USTRUCT(BlueprintType)
-struct FCompanionData
+struct FInnocentDevilData
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Companion")
-	FName CompanionName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	FName DevilName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Companion")
-	ECompanionType CompanionType = ECompanionType::Fairy;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	EInnocentDevilType DevilType = EInnocentDevilType::Fairy;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Companion")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
 	int32 Level = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Companion")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
 	int32 Experience = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Companion")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
 	int32 Health = 100;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Companion")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
 	int32 MaxHealth = 100;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Companion")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
 	int32 Attack = 10;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Companion")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
 	bool bIsUnlocked = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Companion")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
 	bool bIsEvolved = false;
 };
 

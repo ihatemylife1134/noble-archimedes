@@ -20,7 +20,7 @@ public:
 	//=============================================================================
 
 	UPROPERTY(SaveGame)
-	FString PlayerName = "The Forgemaster";
+	FString PlayerName = "Hector";
 
 	UPROPERTY(SaveGame)
 	int32 Health = 100;
@@ -76,17 +76,24 @@ public:
 	EWeaponType EquippedWeaponType = EWeaponType::Sword;
 
 	//=============================================================================
-	// COMPANIONS
+	// INNOCENT DEVILS
 	//=============================================================================
 
 	UPROPERTY(SaveGame)
-	TArray<FCompanionData> Companions;
+	TArray<FInnocentDevilData> InnocentDevils;
 
 	UPROPERTY(SaveGame)
-	int32 ActiveCompanionIndex = 0;
+	int32 ActiveInnocentDevilIndex = 0;
 
 	UPROPERTY(SaveGame)
-	TArray<ECompanionType> UnlockedCompanions;
+	TArray<EInnocentDevilType> UnlockedInnocentDevils;
+
+	//=============================================================================
+	// ITEMS
+	//=============================================================================
+
+	UPROPERTY(SaveGame)
+	bool bHasDeathDoll = false;
 
 	//=============================================================================
 	// WEAPON FORGING

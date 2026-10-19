@@ -43,17 +43,17 @@ public:
 	void PlayGuardBlockFlash(FVector Location);
 
 	//=============================================================================
-	// COMPANION VFX
+	// INNOCENT DEVIL VFX
 	//=============================================================================
 
 	UFUNCTION(BlueprintCallable, Category = "VFX")
-	void PlayCompanionSummon(FVector Location, ECompanionType Type);
+	void PlayInnocentDevilSummon(FVector Location, EInnocentDevilType Type);
 
 	UFUNCTION(BlueprintCallable, Category = "VFX")
-	void PlayCompanionEvolve(FVector Location, ECompanionType Type);
+	void PlayInnocentDevilEvolve(FVector Location, EInnocentDevilType Type);
 
 	UFUNCTION(BlueprintCallable, Category = "VFX")
-	void PlayCompanionAttack(FVector Location, ECompanionType Type);
+	void PlayInnocentDevilAttack(FVector Location, EInnocentDevilType Type);
 
 	//=============================================================================
 	// ITEM VFX

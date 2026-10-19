@@ -20,7 +20,7 @@ C:\Projects\NobleArchimedes\
 │   │   │   ├── NobleArchimedesCombatComponent.h
 │   │   │   ├── NobleArchimedesCharacter.h
 │   │   │   ├── NobleArchimedesCameraComponent.h
-│   │   │   ├── NobleArchimedesCompanionComponent.h
+│   │   │   ├── NobleArchimedesInnocent DevilComponent.h
 │   │   │   ├── NobleArchimedesSaveGame.h
 │   │   │   ├── NobleArchimedesGameInstance.h
 │   │   │   ├── NobleArchimedesLevelStreaming.h
@@ -30,7 +30,7 @@ C:\Projects\NobleArchimedes\
 │   │       ├── NobleArchimedesCombatComponent.cpp
 │   │       ├── NobleArchimedesCharacter.cpp
 │   │       ├── NobleArchimedesCameraComponent.cpp
-│   │       ├── NobleArchimedesCompanionComponent.cpp
+│   │       ├── NobleArchimedesInnocent DevilComponent.cpp
 │   │       ├── NobleArchimedesGameInstance.cpp
 │   │       ├── NobleArchimedesLevelStreaming.cpp
 │   │       ├── NobleArchimedesWeaponForge.cpp
@@ -76,7 +76,7 @@ Create these in the UE5 Editor (Content Browser):
 - [ ] BP_Potion, BP_HighPotion, BP_Serum, BP_Uncurse
 - [ ] BP_Material_Base (for ~40 materials)
 - [ ] BP_SaveRoom, BP_GreenDoorRoom, BP_Candle_Breakable
-- [ ] WB_HealthBar, WB_ManaBar, WB_ComboCounter, WB_WeaponIndicator, WB_CompanionStatus, WB_MainMenu
+- [ ] WB_HealthBar, WB_ManaBar, WB_ComboCounter, WB_WeaponIndicator, WB_Innocent DevilStatus, WB_MainMenu
 
 ### Maps
 - [ ] PersistentLevel.umap
@@ -90,7 +90,7 @@ Create these in the UE5 Editor (Content Browser):
 - [ ] WeaponDataTable (based on FWeaponData)
 - [ ] WeaponRecipeTable (based on FWeaponRecipe)
 - [ ] MaterialDataTable (based on FMaterialData)
-- [ ] CompanionDataTable (based on FCompanionData)
+- [ ] Innocent DevilDataTable (based on FInnocent DevilData)
 - [ ] EnemyDataTable (enemy stats per chapter)
 
 ## 4. BUILD & PACKAGE

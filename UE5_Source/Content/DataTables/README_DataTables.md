@@ -10,7 +10,7 @@ These CSV files are designed to be imported into Unreal Engine 5 as Data Tables.
    - `WeaponDataTable.csv` → Row Structure: `FWeaponData`
    - `MaterialDataTable.csv` → Row Structure: `FMaterialData`
    - `WeaponRecipeTable.csv` → Row Structure: `FWeaponRecipe`
-   - `CompanionDataTable.csv` → Row Structure: `FCompanionData`
+   - `InnocentDevilDataTable.csv` → Row Structure: `FInnocentDevilData`
    - `EnemyDataTable.csv` → Row Structure: `FEnemyData`
 4. Name the Data Table (e.g., `DT_WeaponData`, `DT_MaterialData`, etc.)
 5. The Data Table will be available in Blueprints and C++
@@ -21,13 +21,13 @@ Create these C++ structs (already defined in `NobleArchimedesTypes.h`):
 - `FWeaponData`
 - `FMaterialData`
 - `FWeaponRecipe`
-- `FCompanionData`
+- `FInnocentDevilData`
 - `FEnemyData`
 
 ## Usage in Blueprints
 
 - Get weapon data: `Get Data Table Row` → `DT_WeaponData` → Row Name: `"Short Sword"`
-- Get material data: `Get Data Table Row` → `DT_MaterialData` → Row Name: `"Iron Shard"`
+- Get Innocent Devil data: `Get Data Table Row` → `DT_InnocentDevilData` → Row Name: `"Fairy"`
 - Check forge recipe: Iterate `DT_WeaponRecipe` and compare materials
 
 ## Example: Forge Logic
@@ -42,4 +42,3 @@ ForgeButton Clicked
 │  └─ Play forge VFX/SFX
 └─ If Failure:
   └─ Show "Missing Materials" message
-```

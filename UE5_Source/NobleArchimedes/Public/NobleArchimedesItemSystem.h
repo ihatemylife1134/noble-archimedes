@@ -7,6 +7,8 @@
 #include "NobleArchimedesTypes.h"
 #include "NobleArchimedesItemSystem.generated.h"
 
+class AHectorCharacter;
+
 UCLASS()
 class NOBLEARCHIMEDES_API UNobleArchimedesItemSystem : public UObject
 {
@@ -30,6 +32,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Items")
 	void RemoveItem(FName ItemName, int32 Quantity);
+
+	//=============================================================================
+	// DEATH DOLL
+	//=============================================================================
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Items")
+	bool HasDeathDoll() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Items")
+	void SetDeathDoll(bool bHas);
 
 	//=============================================================================
 	// STEAL SYSTEM

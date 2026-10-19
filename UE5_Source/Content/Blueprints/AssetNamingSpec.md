@@ -8,7 +8,7 @@ All assets must follow this naming convention for consistency and searchability.
 |--------|------------|---------|
 | BP_ | Blueprint | BP_Forgemaster_Character |
 | WP_ | Weapon Blueprint | WP_Sword_Short |
-| CD_ | Companion Blueprint | CD_Fairy |
+| CD_ | Innocent Devil Blueprint | CD_Fairy |
 | EN_ | Enemy Blueprint | EN_Skeleton_Basic |
 | IT_ | Item Blueprint | IT_Potion_Health |
 | OB_ | Object Blueprint | OB_Candle_Breakable |
@@ -88,7 +88,7 @@ Example: `MI_Enemy_Skeleton_Body`
 
 ## Prohibited Names
 Do NOT use these names (copyrighted):
-- Hector, Isaac, Julia, Trevor Belmont, Dracula, Castlevania, Kuran, Innocent Devil (use "Companion" instead)
+- Hector, Isaac, Julia, Trevor Belmont, Dracula, Castlevania, Kuran, Innocent Devil (use "Innocent Devil" instead)
 - Konami, PlayStation, PS2
 
 ## Example Asset List
@@ -119,7 +119,7 @@ Content/
 ├── Blueprints/
 │   ├── Characters/
 │   ├── Combat/
-│   ├── Companions/
+│   ├── Innocent Devils/
 │   ├── Enemies/
 │   ├── Items/
 │   ├── Level/
@@ -147,7 +147,7 @@ Content/
 ├── Animations/
 │   ├── Characters/
 │   ├── Enemies/
-│   ├── Companions/
+│   ├── Innocent Devils/
 │   └── Weapons/
 ├── Audio/
 │   ├── SFX/
@@ -156,7 +156,7 @@ Content/
 │   └── UI/
 ├── VFX/
 │   ├── Combat/
-│   ├── Companion/
+│   ├── Innocent Devil/
 │   ├── Environment/
 │   └── Item/
 ├── DataTables/

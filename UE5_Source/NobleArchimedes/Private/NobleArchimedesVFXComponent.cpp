@@ -17,7 +17,6 @@ void UNobleArchimedesVFXComponent::BeginPlay()
 void UNobleArchimedesVFXComponent::PlayWeaponTrail(EWeaponType WeaponType, FVector StartLocation, FVector EndLocation)
 {
 	// Spawn Niagara weapon trail system
-	// Implementation: UNiagaraFunctionLibrary::SpawnSystemAtLocation(...)
 }
 
 void UNobleArchimedesVFXComponent::PlayWeaponTrailEnd(EWeaponType WeaponType, FVector Location)
@@ -50,19 +49,19 @@ void UNobleArchimedesVFXComponent::PlayGuardBlockFlash(FVector Location)
 	// Spawn guard block flash
 }
 
-void UNobleArchimedesVFXComponent::PlayCompanionSummon(FVector Location, ECompanionType Type)
+void UNobleArchimedesVFXComponent::PlayInnocentDevilSummon(FVector Location, EInnocentDevilType Type)
 {
-	// Spawn companion summon light burst
+	// Spawn Innocent Devil summon light burst
 }
 
-void UNobleArchimedesVFXComponent::PlayCompanionEvolve(FVector Location, ECompanionType Type)
+void UNobleArchimedesVFXComponent::PlayInnocentDevilEvolve(FVector Location, EInnocentDevilType Type)
 {
-	// Spawn companion evolution transformation effect
+	// Spawn Innocent Devil evolution transformation effect
 }
 
-void UNobleArchimedesVFXComponent::PlayCompanionAttack(FVector Location, ECompanionType Type)
+void UNobleArchimedesVFXComponent::PlayInnocentDevilAttack(FVector Location, EInnocentDevilType Type)
 {
-	// Spawn companion attack effect
+	// Spawn Innocent Devil attack effect
 }
 
 void UNobleArchimedesVFXComponent::PlayItemPickup(FVector Location)

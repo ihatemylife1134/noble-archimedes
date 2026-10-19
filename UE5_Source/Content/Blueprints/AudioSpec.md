@@ -24,20 +24,20 @@ Create Sound Cues in UE5 and import original audio files.
 | SC_Combat_PerfectGuard | Sound Cue | Perfect parry | 2 variations |
 | SC_Combat_Death | Sound Cue | Character death | 1 variation |
 
-## 2. Companion SFX
+## 2. Innocent Devil SFX
 
 | Cue Name | Type | Description | Variations |
 |----------|------|-------------|------------|
-| SC_Companion_Summon_Fairy | Sound Cue | Fairy summon | 2 variations |
-| SC_Companion_Summon_Griffin | Sound Cue | Griffin summon | 2 variations |
-| SC_Companion_Summon_Salamander | Sound Cue | Salamander summon | 2 variations |
-| SC_Companion_Summon_Ogre | Sound Cue | Ogre summon | 2 variations |
-| SC_Companion_Summon_Skeleton | Sound Cue | Skeleton summon | 2 variations |
-| SC_Companion_Summon_Witch | Sound Cue | Witch summon | 2 variations |
-| SC_Companion_Summon_Pumpkin | Sound Cue | Pumpkin summon | 2 variations |
-| SC_Companion_Attack | Sound Cue | Companion attack | 3 per type |
-| SC_Companion_Evolve | Sound Cue | Companion evolve | 2 variations |
-| SC_Companion_Hit | Sound Cue | Companion damage | 3 per type |
+| SC_Innocent Devil_Summon_Fairy | Sound Cue | Fairy summon | 2 variations |
+| SC_Innocent Devil_Summon_Griffin | Sound Cue | Griffin summon | 2 variations |
+| SC_Innocent Devil_Summon_Salamander | Sound Cue | Salamander summon | 2 variations |
+| SC_Innocent Devil_Summon_Ogre | Sound Cue | Ogre summon | 2 variations |
+| SC_Innocent Devil_Summon_Skeleton | Sound Cue | Skeleton summon | 2 variations |
+| SC_Innocent Devil_Summon_Witch | Sound Cue | Witch summon | 2 variations |
+| SC_Innocent Devil_Summon_Pumpkin | Sound Cue | Pumpkin summon | 2 variations |
+| SC_Innocent Devil_Attack | Sound Cue | Innocent Devil attack | 3 per type |
+| SC_Innocent Devil_Evolve | Sound Cue | Innocent Devil evolve | 2 variations |
+| SC_Innocent Devil_Hit | Sound Cue | Innocent Devil damage | 3 per type |
 
 ## 3. Item SFX
 

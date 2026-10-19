@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "NobleArchimedesTypes.h"
 #include "NobleArchimedesAudioComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -39,17 +40,17 @@ public:
 	void PlayPerfectGuard();
 
 	//=============================================================================
-	// COMPANION AUDIO
+	// INNOCENT DEVIL AUDIO
 	//=============================================================================
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
-	void PlayCompanionSummon(ECompanionType Type);
+	void PlayInnocentDevilSummon(EInnocentDevilType Type);
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
-	void PlayCompanionAttack(ECompanionType Type);
+	void PlayInnocentDevilAttack(EInnocentDevilType Type);
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
-	void PlayCompanionEvolve(ECompanionType Type);
+	void PlayInnocentDevilEvolve(EInnocentDevilType Type);
 
 	//=============================================================================
 	// ITEM AUDIO

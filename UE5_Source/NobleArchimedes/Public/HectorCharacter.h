@@ -6,18 +6,18 @@
 #include "GameFramework/Character.h"
 #include "NobleArchimedesTypes.h"
 #include "NobleArchimedesCombatComponent.h"
-#include "NobleArchimedesCharacter.generated.h"
+#include "HectorCharacter.generated.h"
 
 class UNobleArchimedesCameraComponent;
-class UNobleArchimedesCompanionComponent;
+class UNobleArchimedesInnocentDevilComponent;
 
 UCLASS()
-class NOBLEARCHIMEDES_API ANobleArchimedesCharacter : public ACharacter
+class NOBLEARCHIMEDES_API AHectorCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	ANobleArchimedesCharacter();
+	AHectorCharacter();
 
 protected:
 	virtual void BeginPlay() override;
@@ -37,7 +37,7 @@ public:
 	UNobleArchimedesCameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UNobleArchimedesCompanionComponent* CompanionComponent;
+	UNobleArchimedesInnocentDevilComponent* InnocentDevilComponent;
 
 	//=============================================================================
 	// MOVEMENT
@@ -69,6 +69,9 @@ public:
 	void QuickStep(FVector Direction) { if (CombatComponent) CombatComponent->QuickStep(Direction); }
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void StealTargetFocus() { /* Lock-on target for stealing */ }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void TakeDamage(float Damage, EDamageType DamageType) { if (CombatComponent) CombatComponent->TakeDamage(Damage, DamageType); }
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
@@ -86,6 +89,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
 	float GetMaxHealth() const { return CombatComponent ? CombatComponent->GetMaxHealth() : 100.0f; }
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool HasDeathDoll() const { return CombatComponent ? CombatComponent->HasDeathDoll() : false; }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetDeathDoll(bool bHas) { if (CombatComponent) CombatComponent->SetDeathDoll(bHas); }
+
 	//=============================================================================
 	// CAMERA MODE
 	//=============================================================================
@@ -97,17 +106,17 @@ public:
 	ECameraMode GetCameraMode() const;
 
 	//=============================================================================
-	// COMPANION
+	// INNOCENT DEVIL
 	//=============================================================================
 
-	UFUNCTION(BlueprintCallable, Category = "Companion")
-	void SummonCompanion(ECompanionType Type);
+	UFUNCTION(BlueprintCallable, Category = "Innocent Devil")
+	void SummonInnocentDevil(EInnocentDevilType Type);
 
-	UFUNCTION(BlueprintCallable, Category = "Companion")
-	void SetCompanionMode(ECompanionMode Mode);
+	UFUNCTION(BlueprintCallable, Category = "Innocent Devil")
+	void SetInnocentDevilMode(EInnocentDevilMode Mode);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Companion")
-	TArray<FCompanionData> GetCompanions() const;
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Innocent Devil")
+	TArray<FInnocentDevilData> GetInnocentDevils() const;
 
 private:
 	FVector MoveInputVector;

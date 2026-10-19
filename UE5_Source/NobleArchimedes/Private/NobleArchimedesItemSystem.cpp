@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NobleArchimedesItemSystem.h"
-#include "NobleArchimedesCharacter.h"
+#include "HectorCharacter.h"
 
 UNobleArchimedesItemSystem::UNobleArchimedesItemSystem()
 {
@@ -17,7 +17,7 @@ bool UNobleArchimedesItemSystem::UseItem(FName ItemName, AActor* Target)
 	if (ItemName == "Potion")
 	{
 		// Heal 50 HP
-		if (ANobleArchimedesCharacter* Char = Cast<ANobleArchimedesCharacter>(Target))
+		if (AHectorCharacter* Char = Cast<AHectorCharacter>(Target))
 		{
 			float NewHealth = FMath::Min(Char->GetHealth() + 50.0f, Char->GetMaxHealth());
 			Char->SetHealth(NewHealth);
@@ -28,7 +28,7 @@ bool UNobleArchimedesItemSystem::UseItem(FName ItemName, AActor* Target)
 	else if (ItemName == "High Potion")
 	{
 		// Heal 150 HP
-		if (ANobleArchimedesCharacter* Char = Cast<ANobleArchimedesCharacter>(Target))
+		if (AHectorCharacter* Char = Cast<AHectorCharacter>(Target))
 		{
 			float NewHealth = FMath::Min(Char->GetHealth() + 150.0f, Char->GetMaxHealth());
 			Char->SetHealth(NewHealth);
@@ -45,6 +45,16 @@ bool UNobleArchimedesItemSystem::UseItem(FName ItemName, AActor* Target)
 	else if (ItemName == "Uncurse")
 	{
 		// Remove curse
+		ItemQuantities[ItemName]--;
+		return true;
+	}
+	else if (ItemName == "Death Doll")
+	{
+		// Death Doll is equipped, not consumed on use
+		if (AHectorCharacter* Char = Cast<AHectorCharacter>(Target))
+		{
+			Char->SetDeathDoll(true);
+		}
 		ItemQuantities[ItemName]--;
 		return true;
 	}

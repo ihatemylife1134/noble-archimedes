@@ -7,7 +7,7 @@
 #include "NobleArchimedesTypes.h"
 #include "NobleArchimedesCombatComponent.generated.h"
 
-class ANobleArchimedesCharacter;
+class AHectorCharacter;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class NOBLEARCHIMEDES_API UNobleArchimedesCombatComponent : public UActorComponent
@@ -84,6 +84,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetHealth(float NewHealth);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ApplyDeathDoll();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	bool HasDeathDoll() const { return bHasDeathDoll; }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetDeathDoll(bool bHas);
+
 	//=============================================================================
 	// WEAPON
 	//=============================================================================
@@ -134,6 +143,9 @@ private:
 
 	// Health
 	float CurrentHealth = 100.0f;
+
+	// Death Doll - Hector dies instead of player (one-time use)
+	bool bHasDeathDoll = false;
 
 	// Weapon
 	EWeaponType CurrentWeaponType = EWeaponType::Sword;
