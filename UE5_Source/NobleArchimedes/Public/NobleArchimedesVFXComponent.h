@@ -201,7 +201,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VFX", meta = (AllowPrivateAccess = "true"))
 	UNiagaraComponent* PersistentNiagaraComponent;
 
-private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
 	float VFXScale = 1.0f;
 };

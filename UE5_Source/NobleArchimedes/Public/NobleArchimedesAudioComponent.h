@@ -374,7 +374,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
 	UAudioComponent* AudioComponent;
 
-private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
 	float MasterVolume = 1.0f;
 
@@ -384,5 +383,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
 	float MusicVolume = 0.0f;
 
+private:
 	void ApplyVolumeSettings();
 };
