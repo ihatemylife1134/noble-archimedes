@@ -1,4 +1,4 @@
-CompanionName,CompanionType,Level,Experience,Health,MaxHealth,Attack,bIsUnlocked,bIsEvolved,EvolutionCrystalColor
+DevilName,DevilType,Level,Experience,Health,MaxHealth,Attack,bIsUnlocked,bIsEvolved,EvolutionCrystalColor
 Fairy,Fairy,1,0,50,50,8,false,false,Light
 Griffin,Griffin,1,0,80,80,12,false,false,Fire
 Salamander,Salamander,1,0,70,70,10,false,false,Fire
