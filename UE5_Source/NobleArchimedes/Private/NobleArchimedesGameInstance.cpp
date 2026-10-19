@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NobleArchimedesGameInstance.h"
-#include "HectorCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Paths.h"
 
