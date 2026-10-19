@@ -97,7 +97,7 @@ void ANobleArchimedesGameModeBase::AutoSave()
 	}
 }
 
-void UNobleArchimedesGameModeBase::UnlockInnocentDevil(EInnocentDevilType Type)
+void ANobleArchimedesGameModeBase::UnlockInnocentDevil(EInnocentDevilType Type)
 {
 	if (!UnlockedInnocentDevils.Contains(Type))
 	{
@@ -110,12 +110,12 @@ void UNobleArchimedesGameModeBase::UnlockInnocentDevil(EInnocentDevilType Type)
 	}
 }
 
-bool UNobleArchimedesGameModeBase::IsInnocentDevilUnlocked(EInnocentDevilType Type) const
+bool ANobleArchimedesGameModeBase::IsInnocentDevilUnlocked(EInnocentDevilType Type) const
 {
 	return UnlockedInnocentDevils.Contains(Type);
 }
 
-void UNobleArchimedesGameModeBase::UnlockWeaponRecipe(FName WeaponName)
+void ANobleArchimedesGameModeBase::UnlockWeaponRecipe(FName WeaponName)
 {
 	if (!UnlockedWeaponRecipes.Contains(WeaponName))
 	{
@@ -128,12 +128,12 @@ void UNobleArchimedesGameModeBase::UnlockWeaponRecipe(FName WeaponName)
 	}
 }
 
-bool UNobleArchimedesGameModeBase::IsWeaponRecipeUnlocked(FName WeaponName) const
+bool ANobleArchimedesGameModeBase::IsWeaponRecipeUnlocked(FName WeaponName) const
 {
 	return UnlockedWeaponRecipes.Contains(WeaponName);
 }
 
-void UNobleArchimedesGameModeBase::LoadSaveData(int32 SlotIndex)
+void ANobleArchimedesGameModeBase::LoadSaveData(int32 SlotIndex)
 {
 	if (GameInstance && GameInstance->GetCurrentSaveGame())
 	{
@@ -144,7 +144,7 @@ void UNobleArchimedesGameModeBase::LoadSaveData(int32 SlotIndex)
 	}
 }
 
-void UNobleArchimedesGameModeBase::SaveCurrentState()
+void ANobleArchimedesGameModeBase::SaveCurrentState()
 {
 	if (GameInstance && GameInstance->GetCurrentSaveGame())
 	{

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimerManager.h"
 #include "ItemDrop.generated.h"
 
 UCLASS()
@@ -62,9 +63,13 @@ public:
 	bool IsRare() const { return bIsRare; }
 
 private:
+	UPROPERTY()
+	FTimerHandle AutoDestroyTimerHandle;
+
 	UFUNCTION()
 	void OnPlayerEnterPickup(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	UFUNCTION()
 	void AutoDestroy();
 };

@@ -12,8 +12,11 @@ class AHectorCharacter;
 // Internal bookkeeping for the steal system. Tracks whether an enemy is in a
 // stealable state, whether it has already been stolen from, and which item it
 // offers when stolen from (set via SetStealable / data table).
+USTRUCT()
 struct FStealLockInfo
 {
+	GENERATED_BODY()
+
 	bool bStealable = false;
 	bool bStolenFrom = false;
 	FName StealItem;
