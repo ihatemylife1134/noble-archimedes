@@ -2,7 +2,7 @@
 # Run this on Windows after creating the UE5 project
 
 $projectRoot = "C:\Projects\NobleArchimedes"
-$ueRoot = "C:\Program Files\Epic Games\UE_5.5"
+$ueRoot = "C:\Program Files\Epic Games\UE_5.8"
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " Noble Archimedes - Project Setup" -ForegroundColor Cyan
@@ -46,7 +46,13 @@ Write-Host "  Project file copied"
 # Generate Visual Studio project files
 Write-Host ""
 Write-Host "Generating Visual Studio project files..." -ForegroundColor Cyan
-& "$ueRoot\Engine\Build\BatchFiles\GenerateProjectFiles.bat" -project="$projectFile"
+$genProjectFiles = "$ueRoot\Engine\Build\BatchFiles\GenerateProjectFiles.bat"
+if (-not (Test-Path $genProjectFiles)) {
+    Write-Host "GenerateProjectFiles.bat not found, using RunUAT.bat instead..." -ForegroundColor Yellow
+    & "$ueRoot\Engine\Build\BatchFiles\RunUAT.bat" GenerateProjectFiles -project="$projectFile"
+} else {
+    & "$genProjectFiles" -project="$projectFile"
+}
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "OK: Project files generated" -ForegroundColor Green

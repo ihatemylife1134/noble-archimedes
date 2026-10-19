@@ -9,6 +9,7 @@
 #include "HectorCharacter.h"
 #include "NobleArchimedesGameInstance.h"
 #include "TimerManager.h"
+#include "EngineUtils.h"
 
 UNobleArchimedesLevelStreaming::UNobleArchimedesLevelStreaming()
 {

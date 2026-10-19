@@ -33,7 +33,7 @@ void AItemDrop::BeginPlay()
 	PickupTrigger->OnComponentBeginOverlap.AddDynamic(this, &AItemDrop::OnPlayerEnterPickup);
 
 	// Auto-destroy after time limit
-	GetWorldTimerManager().SetTimerForNextTick(this, &AItemDrop::AutoDestroy);
+	GetWorldTimerManager().SetTimer(AutoDestroyTimerHandle, this, &AItemDrop::Destroy, AutoDestroyTime, false);
 }
 
 void AItemDrop::Tick(float DeltaTime)
@@ -67,12 +67,4 @@ void AItemDrop::OnPlayerEnterPickup(UPrimitiveComponent* OverlappedComponent, AA
 	{
 		PickupItem(Hector);
 	}
-}
-
-void AItemDrop::AutoDestroy()
-{
-	GetWorldTimerManager().SetTimerForNextTick(this, [this]()
-	{
-		GetWorldTimerManager().SetTimer(AutoDestroyTimerHandle, this, &AItemDrop::Destroy, AutoDestroyTime, false);
-	});
 }
