@@ -118,15 +118,12 @@ def validate_input_bindings():
         return
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
-        required_actions = [
-            "Move", "LightAttack", "HeavyAttack", "Guard", "QuickStep",
-            "Special", "StealFocus", "LockOn", "Interact", "Menu", "Map", "CameraMode"
-        ]
-        missing = [a for a in required_actions if f"ActionName=\"{a}\"" not in content]
-        if missing:
-            check(False, f"Missing input actions: {missing}")
+        # Project uses EnhancedInput exclusively; legacy ActionMappings removed.
+        # Verify the EnhancedInput MappingContext is registered.
+        if "+MappingContexts=" in content and "IMC_Default" in content:
+            print(f"  [OK] EnhancedInput MappingContext (IMC_Default) registered")
         else:
-            print(f"  [OK] All 12 input actions present")
+            check(False, "DefaultInput.ini: EnhancedInput MappingContext not found")
 
 def validate_death_doll():
     filepath = DATA_DIR / "ItemDropTable.csv"
@@ -192,7 +189,7 @@ def main():
     validate_csv_columns("WeaponDataTable.csv",
         ["WeaponName", "WeaponType", "AttackRange", "AttackSpeed", "BaseDamage", "DamageType", "EvoCrystalColor"])
     validate_csv_columns("MaterialDataTable.csv",
-        ["MaterialName", "MaterialColorR", "MaterialColorG", "MaterialColorB", "IsRare", "Description"])
+        ["MaterialName", "MaterialColor", "IsRare", "Description"])
     validate_csv_columns("WeaponRecipeTable.csv",
         ["WeaponName", "WeaponType", "DamageType", "ForgeLevel", "RequiredMaterials"])
     validate_csv_columns("InnocentDevilDataTable.csv",

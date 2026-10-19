@@ -48,7 +48,7 @@ files for Data Table creation in the UE5 Editor.
 
 ## Asset Naming
 
-See `AssetNamingSpec.md` for the complete naming convention.
+See `../Blueprints/AssetNamingSpec.md` for the complete naming convention.
 
 ---
 

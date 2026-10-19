@@ -3,6 +3,7 @@
 #include "HectorCharacter.h"
 #include "NobleArchimedesCameraComponent.h"
 #include "NobleArchimedesInnocentDevilComponent.h"
+#include "NobleArchimedesItemSystem.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
@@ -16,6 +17,7 @@ AHectorCharacter::AHectorCharacter()
 	CombatComponent = CreateDefaultSubobject<UNobleArchimedesCombatComponent>(TEXT("CombatComponent"));
 	CameraComponent = CreateDefaultSubobject<UNobleArchimedesCameraComponent>(TEXT("CameraComponent"));
 	InnocentDevilComponent = CreateDefaultSubobject<UNobleArchimedesInnocentDevilComponent>(TEXT("InnocentDevilComponent"));
+	ItemSystem = CreateDefaultSubobject<UNobleArchimedesItemSystem>(TEXT("ItemSystem"));
 
 	// Setup camera boom
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -119,4 +121,95 @@ void AHectorCharacter::SetInnocentDevilMode(EInnocentDevilMode Mode)
 TArray<FInnocentDevilData> AHectorCharacter::GetInnocentDevils() const
 {
 	return InnocentDevilComponent ? InnocentDevilComponent->GetInnocentDevils() : TArray<FInnocentDevilData>();
+}
+
+int32 AHectorCharacter::GetActiveInnocentDevilIndex() const
+{
+	if (!InnocentDevilComponent) return 0;
+
+	const TArray<FInnocentDevilData>& Devils = InnocentDevilComponent->GetInnocentDevils();
+	EInnocentDevilType ActiveType = InnocentDevilComponent->GetActiveInnocentDevilType();
+
+	for (int32 i = 0; i < Devils.Num(); ++i)
+	{
+		if (Devils[i].DevilType == ActiveType)
+		{
+			return i;
+		}
+	}
+	return 0;
+}
+
+TArray<EInnocentDevilType> AHectorCharacter::GetUnlockedInnocentDevils() const
+{
+	TArray<EInnocentDevilType> UnlockedTypes;
+	if (!InnocentDevilComponent) return UnlockedTypes;
+
+	const TArray<FInnocentDevilData>& Devils = InnocentDevilComponent->GetInnocentDevils();
+	for (const auto& Devil : Devils)
+	{
+		if (Devil.bIsUnlocked)
+		{
+			UnlockedTypes.Add(Devil.DevilType);
+		}
+	}
+	return UnlockedTypes;
+}
+
+TArray<FName> AHectorCharacter::GetDiscoveredRecipes() const
+{
+	// No WeaponForge component on Hector; return empty. Populate when WeaponForge is integrated.
+	return TArray<FName>();
+}
+
+TArray<FName> AHectorCharacter::GetForgedWeapons() const
+{
+	// No WeaponForge component on Hector; return empty. Populate when WeaponForge is integrated.
+	return TArray<FName>();
+}
+
+float AHectorCharacter::GetMasterVolume() const
+{
+	// Default volume; to be wired to an audio settings system when available.
+	return 1.0f;
+}
+
+float AHectorCharacter::GetSFXVolume() const
+{
+	return 1.0f;
+}
+
+float AHectorCharacter::GetMusicVolume() const
+{
+	return 0.0f;
+}
+
+UNobleArchimedesItemSystem* AHectorCharacter::GetItemSystem() const
+{
+	return ItemSystem;
+}
+
+void AHectorCharacter::SetActiveInnocentDevilIndex(int32 NewIndex)
+{
+	if (InnocentDevilComponent)
+	{
+		// Implementation would set active devil on the component
+		// Stored via InnocentDevilComponent's internal state
+	}
+}
+
+void AHectorCharacter::SetUnlockedInnocentDevils(TArray<EInnocentDevilType> NewUnlocked)
+{
+	// Unlocked devils are tracked via InnocentDevilComponent's bIsUnlocked flags on each devil
+	// This setter is provided for save/load completeness
+}
+
+void AHectorCharacter::SetDiscoveredRecipes(TArray<FName> NewRecipes)
+{
+	// Discovered recipes tracked via WeaponForge component when integrated
+}
+
+void AHectorCharacter::SetForgedWeapons(TArray<FName> NewWeapons)
+{
+	// Forged weapons tracked via WeaponForge component when integrated
 }

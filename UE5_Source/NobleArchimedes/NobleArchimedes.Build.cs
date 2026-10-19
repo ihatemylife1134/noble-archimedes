@@ -18,7 +18,8 @@ public class NobleArchimedes : ModuleRules
 			"NavigationSystem",
 			"AIModule",
 			"GameplayTasks",
-			"LevelStreaming"
+			"LevelStreaming",
+			"Niagara"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {

@@ -56,6 +56,15 @@ public:
 	bool IsPerfectGuard() const { return bPerfectGuard; }
 
 	//=============================================================================
+	// PERFECT GUARD SYSTEM
+	//=============================================================================
+
+	// Called by enemy attack system when attack connects.
+	// If player released guard within PerfectGuardWindow before this moment, triggers perfect guard.
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void CheckPerfectGuard();
+
+	//=============================================================================
 	// QUICK STEP SYSTEM
 	//=============================================================================
 
@@ -83,6 +92,27 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetHealth(float NewHealth);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetMaxHealth(float NewMaxHealth);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	float GetMana() const { return Mana; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	float GetMaxMana() const { return MaxMana; }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetMana(float NewMana);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetMaxMana(float NewMaxMana);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	TArray<FString> GetEquippedWeapons() const { return EquippedWeapons; }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetEquippedWeapons(const TArray<FString>& NewWeapons) { EquippedWeapons = NewWeapons; }
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ApplyDeathDoll();
@@ -133,6 +163,15 @@ private:
 	bool bIsGuarding = false;
 	bool bPerfectGuard = false;
 	float GuardStartTime = 0.0f;
+	float LastGuardReleaseTime = 0.0f;
+	bool bWasRecentlyGuarding = false;
+
+	// Mana
+	float Mana = 100.0f;
+	float MaxMana = 100.0f;
+
+	// Equipped weapons (saved as weapon names)
+	TArray<FString> EquippedWeapons;
 
 	// Quick step state
 	bool bIsInvulnerable = false;
@@ -159,7 +198,6 @@ private:
 	void UpdateCombo(float DeltaTime);
 	void UpdateInvulnerability(float DeltaTime);
 	void UpdateDoubleStep(float DeltaTime);
-	void CheckPerfectGuard();
 	void ApplyDamageReduction(float& Damage, EDamageType DamageType);
 	void PlayAttackMontage(int32 Stage);
 	void PlayFinalAttackMontage(int32 Stage);

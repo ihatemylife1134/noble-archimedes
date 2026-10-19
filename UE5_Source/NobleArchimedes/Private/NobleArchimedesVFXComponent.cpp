@@ -3,10 +3,15 @@
 #include "NobleArchimedesVFXComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
 
 UNobleArchimedesVFXComponent::UNobleArchimedesVFXComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+
+	// Create a persistent Niagara component for ambient/looping VFX
+	PersistentNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("PersistentNiagaraComponent"));
+	PersistentNiagaraComponent->bAutoActivate = false;
 }
 
 void UNobleArchimedesVFXComponent::BeginPlay()
@@ -14,70 +19,378 @@ void UNobleArchimedesVFXComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+// Helper: spawn a Niagara system at a location and apply the global VFX scale
+static UNiagaraComponent* SpawnNiagaraSystemScaled(UWorld* World, UNiagaraSystem* System, const FVector& Location, float VFXScale)
+{
+	if (!System || !World)
+	{
+		return nullptr;
+	}
+
+	UNiagaraComponent* NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		World,
+		System,
+		Location,
+		FRotator::ZeroRotator
+	);
+
+	if (NiagaraComponent)
+	{
+		NiagaraComponent->SetNiagaraVariableFloat("VFXScale", VFXScale);
+	}
+
+	return NiagaraComponent;
+}
+
+//=============================================================================
+// COMBAT VFX
+//=============================================================================
+
 void UNobleArchimedesVFXComponent::PlayWeaponTrail(EWeaponType WeaponType, FVector StartLocation, FVector EndLocation)
 {
-	// Spawn Niagara weapon trail system
+	UNiagaraSystem* TrailSystem = nullptr;
+	switch (WeaponType)
+	{
+		case EWeaponType::Sword:      TrailSystem = NS_WeaponTrail_Sword; break;
+		case EWeaponType::Axe:        TrailSystem = NS_WeaponTrail_Axe; break;
+		case EWeaponType::Spear:      TrailSystem = NS_WeaponTrail_Spear; break;
+		case EWeaponType::Knuckles:   TrailSystem = NS_WeaponTrail_Knuckles; break;
+		case EWeaponType::Special:    TrailSystem = NS_WeaponTrail_Special; break;
+		case EWeaponType::None:
+		default:                      break;
+	}
+
+	if (TrailSystem && GetWorld())
+	{
+		UNiagaraComponent* Trail = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			TrailSystem,
+			StartLocation,
+			FRotator::ZeroRotator
+		);
+		if (Trail)
+		{
+			Trail->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlayWeaponTrailEnd(EWeaponType WeaponType, FVector Location)
 {
-	// Spawn weapon trail end impact
+	UNiagaraSystem* TrailSystem = nullptr;
+	switch (WeaponType)
+	{
+		case EWeaponType::Sword:      TrailSystem = NS_WeaponTrail_Sword; break;
+		case EWeaponType::Axe:        TrailSystem = NS_WeaponTrail_Axe; break;
+		case EWeaponType::Spear:      TrailSystem = NS_WeaponTrail_Spear; break;
+		case EWeaponType::Knuckles:   TrailSystem = NS_WeaponTrail_Knuckles; break;
+		case EWeaponType::Special:    TrailSystem = NS_WeaponTrail_Special; break;
+		case EWeaponType::None:
+		default:                      break;
+	}
+
+	if (TrailSystem && GetWorld())
+	{
+		UNiagaraComponent* TrailEnd = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			TrailSystem,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (TrailEnd)
+		{
+			TrailEnd->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlayHitSpark(FVector Location, EDamageType DamageType)
 {
-	// Spawn hit spark particles based on damage type
+	UNiagaraSystem* SparkSystem = nullptr;
+	switch (DamageType)
+	{
+		case EDamageType::Fire:  SparkSystem = NS_HitSpark_Fire; break;
+		case EDamageType::Ice:   SparkSystem = NS_HitSpark_Ice; break;
+		case EDamageType::Light: SparkSystem = NS_HitSpark_Light; break;
+		case EDamageType::Dark:  SparkSystem = NS_HitSpark_Dark; break;
+		default:                 SparkSystem = NS_HitSpark_Fire; break;
+	}
+
+	if (SparkSystem && GetWorld())
+	{
+		UNiagaraComponent* Spark = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			SparkSystem,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Spark)
+		{
+			Spark->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlayHitBlood(FVector Location)
 {
-	// Spawn blood particles
+	if (NS_HitBlood && GetWorld())
+	{
+		UNiagaraComponent* Blood = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_HitBlood,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Blood)
+		{
+			Blood->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlayQuickStepTrail(FVector StartLocation, FVector EndLocation)
 {
-	// Spawn quick step motion trail
+	if (NS_QuickStepTrail && GetWorld())
+	{
+		UNiagaraComponent* Trail = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_QuickStepTrail,
+			StartLocation,
+			FRotator::ZeroRotator
+		);
+		if (Trail)
+		{
+			Trail->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlayPerfectGuardFlash(FVector Location)
 {
-	// Spawn perfect guard flash ring
+	if (NS_PerfectGuardFlash && GetWorld())
+	{
+		UNiagaraComponent* Flash = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_PerfectGuardFlash,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Flash)
+		{
+			Flash->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlayGuardBlockFlash(FVector Location)
 {
-	// Spawn guard block flash
+	if (NS_GuardBlockFlash && GetWorld())
+	{
+		UNiagaraComponent* Flash = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_GuardBlockFlash,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Flash)
+		{
+			Flash->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
+
+//=============================================================================
+// INNOCENT DEVIL VFX
+//=============================================================================
 
 void UNobleArchimedesVFXComponent::PlayInnocentDevilSummon(FVector Location, EInnocentDevilType Type)
 {
-	// Spawn Innocent Devil summon light burst
+	UNiagaraSystem* SummonSystem = nullptr;
+	switch (Type)
+	{
+		case EInnocentDevilType::Fairy:   SummonSystem = NS_InnocentDevilSummon_Fairy; break;
+		case EInnocentDevilType::Griffin: SummonSystem = NS_InnocentDevilSummon_Griffin; break;
+		case EInnocentDevilType::Salamander: SummonSystem = NS_InnocentDevilSummon_Salamander; break;
+		case EInnocentDevilType::Ogre:    SummonSystem = NS_InnocentDevilSummon_Ogre; break;
+		case EInnocentDevilType::Skeleton: SummonSystem = NS_InnocentDevilSummon_Skeleton; break;
+		case EInnocentDevilType::Witch:   SummonSystem = NS_InnocentDevilSummon_Witch; break;
+		case EInnocentDevilType::Pumpkin: SummonSystem = NS_InnocentDevilSummon_Pumpkin; break;
+		case EInnocentDevilType::None:
+		default:                          break;
+	}
+
+	if (SummonSystem && GetWorld())
+	{
+		UNiagaraComponent* Summon = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			SummonSystem,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Summon)
+		{
+			Summon->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlayInnocentDevilEvolve(FVector Location, EInnocentDevilType Type)
 {
-	// Spawn Innocent Devil evolution transformation effect
+	if (NS_InnocentDevilEvolve && GetWorld())
+	{
+		UNiagaraComponent* Evolve = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_InnocentDevilEvolve,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Evolve)
+		{
+			Evolve->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlayInnocentDevilAttack(FVector Location, EInnocentDevilType Type)
 {
-	// Spawn Innocent Devil attack effect
+	UNiagaraSystem* AttackSystem = nullptr;
+	switch (Type)
+	{
+		case EInnocentDevilType::Fire:   AttackSystem = NS_InnocentDevilAttack_Fire; break;
+		case EInnocentDevilType::Ice:    AttackSystem = NS_InnocentDevilAttack_Ice; break;
+		case EInnocentDevilType::Light:  AttackSystem = NS_InnocentDevilAttack_Light; break;
+		case EInnocentDevilType::Dark:   AttackSystem = NS_InnocentDevilAttack_Dark; break;
+		default:                         AttackSystem = NS_InnocentDevilAttack_Fire; break;
+	}
+
+	if (AttackSystem && GetWorld())
+	{
+		UNiagaraComponent* Attack = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			AttackSystem,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Attack)
+		{
+			Attack->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
+
+//=============================================================================
+// ITEM VFX
+//=============================================================================
 
 void UNobleArchimedesVFXComponent::PlayItemPickup(FVector Location)
 {
-	// Spawn item pickup sparkle
+	if (NS_ItemPickup && GetWorld())
+	{
+		UNiagaraComponent* Pickup = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_ItemPickup,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Pickup)
+		{
+			Pickup->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlayCandleBreak(FVector Location)
 {
-	// Spawn candle break particle burst
+	if (NS_CandleBreak && GetWorld())
+	{
+		UNiagaraComponent* Candle = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_CandleBreak,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Candle)
+		{
+			Candle->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
 
 void UNobleArchimedesVFXComponent::PlaySaveRoomHeal(FVector Location)
 {
-	// Spawn save room heal glow
+	if (NS_SaveRoomHeal && GetWorld())
+	{
+		UNiagaraComponent* Heal = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_SaveRoomHeal,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Heal)
+		{
+			Heal->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
 }
+
+//=============================================================================
+// AMBIENT VFX
+//=============================================================================
+
+void UNobleArchimedesVFXComponent::PlayDustMotes(FVector Location)
+{
+	if (NS_DustMotes_Castle && GetWorld())
+	{
+		UNiagaraComponent* Dust = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_DustMotes_Castle,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Dust)
+		{
+			Dust->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
+}
+
+void UNobleArchimedesVFXComponent::PlayLeaves(FVector Location)
+{
+	if (NS_Leaves_Forest && GetWorld())
+	{
+		UNiagaraComponent* Leaves = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_Leaves_Forest,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Leaves)
+		{
+			Leaves->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
+}
+
+void UNobleArchimedesVFXComponent::PlaySteam(FVector Location)
+{
+	if (NS_Steam_MachineTower && GetWorld())
+	{
+		UNiagaraComponent* Steam = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			NS_Steam_MachineTower,
+			Location,
+			FRotator::ZeroRotator
+		);
+		if (Steam)
+		{
+			Steam->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		}
+	}
+}
+
+//=============================================================================
+// SETTINGS
+//=============================================================================
 
 void UNobleArchimedesVFXComponent::SetVFXScale(float Scale)
 {

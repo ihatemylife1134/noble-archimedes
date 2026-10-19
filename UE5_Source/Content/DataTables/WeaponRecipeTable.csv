@@ -1,7 +1,7 @@
 WeaponName,WeaponType,DamageType,ForgeLevel,RequiredMaterials
 Short Sword,Sword,Slash,1,Iron Shard
 Broad Sword,Sword,Slash,2,Iron Shard;Iron Shard;Silver Ingot
-Longsword,Sword,Slash,3,Iron Shard;Silver Ingot;Dark Crystal
+Long Sword,Sword,Slash,3,Iron Shard;Silver Ingot;Dark Crystal
 Battle Axe,Axe,Blunt,3,Iron Shard;Iron Shard;Demon Bone
 Great Axe,Axe,Blunt,4,Iron Shard;Silver Ingot;Demon Bone;Ghost Essence
 Executioner Axe,Axe,Blunt,5,Silver Ingot;Demon Bone;Dark Crystal;Wizard's Orb

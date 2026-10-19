@@ -6,7 +6,6 @@ setlocal enabledelayedexpansion
 
 set UE_ROOT=C:\Program Files\Epic Games\UE_5.5
 set PROJECT=C:\Projects\NobleArchimedes\NobleArchimedes.uproject
-set CONFIG=Development
 set PLATFORM=Win64
 
 echo ============================================

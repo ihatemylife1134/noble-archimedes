@@ -38,6 +38,9 @@ public:
 	TArray<FInnocentDevilData> GetInnocentDevils() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Innocent Devil")
+	EInnocentDevilType GetActiveInnocentDevilType() const { return ActiveInnocentDevil; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Innocent Devil")
 	EInnocentDevilMode GetMode() const { return CurrentMode; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Innocent Devil")
@@ -68,7 +71,14 @@ private:
 	EInnocentDevilMode CurrentMode = EInnocentDevilMode::Auto;
 	EInnocentDevilType ActiveInnocentDevil = EInnocentDevilType::None;
 
+	// Timer used to auto-reset the active devil's mode back to Auto after a
+	// command (Attack / Guard / Heal) has been issued.
+	FTimerHandle CommandResetTimer;
+
 	void UpdateInnocentDevilAI(float DeltaTime);
 	void SpawnInnocentDevilActor(EInnocentDevilType Type);
 	void UpdateInnocentDevilStats(FInnocentDevilData& Data);
+
+	// Called by CommandResetTimer to return the active devil to Auto mode.
+	void ResetToAutoMode();
 };

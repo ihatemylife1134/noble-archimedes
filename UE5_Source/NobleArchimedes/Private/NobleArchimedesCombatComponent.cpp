@@ -15,6 +15,7 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentHealth = MaxHealth;
+	Mana = MaxMana;
 
 	// Initialize default weapon data
 	FWeaponData SwordData;
@@ -83,18 +84,20 @@ void UNobleArchimedesCombatComponent::LightAttack()
 {
 	if (bIsAttacking || bIsInvulnerable) return;
 
+	// After Light Attack 3, the only options are Heavy Attack or return to Idle.
+	// Do not allow Light Attack to loop back to Light 1.
+	if (CurrentComboStage >= 3)
+	{
+		return;
+	}
+
 	bIsAttacking = true;
 	CurrentComboStage++;
-
-	if (CurrentComboStage > 3)
-	{
-		CurrentComboStage = 1;
-	}
 
 	PlayAttackMontage(CurrentComboStage);
 
 	// Set combo window for next attack
-	GetWorldTimerManager().SetTimer(ComboResetTimer, this, &UNobleArchimedesCombatComponent::ResetCombo, 
+	GetWorldTimerManager().SetTimer(ComboResetTimer, this, &UNobleArchimedesCombatComponent::ResetCombo,
 		CurrentComboStage == 1 ? COMBO_STAGE_1_WINDOW :
 		CurrentComboStage == 2 ? COMBO_STAGE_2_WINDOW : COMBO_STAGE_3_WINDOW, false);
 }
@@ -129,15 +132,14 @@ void UNobleArchimedesCombatComponent::EndGuard()
 {
 	if (!bIsGuarding) return;
 
-	float GuardDuration = GetWorld()->GetTimeSeconds() - GuardStartTime;
-
-	// Check perfect guard: release within window before enemy impact
-	if (GuardDuration <= PerfectGuardWindow)
-	{
-		bPerfectGuard = true;
-	}
-
 	bIsGuarding = false;
+	bPerfectGuard = false;
+
+	// Record when guard was released. Perfect guard is determined later by
+	// CheckPerfectGuard() when an enemy attack connects: the player must have
+	// released guard within PerfectGuardWindow (0.1s) before the impact.
+	LastGuardReleaseTime = GetWorld()->GetTimeSeconds();
+	bWasRecentlyGuarding = true;
 }
 
 void UNobleArchimedesCombatComponent::QuickStep(FVector Direction)
@@ -209,6 +211,23 @@ void UNobleArchimedesCombatComponent::SetHealth(float NewHealth)
 	CurrentHealth = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
 }
 
+void UNobleArchimedesCombatComponent::SetMaxHealth(float NewMaxHealth)
+{
+	MaxHealth = FMath::Max(0.0f, NewMaxHealth);
+	CurrentHealth = FMath::Clamp(CurrentHealth, 0.0f, MaxHealth);
+}
+
+void UNobleArchimedesCombatComponent::SetMana(float NewMana)
+{
+	Mana = FMath::Clamp(NewMana, 0.0f, MaxMana);
+}
+
+void UNobleArchimedesCombatComponent::SetMaxMana(float NewMaxMana)
+{
+	MaxMana = FMath::Max(0.0f, NewMaxMana);
+	Mana = FMath::Clamp(Mana, 0.0f, MaxMana);
+}
+
 void UNobleArchimedesCombatComponent::ApplyDeathDoll()
 {
 	// Death Doll consumed on next death instead of game over
@@ -263,8 +282,17 @@ void UNobleArchimedesCombatComponent::UpdateDoubleStep(float DeltaTime)
 
 void UNobleArchimedesCombatComponent::CheckPerfectGuard()
 {
-	// Called by enemy attack system when attack connects
-	// If guard is active and release was within window, trigger perfect guard
+	// Called by enemy attack system when attack connects.
+	// Perfect Guard: player released guard within PerfectGuardWindow (0.1s) before this moment.
+	if (bWasRecentlyGuarding)
+	{
+		float TimeSinceRelease = GetWorld()->GetTimeSeconds() - LastGuardReleaseTime;
+		if (TimeSinceRelease <= PerfectGuardWindow)
+		{
+			bPerfectGuard = true;
+		}
+		bWasRecentlyGuarding = false;
+	}
 }
 
 void UNobleArchimedesCombatComponent::ApplyDamageReduction(float& Damage, EDamageType DamageType)

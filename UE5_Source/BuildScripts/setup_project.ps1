@@ -29,7 +29,7 @@ Write-Host "OK: Project found at $projectFile" -ForegroundColor Green
 # Copy source files
 Write-Host ""
 Write-Host "Copying source files..." -ForegroundColor Cyan
-$sourceRoot = "$PSScriptRoot\..\UE5_Source"
+$sourceRoot = "$PSScriptRoot\.."
 
 # Copy Config
 Copy-Item "$sourceRoot\Config\*" "$projectRoot\Config\" -Recurse -Force
