@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate a complete UE5 project structure for the Noble Archimedes fan recreation.
-This script creates the directory structure and placeholder files needed
-to start building in the UE5 Editor.
+This script creates the directory structure needed for the UE5 Editor.
 
 Usage:
     python generate_ue5_project_structure.py
@@ -19,7 +18,9 @@ DIRECTORIES = [
     "Content/Blueprints/Combat",
     "Content/Blueprints/Companions",
     "Content/Blueprints/Enemies",
+    "Content/Blueprints/Enemies/Bosses",
     "Content/Blueprints/Items",
+    "Content/Blueprints/Items/Materials",
     "Content/Blueprints/Level",
     "Content/Blueprints/UI",
     "Content/Maps/Chap_01_AbandonedCastle",
@@ -99,7 +100,7 @@ def create_structure():
     print("  1. Copy C++ source files to Source/NobleArchimedes/")
     print("  2. Copy Config files to Config/")
     print("  3. Copy Data Tables to Content/DataTables/")
-    print("  4. Create Blueprints and Assets in UE5 Editor")
+    print("  4. Create Blueprints and assets in UE5 Editor")
     print("  5. Build and package!")
 
 if __name__ == "__main__":
