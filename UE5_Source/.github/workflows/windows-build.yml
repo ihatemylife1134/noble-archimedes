@@ -1,0 +1,58 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        lfs: true
+
+    - name: Install Visual Studio
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Install Unreal Engine
+      uses: SonarSource/unstable-install-action@v1
+      with:
+        # UE5 installation requires manual setup on Windows runners
+        # For automated builds, use a self-hosted runner with UE5 installed
+        run: |
+          echo "Unreal Engine must be installed manually on the build runner."
+          echo "For GitHub Actions, use a self-hosted runner with UE5.5+ installed."
+          exit 1
+
+    - name: Build project
+      run: |
+        $env:UE_ROOT = "C:\Program Files\Epic Games\UE_5.5"
+        & "$env:UE_ROOT\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun `
+          -project="$env:GITHUB_WORKSPACE\UE5_Source\NobleArchimedes.uproject" `
+          -platform=Win64 `
+          -clientconfig=Shipping `
+          -serverconfig=Shipping `
+          -cook `
+          -stage `
+          -package `
+          -prerequisites `
+          -build
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: NobleArchimedes-Build
+        path: UE5_Source/Saved/StagedBuilds/Windows/NobleArchimedes/**
+        retention-days: 7
+
+    - name: Upload build logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: Build-Logs
+        path: UE5_Source/Saved/Logs/**
+        retention-days: 3
