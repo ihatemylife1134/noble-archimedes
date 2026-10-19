@@ -14,7 +14,6 @@ public class NobleArchimedes : ModuleRules
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
-			"HeadMountedDisplay",
 			"NavigationSystem",
 			"AIModule",
 			"GameplayTasks",
