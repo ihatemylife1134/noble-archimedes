@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.5",
+	"EngineAssociation": "5.8",
 	"Category": "",
 	"Description": "Noble Archimedes - Castlevania: Curse of Darkness Fan Recreation",
 	"Modules": [
@@ -16,23 +16,7 @@
 			"Enabled": true
 		},
 		{
-			"Name": "Lumen",
-			"Enabled": true
-		},
-		{
-			"Name": "Nanite",
-			"Enabled": true
-		},
-		{
-			"Name": "TSR",
-			"Enabled": true
-		},
-		{
 			"Name": "Niagara",
-			"Enabled": true
-		},
-		{
-			"Name": "MediaPlayer",
 			"Enabled": true
 		}
 	]
