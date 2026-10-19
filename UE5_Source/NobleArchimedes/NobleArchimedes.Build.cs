@@ -15,7 +15,6 @@ public class NobleArchimedes : ModuleRules
 			"NavigationSystem",
 			"AIModule",
 			"GameplayTasks",
-			"LevelStreaming",
 			"Niagara"
 		});
 
