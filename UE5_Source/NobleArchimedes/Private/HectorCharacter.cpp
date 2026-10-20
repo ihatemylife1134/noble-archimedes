@@ -6,6 +6,7 @@
 #include "NobleArchimedesItemSystem.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 AHectorCharacter::AHectorCharacter()
