@@ -178,4 +178,5 @@ private:
 	void CheckAttackRange();
 	void UpdateStealWindow(float DeltaTime);
 	void Die();
+	void DestroySelf();
 };
