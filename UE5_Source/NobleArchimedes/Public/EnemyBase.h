@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Delegates/DelegateCombinations.h"
 #include "NobleArchimedesTypes.h"
 #include "EnemyBase.generated.h"
 

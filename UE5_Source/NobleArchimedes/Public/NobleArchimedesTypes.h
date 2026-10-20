@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/AnimMontage.h"
 #include "NobleArchimedesTypes.generated.h"
 
 //=============================================================================
