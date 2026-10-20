@@ -33,7 +33,7 @@ jobs:
       run: |
         $env:UE_ROOT = "C:\Program Files\Epic Games\UE_5.5"
         & "$env:UE_ROOT\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun `
-          -project="$env:GITHUB_WORKSPACE\UE5_Source\NobleArchimedes.uproject" `
+          -project="$env:GITHUB_WORKSPACE\NobleArchimedes.uproject" `
           -platform=Win64 `
           -clientconfig=Shipping `
           -serverconfig=Shipping `
@@ -47,12 +47,12 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: NobleArchimedes-Build
-        path: UE5_Source/Saved/StagedBuilds/Windows/NobleArchimedes/**
+        path: Saved/StagedBuilds/Windows/NobleArchimedes/**
         retention-days: 7
 
     - name: Upload build logs
       uses: actions/upload-artifact@v3
       with:
         name: Build-Logs
-        path: UE5_Source/Saved/Logs/**
+        path: Saved/Logs/**
         retention-days: 3

@@ -46,7 +46,7 @@ public:
 	AHectorCharacter* GetHectorCharacter() const;
 
 private:
-	AHectorCharacter* CachedHectorCharacter;
+	mutable AHectorCharacter* CachedHectorCharacter;
 
 	void CacheHectorCharacter();
 };

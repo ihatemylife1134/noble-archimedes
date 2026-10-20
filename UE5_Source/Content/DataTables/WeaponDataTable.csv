@@ -1,10 +1,10 @@
 WeaponName,WeaponType,AttackRange,AttackSpeed,BaseDamage,DamageType,EvoCrystalColor,ComboAnimCount,FinalAttackAnimCount
 Short Sword,Sword,200,1.0,15,Slash,Light,3,3
-Iron Sword,Sword,210,1.0,18,Light,Light,3,3
-Broad Sword,Sword,220,0.8,20,Slash,Light,3,3
+Iron Sword,Sword,210,1.0,18,Slash,Light,3,3
+Broad Sword,Sword,220,0.9,20,Slash,Light,3,3
 Long Sword,Sword,230,0.85,24,Light,Light,3,3
-Great Sword,Sword,250,0.8,28,Curse,Dark,3,3
-Executioner Sword,Sword,280,0.75,35,Curse,Dark,3,3
+Great Sword,Sword,250,0.8,28,Curse,Light,3,3
+Executioner Sword,Sword,280,0.75,35,Slash,Light,3,3
 Battle Axe,Axe,180,0.7,25,Blunt,Dark,3,3
 Great Axe,Axe,200,0.65,30,Dark,Dark,3,3
 Executioner Axe,Axe,220,0.6,40,Stone,Dark,3,3

@@ -1,7 +1,10 @@
 WeaponName,WeaponType,DamageType,ForgeLevel,RequiredMaterials
 Short Sword,Sword,Slash,1,Iron Shard
+Iron Sword,Sword,Slash,2,Iron Shard;Iron Shard
 Broad Sword,Sword,Slash,2,Iron Shard;Iron Shard;Silver Ingot
-Longsword,Sword,Slash,3,Iron Shard;Silver Ingot;Dark Crystal
+Long Sword,Sword,Slash,3,Silver Ingot;Silver Ingot;Dark Crystal
+Great Sword,Sword,Curse,4,Silver Ingot;Dark Crystal;Phoenix Feather
+Executioner Sword,Sword,Slash,5,Dark Crystal;Phoenix Feather;Dragon Scale
 Battle Axe,Axe,Blunt,3,Iron Shard;Iron Shard;Demon Bone
 Great Axe,Axe,Blunt,4,Iron Shard;Silver Ingot;Demon Bone;Ghost Essence
 Executioner Axe,Axe,Blunt,5,Silver Ingot;Demon Bone;Dark Crystal;Wizard's Orb
@@ -11,6 +14,7 @@ Pike,Spear,Slash,6,Dark Crystal;Dragon Scale;Demon Bone
 Punch Rings,Knuckles,Blunt,2,Silver Ingot;Ghost Essence
 Claws,Knuckles,Blunt,3,Silver Ingot;Ghost Essence;Dark Crystal
 Brass Knuckles,Knuckles,Blunt,4,Silver Ingot;Ghost Essence;Dark Crystal;Phoenix Feather
+Katar,Knuckles,Blunt,5,Ghost Essence;Dark Crystal;Phoenix Feather;Dragon Scale
 Shuriken,Special,Magic,2,Iron Shard;Holy Water
 Bomb,Special,Fire,3,Iron Shard;Phoenix Feather;Demon Bone
 Gatling Gun,Special,Slash,5,Mithril Ore;Adamantite;Orichalcum;Wizard's Orb

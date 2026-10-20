@@ -37,6 +37,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SaveLoad")
 	UNobleArchimedesSaveGame* GetCurrentSaveGame() const { return CurrentSaveGame; }
 
+	/** Apply a save that was loaded while the destination level was opening. */
+	UFUNCTION(BlueprintCallable, Category = "SaveLoad")
+	void ApplyPendingLoad();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SaveLoad")
+	bool HasPendingLoad() const { return bPendingLoad; }
+
 	//=============================================================================
 	// SAVE SLOTS
 	//=============================================================================
@@ -50,6 +57,12 @@ public:
 private:
 	UPROPERTY()
 	UNobleArchimedesSaveGame* CurrentSaveGame = nullptr;
+
+	bool bPendingLoad = false;
+
+	void ApplySaveGameToPlayer(class AHectorCharacter* Player);
+	TMap<FName, int32> InventoryArrayToMap(const TArray<FInventoryItem>& Items) const;
+	TArray<FInventoryItem> InventoryMapToArray(const TMap<FName, int32>& Items) const;
 
 	FString GetSaveSlotName(int32 SlotIndex) const;
 	FString GetSaveDirectory() const;

@@ -4,8 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "NobleArchimedesTypes.h"
 #include "NobleArchimedesLevelStreaming.generated.h"
+
+class AMapChecker;
+class ASaveRoom;
+class ARoom;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class NOBLEARCHIMEDES_API UNobleArchimedesLevelStreaming : public UActorComponent
@@ -33,6 +38,28 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "LevelStreaming")
 	int32 GetCurrentChapterIndex() const { return CurrentChapterIndex; }
+
+	//=============================================================================
+	// ROOM & MAP INTEGRATION
+	//=============================================================================
+
+	UFUNCTION(BlueprintCallable, Category = "LevelStreaming")
+	AMapChecker* GetMapChecker() const;
+
+	UFUNCTION(BlueprintCallable, Category = "LevelStreaming")
+	ASaveRoom* GetSaveRoomInLevel() const;
+
+	UFUNCTION(BlueprintCallable, Category = "LevelStreaming")
+	TArray<ARoom*> GetAllRoomsInLevel() const;
+
+	UFUNCTION(BlueprintCallable, Category = "LevelStreaming")
+	void DiscoverRoom(FName RoomName);
+
+	UFUNCTION(BlueprintCallable, Category = "LevelStreaming")
+	void ClearRoom(FName RoomName);
+
+	UFUNCTION(BlueprintCallable, Category = "LevelStreaming")
+	void ActivateSaveRoom();
 
 	//=============================================================================
 	// CHAPTER LIST

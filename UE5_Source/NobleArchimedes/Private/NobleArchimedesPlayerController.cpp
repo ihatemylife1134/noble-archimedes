@@ -3,6 +3,8 @@
 #include "NobleArchimedesPlayerController.h"
 #include "HectorCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/GameModeBase.h"
+#include "EnhancedInputComponent.h"
 
 ANobleArchimedesPlayerController::ANobleArchimedesPlayerController()
 {
@@ -20,18 +22,13 @@ void ANobleArchimedesPlayerController::BeginPlay()
 void ANobleArchimedesPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
-	{
-		// Input actions are bound in Blueprints via Input Mapping Context
-	}
 }
 
 void ANobleArchimedesPlayerController::PauseGame()
 {
 	if (GetWorld())
 	{
-		GetWorld()->GetAuthGameMode()->GetWorldSettings()->SetPaused(true);
+		UGameplayStatics::SetGamePaused(GetWorld(), true);
 	}
 }
 

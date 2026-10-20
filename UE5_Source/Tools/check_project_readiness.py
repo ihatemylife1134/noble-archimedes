@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 
 PROJECT_ROOT = Path("UE5_Source")
+REPO_ROOT = PROJECT_ROOT.parent
 
 REQUIRED_FILES = {
     "C++ Headers": [
@@ -25,6 +26,15 @@ REQUIRED_FILES = {
         "NobleArchimedes/Public/NobleArchimedesItemSystem.h",
         "NobleArchimedes/Public/NobleArchimedesGameModeBase.h",
         "NobleArchimedes/Public/NobleArchimedesPlayerController.h",
+        "NobleArchimedes/Public/Room.h",
+        "NobleArchimedes/Public/SaveRoom.h",
+        "NobleArchimedes/Public/CandleBreakable.h",
+        "NobleArchimedes/Public/EnemyBase.h",
+        "NobleArchimedes/Public/BossBase.h",
+        "NobleArchimedes/Public/InnocentDevilActor.h",
+        "NobleArchimedes/Public/MapChecker.h",
+        "NobleArchimedes/Public/ItemDrop.h",
+        "NobleArchimedes/Public/NobleArchimedesHUD.h",
     ],
     "C++ Source": [
         "NobleArchimedes/Private/HectorCharacter.cpp",
@@ -40,6 +50,15 @@ REQUIRED_FILES = {
         "NobleArchimedes/Private/NobleArchimedesItemSystem.cpp",
         "NobleArchimedes/Private/NobleArchimedesGameModeBase.cpp",
         "NobleArchimedes/Private/NobleArchimedesPlayerController.cpp",
+        "NobleArchimedes/Private/Room.cpp",
+        "NobleArchimedes/Private/SaveRoom.cpp",
+        "NobleArchimedes/Private/CandleBreakable.cpp",
+        "NobleArchimedes/Private/EnemyBase.cpp",
+        "NobleArchimedes/Private/BossBase.cpp",
+        "NobleArchimedes/Private/InnocentDevilActor.cpp",
+        "NobleArchimedes/Private/MapChecker.cpp",
+        "NobleArchimedes/Private/ItemDrop.cpp",
+        "NobleArchimedes/Private/NobleArchimedesHUD.cpp",
         "NobleArchimedes/NobleArchimedes.Build.cs",
     ],
     "Data Tables": [
@@ -62,8 +81,6 @@ REQUIRED_FILES = {
     ],
     "Documentation": [
         "TRANSFER_GUIDE.md",
-        "SESSION_HANDOFF.md",
-        "RESEARCH_FINDINGS.md",
         "COMPARISON_ORIGINAL_VS_REBUILD.md",
         "Content/Blueprints/AnimationBlueprintSpec.md",
         "Content/Blueprints/AnimationFrameData.md",
@@ -72,7 +89,6 @@ REQUIRED_FILES = {
         "Content/Blueprints/AudioSpec.md",
         "Content/Blueprints/BehaviorTreeSpec.md",
         "Content/Blueprints/EnemyEncounterSpec.md",
-        "Content/Blueprints/LevelDesignSpec.md",
         "Content/Blueprints/LevelDesignSpec_Extended.md",
         "Content/Blueprints/MaterialSpec.md",
         "Content/Blueprints/ParticleSpec.md",
@@ -81,6 +97,11 @@ REQUIRED_FILES = {
         "Content/Blueprints/WeaponSpec.md",
         "Content/DataTables/README_DataTables.md",
         "Content/DataTables/SaveGameSchema.md",
+        "Content/Maps/LevelDesignSpec.md",
+    ],
+    "RepoRootDocs": [
+        "SESSION_HANDOFF.md",
+        "RESEARCH_FINDINGS.md",
     ],
     "Tools": [
         "Tools/validate_rebuild_fidelity.py",
@@ -128,8 +149,26 @@ def main():
     
     all_complete = True
     for category, files in REQUIRED_FILES.items():
-        if not check_category(category, files):
-            all_complete = False
+        if category == "RepoRootDocs":
+            # Repo root docs live one level above UE5_Source/
+            missing = []
+            present = 0
+            for f in files:
+                full_path = REPO_ROOT / f
+                if full_path.exists():
+                    present += 1
+                else:
+                    missing.append(f)
+            total = len(files)
+            pct = (present / total * 100) if total > 0 else 0
+            print(f"{category}: {present}/{total} ({pct:.0f}%)")
+            if missing:
+                for f in missing:
+                    print(f"  MISSING: {f}")
+                all_complete = False
+        else:
+            if not check_category(category, files):
+                all_complete = False
     
     print()
     print("=" * 50)

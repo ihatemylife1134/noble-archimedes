@@ -7,7 +7,8 @@ This helps track progress and identify missing pieces.
 import json
 from pathlib import Path
 
-PROJECT_ROOT = Path("UE5_Source")
+ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = ROOT / "UE5_Source"
 
 CATEGORIES = {
     "C++ Source Files": {
@@ -31,7 +32,7 @@ CATEGORIES = {
             "NobleArchimedes/Private/NobleArchimedesAudioComponent.cpp",
             "NobleArchimedes/Private/NobleArchimedesVFXComponent.cpp",
             "NobleArchimedes/Private/NobleArchimedesGameInstance.cpp",
-            "NobleArchimedes/Private/NobleArchivdesLevelStreaming.cpp",
+            "NobleArchimedes/Private/NobleArchimedesLevelStreaming.cpp",
             "NobleArchimedes/Private/NobleArchimedesWeaponForge.cpp",
             "NobleArchimedes/Private/NobleArchimedesItemSystem.cpp",
             "NobleArchimedes/NobleArchimedes.Build.cs",
@@ -74,8 +75,11 @@ CATEGORIES = {
             "Content/Blueprints/EnemyEncounterSpec.md",
             "Content/Blueprints/WeaponSpec.md",
             "Content/Blueprints/MaterialSpec.md",
-            "Content/Blueprints/LevelDesignSpec.md",
+            "Content/Blueprints/LevelSpec.md",
             "Content/Blueprints/LevelDesignSpec_Extended.md",
+            "Content/Blueprints/BehaviorTreeSpec.md",
+            "Content/Blueprints/AnimationBlueprintSpec.md",
+            "Content/Blueprints/UIWireframeSpec.md",
             "Content/DataTables/README_DataTables.md",
             "Content/DataTables/SaveGameSchema.md",
         ]
@@ -104,6 +108,9 @@ def check_category(name, files):
     present = 0
     for f in files["files"]:
         full_path = PROJECT_ROOT / f
+        if not full_path.exists():
+            # A few handoff documents live at the repository root.
+            full_path = ROOT / f
         if full_path.exists():
             present += 1
         else:
