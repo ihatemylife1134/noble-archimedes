@@ -170,7 +170,7 @@ void AEnemyBase::ApplyDamageToPlayer(class AHectorCharacter* Player)
 {
 	if (!Player) return;
 
-	Player->TakeDamage(Damage, EDamageType::Slash); // Default damage type, override per enemy
+	Player->ApplyDamage(Damage, EDamageType::Slash); // Default damage type, override per enemy
 }
 
 void AEnemyBase::UpdatePerception(float DeltaTime)

@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "NobleArchimedesTypes.h"
 #include "NobleArchimedesCombatComponent.h"
 #include "HectorCharacter.generated.h"
@@ -81,7 +83,7 @@ public:
 	void StealTargetFocus() { /* Lock-on target for stealing */ }
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void TakeDamage(float Damage, EDamageType DamageType) { if (CombatComponent) CombatComponent->TakeDamage(Damage, DamageType); }
+	void ApplyDamage(float Damage, EDamageType DamageType) { if (CombatComponent) CombatComponent->TakeDamage(Damage, DamageType); }
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void EquipWeapon(EWeaponType WeaponType) { if (CombatComponent) CombatComponent->EquipWeapon(WeaponType); }
