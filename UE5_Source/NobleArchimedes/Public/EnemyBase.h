@@ -127,7 +127,7 @@ public:
 	//=============================================================================
 
 	UFUNCTION(BlueprintCallable, Category = "Enemy")
-	void TakeDamage(float DamageAmount, EDamageType DamageType);
+	void ApplyDamage(float DamageAmount, EDamageType DamageType);
 
 	UFUNCTION(BlueprintCallable, Category = "Enemy")
 	void FacePlayer();

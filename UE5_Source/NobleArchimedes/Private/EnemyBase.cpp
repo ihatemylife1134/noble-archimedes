@@ -53,7 +53,7 @@ void AEnemyBase::Tick(float DeltaTime)
 	UpdateStealWindow(DeltaTime);
 }
 
-void AEnemyBase::TakeDamage(float DamageAmount, EDamageType DamageType)
+void AEnemyBase::ApplyDamage(float DamageAmount, EDamageType DamageType)
 {
 	if (bIsDead) return;
 
