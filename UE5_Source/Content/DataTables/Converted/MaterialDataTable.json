@@ -1,0 +1,367 @@
+{
+  "StructName": "FMaterialData",
+  "SourceFile": "MaterialDataTable.csv",
+  "RowCount": 40,
+  "Rows": {
+    "Iron Shard": {
+      "MaterialName": "Iron Shard",
+      "MaterialColorR": 0.7,
+      "MaterialColorG": 0.7,
+      "MaterialColorB": 0.7,
+      "MaterialColorA": 1.0,
+      "IsRare": false,
+      "Description": "Basic iron material for early weapons"
+    },
+    "Silver Ingot": {
+      "MaterialName": "Silver Ingot",
+      "MaterialColorR": 0.9,
+      "MaterialColorG": 0.8,
+      "MaterialColorB": 0.7,
+      "MaterialColorA": 1.0,
+      "IsRare": false,
+      "Description": "Refined silver for mid-tier weapons"
+    },
+    "Dark Crystal": {
+      "MaterialName": "Dark Crystal",
+      "MaterialColorR": 0.2,
+      "MaterialColorG": 0.2,
+      "MaterialColorB": 0.8,
+      "MaterialColorA": 1.0,
+      "IsRare": false,
+      "Description": "Dark elemental crystal"
+    },
+    "Holy Water": {
+      "MaterialName": "Holy Water",
+      "MaterialColorR": 0.8,
+      "MaterialColorG": 0.9,
+      "MaterialColorB": 1.0,
+      "MaterialColorA": 1.0,
+      "IsRare": false,
+      "Description": "Blessed water for light weapons"
+    },
+    "Phoenix Feather": {
+      "MaterialName": "Phoenix Feather",
+      "MaterialColorR": 1.0,
+      "MaterialColorG": 0.5,
+      "MaterialColorB": 0.0,
+      "MaterialColorA": 1.0,
+      "IsRare": false,
+      "Description": "Fiery bird feather"
+    },
+    "Dragon Scale": {
+      "MaterialName": "Dragon Scale",
+      "MaterialColorR": 0.2,
+      "MaterialColorG": 0.5,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Scaled hide from dragons"
+    },
+    "Demon Bone": {
+      "MaterialName": "Demon Bone",
+      "MaterialColorR": 0.4,
+      "MaterialColorG": 0.2,
+      "MaterialColorB": 0.1,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Bone from demonic creatures"
+    },
+    "Ghost Essence": {
+      "MaterialName": "Ghost Essence",
+      "MaterialColorR": 0.5,
+      "MaterialColorG": 0.5,
+      "MaterialColorB": 0.5,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Ethereal spirit remnant"
+    },
+    "Wizard's Orb": {
+      "MaterialName": "Wizard's Orb",
+      "MaterialColorR": 0.8,
+      "MaterialColorG": 0.8,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Magical energy crystal"
+    },
+    "Mithril Ore": {
+      "MaterialName": "Mithril Ore",
+      "MaterialColorR": 0.6,
+      "MaterialColorG": 0.6,
+      "MaterialColorB": 0.6,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Rare lightweight metal"
+    },
+    "Adamantite": {
+      "MaterialName": "Adamantite",
+      "MaterialColorR": 0.3,
+      "MaterialColorG": 0.3,
+      "MaterialColorB": 0.3,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Virtually indestructible metal"
+    },
+    "Orichalcum": {
+      "MaterialName": "Orichalcum",
+      "MaterialColorR": 1.0,
+      "MaterialColorG": 0.8,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Legendary golden alloy"
+    },
+    "Phoenix Down": {
+      "MaterialName": "Phoenix Down",
+      "MaterialColorR": 1.0,
+      "MaterialColorG": 0.3,
+      "MaterialColorB": 0.3,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Reviving bird feather"
+    },
+    "Unicorn Horn": {
+      "MaterialName": "Unicorn Horn",
+      "MaterialColorR": 1.0,
+      "MaterialColorG": 1.0,
+      "MaterialColorB": 1.0,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Pure magical horn"
+    },
+    "Dragon Heart": {
+      "MaterialName": "Dragon Heart",
+      "MaterialColorR": 0.8,
+      "MaterialColorG": 0.0,
+      "MaterialColorB": 0.0,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Beating dragon heart"
+    },
+    "Demon Soul": {
+      "MaterialName": "Demon Soul",
+      "MaterialColorR": 0.5,
+      "MaterialColorG": 0.0,
+      "MaterialColorB": 0.5,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Captured demon essence"
+    },
+    "Angel Feather": {
+      "MaterialName": "Angel Feather",
+      "MaterialColorR": 1.0,
+      "MaterialColorG": 1.0,
+      "MaterialColorB": 0.8,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Celestial bird feather"
+    },
+    "Vampire Fang": {
+      "MaterialName": "Vampire Fang",
+      "MaterialColorR": 0.3,
+      "MaterialColorG": 0.3,
+      "MaterialColorB": 0.3,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Fang from undead"
+    },
+    "Werewolf Claw": {
+      "MaterialName": "Werewolf Claw",
+      "MaterialColorR": 0.6,
+      "MaterialColorG": 0.4,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Beastial claw"
+    },
+    "Golem Core": {
+      "MaterialName": "Golem Core",
+      "MaterialColorR": 0.2,
+      "MaterialColorG": 0.2,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Animated stone heart"
+    },
+    "Fairy Dust": {
+      "MaterialName": "Fairy Dust",
+      "MaterialColorR": 1.0,
+      "MaterialColorG": 1.0,
+      "MaterialColorB": 0.5,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Sparkling magical powder"
+    },
+    "Witch Broom": {
+      "MaterialName": "Witch Broom",
+      "MaterialColorR": 0.3,
+      "MaterialColorG": 0.2,
+      "MaterialColorB": 0.1,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Witch's travel implement"
+    },
+    "Zombie Brain": {
+      "MaterialName": "Zombie Brain",
+      "MaterialColorR": 0.1,
+      "MaterialColorG": 0.1,
+      "MaterialColorB": 0.1,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Decayed organ"
+    },
+    "Ghoul Eye": {
+      "MaterialName": "Ghoul Eye",
+      "MaterialColorR": 0.2,
+      "MaterialColorG": 0.1,
+      "MaterialColorB": 0.1,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Undead eye"
+    },
+    "Harpy Feather": {
+      "MaterialName": "Harpy Feather",
+      "MaterialColorR": 0.8,
+      "MaterialColorG": 0.8,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Winged creature feather"
+    },
+    "Basilisk Scale": {
+      "MaterialName": "Basilisk Scale",
+      "MaterialColorR": 0.2,
+      "MaterialColorG": 0.5,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Reptilian scale"
+    },
+    "Medusa Hair": {
+      "MaterialName": "Medusa Hair",
+      "MaterialColorR": 0.4,
+      "MaterialColorG": 0.2,
+      "MaterialColorB": 0.4,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Snakelike hair"
+    },
+    "Cerberus Fang": {
+      "MaterialName": "Cerberus Fang",
+      "MaterialColorR": 0.6,
+      "MaterialColorG": 0.2,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Three-headed dog fang"
+    },
+    "Hydra Blood": {
+      "MaterialName": "Hydra Blood",
+      "MaterialColorR": 0.3,
+      "MaterialColorG": 0.6,
+      "MaterialColorB": 0.3,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Multi-headed serpent blood"
+    },
+    "Chimera Horn": {
+      "MaterialName": "Chimera Horn",
+      "MaterialColorR": 0.7,
+      "MaterialColorG": 0.4,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Composite creature horn"
+    },
+    "Griffin Feather": {
+      "MaterialName": "Griffin Feather",
+      "MaterialColorR": 0.9,
+      "MaterialColorG": 0.7,
+      "MaterialColorB": 0.3,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Eagle-lion feather"
+    },
+    "Sphinx Eye": {
+      "MaterialName": "Sphinx Eye",
+      "MaterialColorR": 0.4,
+      "MaterialColorG": 0.4,
+      "MaterialColorB": 0.1,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Riddle creature eye"
+    },
+    "Minotaur Horn": {
+      "MaterialName": "Minotaur Horn",
+      "MaterialColorR": 0.5,
+      "MaterialColorG": 0.3,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Bull creature horn"
+    },
+    "Cyclops Eye": {
+      "MaterialName": "Cyclops Eye",
+      "MaterialColorR": 0.2,
+      "MaterialColorG": 0.2,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "One-eyed giant eye"
+    },
+    "Troll Skin": {
+      "MaterialName": "Troll Skin",
+      "MaterialColorR": 0.3,
+      "MaterialColorG": 0.1,
+      "MaterialColorB": 0.1,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Regenerating hide"
+    },
+    "Ogre Club": {
+      "MaterialName": "Ogre Club",
+      "MaterialColorR": 0.4,
+      "MaterialColorG": 0.3,
+      "MaterialColorB": 0.2,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Primitive weapon"
+    },
+    "Giant Toe": {
+      "MaterialName": "Giant Toe",
+      "MaterialColorR": 0.8,
+      "MaterialColorG": 0.8,
+      "MaterialColorB": 0.8,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Giant's digit"
+    },
+    "Leviathan Scale": {
+      "MaterialName": "Leviathan Scale",
+      "MaterialColorR": 0.2,
+      "MaterialColorG": 0.4,
+      "MaterialColorB": 0.8,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Sea monster scale"
+    },
+    "Kraken Tentacle": {
+      "MaterialName": "Kraken Tentacle",
+      "MaterialColorR": 0.1,
+      "MaterialColorG": 0.2,
+      "MaterialColorB": 0.4,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Deep sea appendage"
+    },
+    "Sea Serpent Fang": {
+      "MaterialName": "Sea Serpent Fang",
+      "MaterialColorR": 0.3,
+      "MaterialColorG": 0.1,
+      "MaterialColorB": 0.5,
+      "MaterialColorA": 1.0,
+      "IsRare": true,
+      "Description": "Ocean predator fang"
+    }
+  }
+}

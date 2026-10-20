@@ -189,7 +189,7 @@ def main():
     validate_csv_columns("WeaponDataTable.csv",
         ["WeaponName", "WeaponType", "AttackRange", "AttackSpeed", "BaseDamage", "DamageType", "EvoCrystalColor"])
     validate_csv_columns("MaterialDataTable.csv",
-        ["MaterialName", "MaterialColor", "IsRare", "Description"])
+        ["MaterialName", "MaterialColorR", "MaterialColorG", "MaterialColorB", "MaterialColorA", "IsRare", "Description"])
     validate_csv_columns("WeaponRecipeTable.csv",
         ["WeaponName", "WeaponType", "DamageType", "ForgeLevel", "RequiredMaterials"])
     validate_csv_columns("InnocentDevilDataTable.csv",
