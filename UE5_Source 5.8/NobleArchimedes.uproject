@@ -1,0 +1,39 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{15AD8E3C-48C5-4590-15C2-4CB51DC0F800}",
+	"Category": "",
+	"Description": "Noble Archimedes - Castlevania: Curse of Darkness Fan Recreation",
+	"Modules": [
+		{
+			"Name": "NobleArchimedes",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		},
+		{
+			"Name": "Lumen",
+			"Enabled": true
+		},
+		{
+			"Name": "Nanite",
+			"Enabled": true
+		},
+		{
+			"Name": "TSR",
+			"Enabled": true
+		},
+		{
+			"Name": "Niagara",
+			"Enabled": true
+		},
+		{
+			"Name": "MediaPlayer",
+			"Enabled": true
+		}
+	]
+}

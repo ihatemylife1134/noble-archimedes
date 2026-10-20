@@ -1,0 +1,33 @@
+Chapter,EnemyName,Count,SpawnLocation,RespawnTime,IsBoss,Stealable,StealItem,Weakness,Tolerance,Health,Damage
+1,Skeleton,3,EntranceHall,0,false,true,Bone Shard,Holy,Dark,50,10
+1,Zombie,2,EntranceHall,0,false,false,-,Fire,Poison,80,15
+1,Ghoul,2,Chapel,0,false,true,Bone Shard,Holy,Dark,60,12
+1,Sentinel Knight,1,BossArena,0,true,false,-,Holy,Dark,500,40
+2,Harpies,4,MountainPass,0,false,true,Harpy Feather,Ice,Wind,45,18
+2,Bat,6,CaveEntrance,0,false,true,Small Coin,Ice,Wind,30,8
+2,Mountain Beast,2,Summit,0,false,true,Mountain Herb,Fire,Dark,120,25
+2,Sky Drake,1,BossArena,0,true,false,-,Ice,Wind,600,55
+3,Temple Guardian,3,Nave,0,false,true,Temple Key,Dark,Holy,100,20
+3,Cultist,4,Crypt,0,false,true,Cultist Robe,Light,Dark,70,15
+3,Dark Priest,2,BellTower,0,false,true,Dark Crystal,Light,Dark,90,25
+3,High Inquisitor,1,BossArena,0,true,false,-,Light,Dark,700,60
+4,Water Creature,3,WaterChamber,0,false,true,Aqueduct Gem,Lightning,Water,85,18
+4,Aqueduct Guard,2,BridgeCrossing,0,false,true,Iron Shard,Fire,Iron,95,22
+4,Aqueduct Sentinel,1,BossArena,0,true,false,-,Fire,Iron,550,45
+5,Forest Stalker,4,ForestEdge,0,false,true,Forest Mushroom,Fire,Poison,65,16
+5,Nature Spirit,3,DeepForest,0,false,true,Nature Essence,Fire,Poison,55,14
+5,Forest Warden,1,BossArena,0,true,false,-,Fire,Poison,450,38
+6,Town Guard,5,TownSquare,0,false,true,Town Key,Slash,Blunt,75,14
+6,Citizen,8,TownSquare,0,false,false,-,None,None,40,5
+6,Town Captain,1,BossArena,0,true,false,-,Slash,Blunt,300,35
+7,Clockwork Soldier,4,GearChamber,0,false,true,Gear Component,Fire,Lightning,110,28
+7,Mechanical Trap,6,SteamRoom,0,false,false,-,Fire,Lightning,60,20
+7,Tower Automaton,1,BossArena,0,true,false,-,Fire,Lightning,650,50
+8,Ruin Guardian,3,RuinEntrance,0,false,true,Ancient Coin,Light,Dark,95,22
+8,Ancient Construct,2,SunkenCourtyard,0,false,true,Ancient Relic,Light,Dark,130,30
+8,Ruin Sentinel,1,BossArena,0,true,false,-,Light,Dark,500,42
+9,Corridor Phantom,5,CorridorLoop,0,false,true,Ethereal Dust,Light,Dark,70,18
+9,Surreal Entity,3,MirrorChamber,0,false,true,Surreal Fragment,Light,Dark,85,24
+9,Mirror Entity,1,BossArena,0,true,false,-,Light,Dark,400,35
+10,Castle Elite,6,GrandHall,0,false,true,Castle Key,Dark,Light,140,35
+10,Final Boss,1,ThroneRoom,0,true,false,-,None,None,1000,80

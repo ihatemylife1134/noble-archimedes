@@ -1,0 +1,15 @@
+DevilName,DevilType,Level,BaseForm,EvolvedForm,FinalForm,EvoCrystalRequired,EvoCrystalCount,AbilityUnlock
+Fairy,Fairy,1,Fairy,Fairy Elite,Fairy Queen,Light,10,Heal
+Fairy,Fairy,15,Fairy Elite,Fairy Queen,-,Light,20,Revive
+Griffin,Griffin,1,Griffin,Griffin Lord,Griffin King,Fire,10,Fire Breath
+Griffin,Griffin,15,Griffin Lord,Griffin King,-,Fire,20,Fire Storm
+Salamander,Salamander,1,Salamander,Salamander Lord,Salamander King,Fire,10,Fire Attack
+Salamander,Salamander,15,Salamander Lord,Salamander King,-,Fire,20,Inferno
+Ogre,Ogre,1,Ogre,Ogre Lord,Ogre King,Slash,10,Ground Pound
+Ogre,Ogre,15,Ogre Lord,Ogre King,-,Slash,20,Earthquake
+Skeleton Devil,Skeleton,1,Skeleton Devil,Skeleton Lord,Skeleton King,Dark,10,Bone Throw
+Skeleton Devil,Skeleton,15,Skeleton Lord,Skeleton King,-,Dark,20,Curse
+Witch Devil,Witch,1,Witch Devil,Witch Lord,Witch Queen,Magic,10,Magic Attack
+Witch Devil,Witch,15,Witch Lord,Witch Queen,-,Magic,20,Dark Magic
+Pumpkin,Pumpkin,1,Pumpkin,Pumpkin Lord,Pumpkin King,Special,15,Pumpkin Bomb
+Pumpkin,Pumpkin,20,Pumpkin Lord,Pumpkin King,-,Special,30,Jack-o-Lantern
