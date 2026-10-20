@@ -101,11 +101,14 @@ void AEnemyBase::MoveToPlayer()
 
 	if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
-		if (ACharacter* Char = Cast<ACharacter>(GetPawn()))
+		if (APawn* MyPawn = GetPawn())
 		{
-			FVector Direction = (Player->GetActorLocation() - Char->GetActorLocation()).GetSafeNormal();
-			Char->GetCharacterMovement()->SetMovementMode(MOVE_Walk);
-			Char->GetCharacterMovement()->Velocity = Direction * Char->GetCharacterMovement()->MaxWalkSpeed;
+			if (ACharacter* MyChar = Cast<ACharacter>(MyPawn))
+			{
+				FVector Direction = (Player->GetActorLocation() - MyChar->GetActorLocation()).GetSafeNormal();
+				MyChar->GetCharacterMovement()->SetMovementMode(MOVE_Walk);
+				MyChar->GetCharacterMovement()->Velocity = Direction * MyChar->GetCharacterMovement()->MaxWalkSpeed;
+			}
 		}
 	}
 }

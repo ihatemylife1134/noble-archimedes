@@ -4,6 +4,7 @@
 #include "HectorCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "TimerManager.h"
 
 UNobleArchimedesCombatComponent::UNobleArchimedesCombatComponent()
 {
