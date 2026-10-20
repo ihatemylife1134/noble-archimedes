@@ -22,11 +22,6 @@ void ANobleArchimedesPlayerController::BeginPlay()
 void ANobleArchimedesPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInput))
-	{
-		// Input actions are bound in Blueprints via Input Mapping Context
-	}
 }
 
 void ANobleArchimedesPlayerController::PauseGame()
