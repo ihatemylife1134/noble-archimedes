@@ -3,6 +3,7 @@
 #include "NobleArchimedesPlayerController.h"
 #include "HectorCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/GameModeBase.h"
 
 ANobleArchimedesPlayerController::ANobleArchimedesPlayerController()
 {
