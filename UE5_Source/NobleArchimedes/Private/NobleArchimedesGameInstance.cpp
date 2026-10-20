@@ -38,7 +38,7 @@ void UNobleArchimedesGameInstance::SaveGame(int32 SlotIndex)
 			CurrentSaveGame->MaxHealth = Player->GetMaxHealth();
 			CurrentSaveGame->Mana = Player->GetMana();
 			CurrentSaveGame->MaxMana = Player->GetMaxMana();
-			CurrentSaveGame->Level = Player->GetLevel();
+			CurrentSaveGame->Level = Player->GetCharacterLevel();
 			CurrentSaveGame->Experience = Player->GetExperience();
 			CurrentSaveGame->SkillPoints = Player->GetSkillPoints();
 

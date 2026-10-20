@@ -61,7 +61,6 @@ public:
 	// HUD ACTIONS
 	//=============================================================================
 
-	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void ShowHUD();
 
 	UFUNCTION(BlueprintCallable, Category = "HUD")

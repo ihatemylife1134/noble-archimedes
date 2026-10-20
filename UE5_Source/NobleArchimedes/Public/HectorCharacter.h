@@ -117,7 +117,7 @@ public:
 	void SetMaxMana(float NewMaxMana) { if (CombatComponent) CombatComponent->SetMaxMana(NewMaxMana); }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
-	int32 GetLevel() const { return Level; }
+	int32 GetCharacterLevel() const { return Level; }
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void SetLevel(int32 NewLevel) { Level = NewLevel; }
