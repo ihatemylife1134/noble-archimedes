@@ -61,12 +61,12 @@ void AEnemyBase::ApplyDamage(float DamageAmount, EDamageType DamageType)
 	// Apply weakness/tolerance modifiers
 	float FinalDamage = DamageAmount;
 
-	if (Weaknesses.Contains(DamageType.ToString()))
+	if (Weaknesses.Contains(StaticEnum<EDamageType>()->GetValueAsString(DamageType)))
 	{
 		FinalDamage *= 1.5f; // Weakness bonus
 	}
 
-	if (Tolerances.Contains(DamageType.ToString()))
+	if (Tolerances.Contains(StaticEnum<EDamageType>()->GetValueAsString(DamageType)))
 	{
 		FinalDamage *= 0.5f; // Tolerance reduction
 	}
@@ -101,9 +101,9 @@ void AEnemyBase::MoveToPlayer()
 
 	if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
-		if (AController* Controller = GetController())
+		if (AController* MyController = GetController())
 		{
-			Controller->MoveToLocation(Player->GetActorLocation());
+			MyController->MoveTo(Player->GetActorLocation());
 		}
 	}
 }
