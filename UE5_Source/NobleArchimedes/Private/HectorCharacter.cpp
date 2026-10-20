@@ -6,7 +6,6 @@
 #include "NobleArchimedesItemSystem.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystem.h"
 
 AHectorCharacter::AHectorCharacter()
@@ -71,11 +70,6 @@ void AHectorCharacter::Tick(float DeltaTime)
 void AHectorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		// Input actions would be bound here in Blueprint
-	}
 }
 
 void AHectorCharacter::Move(float ValueX, float ValueY)
