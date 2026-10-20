@@ -102,7 +102,6 @@ void ARoom::SpawnEnemies()
 
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = this;
-			SpawnParams.Instigator = Instigator;
 
 			AEnemyBase* NewEnemy = GetWorld()->SpawnActor<AEnemyBase>(EnemyClassesToSpawn[i], SpawnLocation, SpawnRotation, SpawnParams);
 			if (NewEnemy)

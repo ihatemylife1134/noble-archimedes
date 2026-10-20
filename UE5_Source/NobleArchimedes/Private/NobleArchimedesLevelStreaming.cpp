@@ -43,7 +43,7 @@ void UNobleArchimedesLevelStreaming::TransitionToChapter(int32 ChapterIndex)
 	if (ChapterIndex < 0 || ChapterIndex >= ChapterLevelNames.Num()) return;
 
 	// Save current game state before transition
-	if (UNobleArchimedesGameInstance* GameInstance = Cast<UNobleArchimedesGameInstance>(GetGameInstance()))
+	if (UNobleArchimedesGameInstance* GameInstance = Cast<UNobleArchimedesGameInstance>(GetWorld()->GetGameInstance()))
 	{
 		GameInstance->SaveGame(5); // Auto-save on chapter transition
 	}
