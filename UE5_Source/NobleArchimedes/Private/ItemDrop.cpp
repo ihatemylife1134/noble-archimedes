@@ -48,6 +48,11 @@ void AItemDrop::InitializeItem(FName NewItemName, bool NewIsStealOnly, bool NewI
 	bIsRare = NewIsRare;
 }
 
+void AItemDrop::AutoDestroy()
+{
+	Destroy();
+}
+
 void AItemDrop::PickupItem(class AHectorCharacter* Player)
 {
 	if (!Player) return;

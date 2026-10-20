@@ -279,7 +279,7 @@ void UNobleArchimedesAudioComponent::PlayBossMusic()
 	{
 		AudioComponent->SetSound(SC_Music_Boss);
 		AudioComponent->SetVolumeMultiplier(MusicVolume);
-		AudioComponent->bLooping = true;
+		AudioComponent->SetIsLooping(true);
 		AudioComponent->Play();
 	}
 }
@@ -301,7 +301,7 @@ void UNobleArchimedesAudioComponent::PlayGameOverMusic()
 	{
 		AudioComponent->SetSound(SC_Music_GameOver);
 		AudioComponent->SetVolumeMultiplier(MusicVolume);
-		AudioComponent->bLooping = false;
+		AudioComponent->SetIsLooping(false);
 		AudioComponent->Play();
 	}
 }

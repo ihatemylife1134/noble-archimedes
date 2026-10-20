@@ -4,6 +4,7 @@
 #include "HectorCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/GameModeBase.h"
+#include "EnhancedInputComponent.h"
 
 ANobleArchimedesPlayerController::ANobleArchimedesPlayerController()
 {

@@ -15,7 +15,8 @@ public class NobleArchimedes : ModuleRules
 			"NavigationSystem",
 			"AIModule",
 			"GameplayTasks",
-			"Niagara"
+			"Niagara",
+			"UMG"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
