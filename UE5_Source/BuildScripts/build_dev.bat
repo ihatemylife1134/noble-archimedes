@@ -1,25 +1,44 @@
 @echo off
 :: Noble Archimedes - Development Build Script
-:: For iterative development and testing
+:: Compiles the editor target, then launches Unreal Editor.
+:: Building first prevents the editor from loading a stale module DLL.
 
-setlocal enabledelayedexpansion
+setlocal
 
 set UE_ROOT=C:\Program Files\Epic Games\UE_5.8
 set PROJECT=C:\Projects\NobleArchimedes\NobleArchimedes.uproject
-set PLATFORM=Win64
 
 echo ============================================
 echo  Noble Archimedes - Development Build
 echo ============================================
 echo.
 
-echo [1/3] Launching Unreal Editor for development build...
-echo This will open the UE5 editor. Use File > Package Project > Windows > Win64
-echo to create a development build from within the editor.
-echo.
+if not exist "%UE_ROOT%\Engine\Build\BatchFiles\Build.bat" (
+    echo ERROR: UE5 not found at %UE_ROOT%
+    echo Update UE_ROOT in this script.
+    pause
+    exit /b 1
+)
 
-"%UE_ROOT%\Engine\Binaries\Win64\UnrealEditor.exe" "%PROJECT%"
+if not exist "%PROJECT%" (
+    echo ERROR: Project not found at %PROJECT%
+    echo Update PROJECT in this script.
+    pause
+    exit /b 1
+)
+
+echo [1/2] Building NobleArchimedesEditor...
+call "%UE_ROOT%\Engine\Build\BatchFiles\Build.bat" NobleArchimedesEditor Win64 Development -Project="%PROJECT%" -WaitMutex
+if errorlevel 1 (
+    echo.
+    echo ERROR: Build failed. Fix the compile errors above, then run this script again.
+    pause
+    exit /b 1
+)
 
 echo.
-echo Done.
-pause
+echo [2/2] Launching Unreal Editor...
+start "" "%UE_ROOT%\Engine\Binaries\Win64\UnrealEditor.exe" "%PROJECT%"
+
+echo.
+echo Editor launched.

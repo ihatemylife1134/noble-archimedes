@@ -8,12 +8,26 @@
 
 ---
 
+## Step 0: Build Before Launching
+
+Always compile before opening the editor. The editor does **not** rebuild a stale game module for you; it will load the old DLL and report that the module could not be initialized.
+
+```bat
+"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" NobleArchimedesEditor Win64 Development -Project="C:\Projects\NobleArchimedes\NobleArchimedes.uproject" -WaitMutex
+```
+
+Or run `BuildScripts\build_dev.bat`, which builds and then launches.
+
+Expected: `Result: Succeeded` and a fresh `Binaries\Win64\UnrealEditor-NobleArchimedes.dll`.
+
+---
+
 ## Step 1: Create Blueprints from C++ Classes
 
 ### 1.1 Open the project in UE5 Editor
-1. Launch UE5 Editor
+1. Run `BuildScripts\build_dev.bat` (builds, then launches), or build with the command in Step 0 and launch the editor manually
 2. File > Open Project > `C:\Projects\NobleArchimedes\NobleArchimedes.uproject`
-3. Wait for C++ module to compile (should succeed)
+3. The startup map `Chap_01_AbandonedCastle` loads automatically
 
 ### 1.2 Create Blueprint classes
 In the Content Browser, navigate to `Content/Blueprints/` (create if needed).
@@ -32,7 +46,7 @@ For each C++ class below, right-click > **Create Blueprint Class based on**:
 | `AItemDrop` | `BP_ItemDrop` | Content/Blueprints/Items/ |
 | `AMapChecker` | `BP_MapChecker` | Content/Blueprints/Levels/ |
 | `ANobleArchimedesHUD` | `BP_NobleArchimedesHUD` | Content/Blueprints/UI/ |
-| `UNobleArchimedesGameModeBase` | `BP_NobleArchimedesGameModeBase` | Content/Blueprints/Core/ |
+| `ANobleArchimedesGameModeBase` | `BP_NobleArchimedesGameModeBase` | Content/Blueprints/Core/ |
 
 ### 1.3 Configure GameMode
 1. Open `BP_NobleArchimedesGameModeBase`
