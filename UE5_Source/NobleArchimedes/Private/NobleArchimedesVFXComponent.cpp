@@ -36,7 +36,7 @@ static UNiagaraComponent* SpawnNiagaraSystemScaled(UWorld* World, UNiagaraSystem
 
 	if (NiagaraComponent)
 	{
-		NiagaraComponent->SetNiagaraVariableFloat("VFXScale", VFXScale);
+		NiagaraComponent->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 	}
 
 	return NiagaraComponent;
@@ -70,7 +70,7 @@ void UNobleArchimedesVFXComponent::PlayWeaponTrail(EWeaponType WeaponType, FVect
 		);
 		if (Trail)
 		{
-			Trail->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Trail->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -99,7 +99,7 @@ void UNobleArchimedesVFXComponent::PlayWeaponTrailEnd(EWeaponType WeaponType, FV
 		);
 		if (TrailEnd)
 		{
-			TrailEnd->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			TrailEnd->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -126,7 +126,7 @@ void UNobleArchimedesVFXComponent::PlayHitSpark(FVector Location, EDamageType Da
 		);
 		if (Spark)
 		{
-			Spark->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Spark->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -143,7 +143,7 @@ void UNobleArchimedesVFXComponent::PlayHitBlood(FVector Location)
 		);
 		if (Blood)
 		{
-			Blood->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Blood->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -160,7 +160,7 @@ void UNobleArchimedesVFXComponent::PlayQuickStepTrail(FVector StartLocation, FVe
 		);
 		if (Trail)
 		{
-			Trail->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Trail->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -177,7 +177,7 @@ void UNobleArchimedesVFXComponent::PlayPerfectGuardFlash(FVector Location)
 		);
 		if (Flash)
 		{
-			Flash->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Flash->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -194,7 +194,7 @@ void UNobleArchimedesVFXComponent::PlayGuardBlockFlash(FVector Location)
 		);
 		if (Flash)
 		{
-			Flash->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Flash->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -229,7 +229,7 @@ void UNobleArchimedesVFXComponent::PlayInnocentDevilSummon(FVector Location, EIn
 		);
 		if (Summon)
 		{
-			Summon->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Summon->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -246,7 +246,7 @@ void UNobleArchimedesVFXComponent::PlayInnocentDevilEvolve(FVector Location, EIn
 		);
 		if (Evolve)
 		{
-			Evolve->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Evolve->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -273,7 +273,7 @@ void UNobleArchimedesVFXComponent::PlayInnocentDevilAttack(FVector Location, EIn
 		);
 		if (Attack)
 		{
-			Attack->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Attack->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -294,7 +294,7 @@ void UNobleArchimedesVFXComponent::PlayItemPickup(FVector Location)
 		);
 		if (Pickup)
 		{
-			Pickup->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Pickup->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -311,7 +311,7 @@ void UNobleArchimedesVFXComponent::PlayCandleBreak(FVector Location)
 		);
 		if (Candle)
 		{
-			Candle->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Candle->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -328,7 +328,7 @@ void UNobleArchimedesVFXComponent::PlaySaveRoomHeal(FVector Location)
 		);
 		if (Heal)
 		{
-			Heal->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Heal->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -349,7 +349,7 @@ void UNobleArchimedesVFXComponent::PlayDustMotes(FVector Location)
 		);
 		if (Dust)
 		{
-			Dust->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Dust->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -366,7 +366,7 @@ void UNobleArchimedesVFXComponent::PlayLeaves(FVector Location)
 		);
 		if (Leaves)
 		{
-			Leaves->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Leaves->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }
@@ -383,7 +383,7 @@ void UNobleArchimedesVFXComponent::PlaySteam(FVector Location)
 		);
 		if (Steam)
 		{
-			Steam->SetNiagaraVariableFloat("VFXScale", VFXScale);
+			Steam->SetVariableFloat(FName(TEXT("VFXScale")), VFXScale);
 		}
 	}
 }

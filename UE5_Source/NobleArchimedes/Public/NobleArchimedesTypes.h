@@ -36,7 +36,7 @@ enum class EWeaponType : uint8
 	None
 };
 
-UENUM(BlueprintType)
+UENUM(BlueprintType, meta = (ScriptName = "NobleDamageType"))
 enum class EDamageType : uint8
 {
 	Fire,
