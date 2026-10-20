@@ -35,7 +35,7 @@ void UNobleArchimedesLevelStreaming::UnloadChapter(int32 ChapterIndex)
 	if (ChapterIndex < 0 || ChapterIndex >= ChapterLevelNames.Num()) return;
 
 	FName LevelName = ChapterLevelNames[ChapterIndex];
-	UGameplayStatics::UnloadStreamLevel(GetWorld(), LevelName, FLatentActionInfo());
+	UGameplayStatics::UnloadStreamLevel(GetWorld(), LevelName, FLatentActionInfo(), false);
 }
 
 void UNobleArchimedesLevelStreaming::TransitionToChapter(int32 ChapterIndex)

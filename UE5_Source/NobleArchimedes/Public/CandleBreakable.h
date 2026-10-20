@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "NobleArchimedesTypes.h"
 #include "CandleBreakable.generated.h"
 

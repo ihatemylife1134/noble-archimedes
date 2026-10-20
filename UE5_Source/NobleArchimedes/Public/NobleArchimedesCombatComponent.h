@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "TimerManager.h"
 #include "NobleArchimedesTypes.h"
 #include "NobleArchimedesCombatComponent.generated.h"
 

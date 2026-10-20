@@ -221,7 +221,7 @@ void UNobleArchimedesAudioComponent::PlayAmbient(int32 ChapterIndex)
 	{
 		AudioComponent->SetSound(AmbientCue);
 		AudioComponent->SetVolumeMultiplier(MusicVolume);
-		AudioComponent->bLooping = true;
+		AudioComponent->SetIsLooping(true);
 		AudioComponent->Play();
 	}
 }
@@ -257,7 +257,7 @@ void UNobleArchimedesAudioComponent::PlayMusic(int32 ChapterIndex)
 	{
 		AudioComponent->SetSound(MusicCue);
 		AudioComponent->SetVolumeMultiplier(MusicVolume);
-		AudioComponent->bLooping = true;
+		AudioComponent->SetIsLooping(true);
 		AudioComponent->Play();
 	}
 }
@@ -268,7 +268,7 @@ void UNobleArchimedesAudioComponent::PlayCombatMusic()
 	{
 		AudioComponent->SetSound(SC_Music_Combat);
 		AudioComponent->SetVolumeMultiplier(MusicVolume);
-		AudioComponent->bLooping = true;
+		AudioComponent->SetIsLooping(true);
 		AudioComponent->Play();
 	}
 }
@@ -290,7 +290,7 @@ void UNobleArchimedesAudioComponent::PlayVictoryMusic()
 	{
 		AudioComponent->SetSound(SC_Music_Victory);
 		AudioComponent->SetVolumeMultiplier(MusicVolume);
-		AudioComponent->bLooping = false;
+		AudioComponent->SetIsLooping(false);
 		AudioComponent->Play();
 	}
 }

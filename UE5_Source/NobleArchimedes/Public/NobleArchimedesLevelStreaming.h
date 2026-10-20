@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "NobleArchimedesTypes.h"
 #include "NobleArchimedesLevelStreaming.generated.h"
 

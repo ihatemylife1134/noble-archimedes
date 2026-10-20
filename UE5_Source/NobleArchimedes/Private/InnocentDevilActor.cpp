@@ -110,9 +110,9 @@ void AInnocentDevilActor::FollowOwner()
 		float DistanceToOwner = FVector::Dist(GetActorLocation(), OwnerHector->GetActorLocation());
 		if (DistanceToOwner > 300.0f)
 		{
-			if (AController* Controller = GetController())
+			if (AController* MyController = GetController())
 			{
-				Controller->MoveToLocation(OwnerHector->GetActorLocation());
+				MyController->MoveToLocation(OwnerHector->GetActorLocation());
 			}
 		}
 	}
