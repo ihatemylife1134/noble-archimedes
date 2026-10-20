@@ -98,7 +98,7 @@ void UNobleArchimedesCombatComponent::LightAttack()
 	PlayAttackMontage(CurrentComboStage);
 
 	// Set combo window for next attack
-	GetWorldTimerManager().SetTimer(ComboResetTimer, this, &UNobleArchimedesCombatComponent::ResetCombo,
+	GetWorld()->GetTimerManager().SetTimer(ComboResetTimer, this, &UNobleArchimedesCombatComponent::ResetCombo,
 		CurrentComboStage == 1 ? COMBO_STAGE_1_WINDOW :
 		CurrentComboStage == 2 ? COMBO_STAGE_2_WINDOW : COMBO_STAGE_3_WINDOW, false);
 }
@@ -117,7 +117,7 @@ void UNobleArchimedesCombatComponent::ResetCombo()
 {
 	CurrentComboStage = 0;
 	bComboWindowOpen = false;
-	GetWorldTimerManager().ClearTimer(ComboResetTimer);
+	GetWorld()->GetTimerManager().ClearTimer(ComboResetTimer);
 }
 
 void UNobleArchimedesCombatComponent::StartGuard()

@@ -101,15 +101,9 @@ void AEnemyBase::MoveToPlayer()
 
 	if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
-		if (APawn* MyPawn = GetPawn())
-		{
-			if (ACharacter* MyChar = Cast<ACharacter>(MyPawn))
-			{
-				FVector Direction = (Player->GetActorLocation() - MyChar->GetActorLocation()).GetSafeNormal();
-				MyChar->GetCharacterMovement()->SetMovementMode(MOVE_Walk);
-				MyChar->GetCharacterMovement()->Velocity = Direction * MyChar->GetCharacterMovement()->MaxWalkSpeed;
-			}
-		}
+		FVector Direction = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+		GetCharacterMovement()->SetMovementMode(MOVE_Walk);
+		GetCharacterMovement()->Velocity = Direction * GetCharacterMovement()->MaxWalkSpeed;
 	}
 }
 
@@ -238,10 +232,18 @@ void AEnemyBase::Die()
 
 	// Destroy after a short delay to allow death animation
 	FTimerHandle DeathTimer;
-	GetWorldTimerManager().SetTimer(DeathTimer, this, &AEnemyBase::DestroySelf, 2.0f, false);
+	GetWorld()->GetTimerManager().SetTimer(DeathTimer, this, &AEnemyBase::DestroySelf, 2.0f, false);
 }
 
 void AEnemyBase::DestroySelf()
 {
-	GetWorld()->DestroyActor(this);
+	Destroy();
+}
+
+void AEnemyBase::OnPlayerDetected(AActor* DetectedActor)
+{
+}
+
+void AEnemyBase::OnPlayerLost(AActor* LostActor)
+{
 }
