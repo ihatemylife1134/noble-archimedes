@@ -32,7 +32,7 @@ void ANobleArchimedesPlayerController::PauseGame()
 {
 	if (GetWorld())
 	{
-		GetWorld()->GetAuthGameMode()->GetWorldSettings()->SetPaused(true);
+		UGameplayStatics::SetGamePaused(GetWorld(), true);
 	}
 }
 

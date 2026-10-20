@@ -237,5 +237,5 @@ void AEnemyBase::Die()
 
 void AEnemyBase::DestroySelf()
 {
-	Destroy();
+	GetWorld()->DestroyActor(this);
 }
