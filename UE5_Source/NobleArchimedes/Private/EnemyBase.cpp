@@ -101,9 +101,11 @@ void AEnemyBase::MoveToPlayer()
 
 	if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
-		if (AController* MyController = GetController())
+		if (ACharacter* Char = Cast<ACharacter>(GetPawn()))
 		{
-			MyController->MoveTo(Player->GetActorLocation());
+			FVector Direction = (Player->GetActorLocation() - Char->GetActorLocation()).GetSafeNormal();
+			Char->GetCharacterMovement()->SetMovementMode(MOVE_Walk);
+			Char->GetCharacterMovement()->Velocity = Direction * Char->GetCharacterMovement()->MaxWalkSpeed;
 		}
 	}
 }

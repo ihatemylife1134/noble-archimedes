@@ -110,9 +110,11 @@ void AInnocentDevilActor::FollowOwner()
 		float DistanceToOwner = FVector::Dist(GetActorLocation(), OwnerHector->GetActorLocation());
 		if (DistanceToOwner > 300.0f)
 		{
-			if (AController* MyController = GetController())
+			if (ACharacter* Char = Cast<ACharacter>(GetPawn()))
 			{
-				MyController->MoveToLocation(OwnerHector->GetActorLocation());
+				FVector Direction = (OwnerHector->GetActorLocation() - Char->GetActorLocation()).GetSafeNormal();
+				Char->GetCharacterMovement()->SetMovementMode(MOVE_Walk);
+				Char->GetCharacterMovement()->Velocity = Direction * Char->GetCharacterMovement()->MaxWalkSpeed;
 			}
 		}
 	}
