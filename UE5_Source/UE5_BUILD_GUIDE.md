@@ -317,16 +317,19 @@ Create `IMC_Default` Input Mapping Context in `Content/Input/`:
 | Move | WASD | Left Stick |
 | Look | Mouse | Right Stick |
 | Jump | Space | A / Cross |
-| Light Attack | J | X / Square |
-| Heavy Attack | K | Y / Triangle |
+| Light Attack | Left Mouse | X / Square |
+| Heavy Attack | Right Mouse | Y / Triangle |
 | Dodge | Shift + Dir | B / Circle + Dir |
-| Guard (Hold) | Left Shift | L1 / LB |
-| Guard Release | Left Shift (release) | L1 / LB (release) |
-| Special | Q | LT / L2 |
-| Interact | E / L | A / Cross |
-| Menu | Esc / Enter | Start / Options |
-| Map | M | Select / Touchpad |
-| Camera Mode | V | R3 / Rstick click |
+| Guard (Hold) | Left Ctrl | L1 / LB |
+| Special / Summon Devil | Q | D-Pad Up |
+| Interact / Steal | E | RB |
+| Use Potion | R | D-Pad Left |
+| Forge Best Weapon | F | D-Pad Right |
+| Quick Save | F5 | - |
+| Quick Load | F9 | - |
+| Menu / Pause | Escape | Start / Options |
+| Map | Tab | Select / Touchpad |
+| Camera Mode | C | D-Pad Down |
 
 Assign `IMC_Default` to the Enhanced Input Local Player Subsystem in `BP_HectorCharacter` or `BP_PlayerController`.
 

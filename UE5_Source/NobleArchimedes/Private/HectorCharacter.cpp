@@ -4,6 +4,8 @@
 #include "NobleArchimedesCameraComponent.h"
 #include "NobleArchimedesInnocentDevilComponent.h"
 #include "NobleArchimedesItemSystem.h"
+#include "NobleArchimedesWeaponForge.h"
+#include "NobleArchimedesGameInstance.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -14,6 +16,13 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "EnemyBase.h"
+#include "ItemDrop.h"
+#include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "TimerManager.h"
 
 
 AHectorCharacter::AHectorCharacter()
@@ -25,6 +34,7 @@ AHectorCharacter::AHectorCharacter()
 	CameraComponent = CreateDefaultSubobject<UNobleArchimedesCameraComponent>(TEXT("CameraComponent"));
 	InnocentDevilComponent = CreateDefaultSubobject<UNobleArchimedesInnocentDevilComponent>(TEXT("InnocentDevilComponent"));
 	ItemSystem = CreateDefaultSubobject<UNobleArchimedesItemSystem>(TEXT("ItemSystem"));
+	WeaponForge = CreateDefaultSubobject<UNobleArchimedesWeaponForge>(TEXT("WeaponForge"));
 
 	// Setup camera boom
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -51,6 +61,21 @@ void AHectorCharacter::BeginPlay()
 	UE_LOG(LogTemp, Display,
 		TEXT("NobleArchimedes: Hector BeginPlay. Controller=%s MappingContext=%s"),
 		*GetNameSafe(GetController()), *GetNameSafe(DefaultMappingContext));
+
+	if (UNobleArchimedesGameInstance* GameInstance = Cast<UNobleArchimedesGameInstance>(GetGameInstance()))
+	{
+		GameInstance->ApplyPendingLoad();
+	}
+
+#if !UE_BUILD_SHIPPING
+	if (FParse::Param(FCommandLine::Get(), TEXT("NATestCombat")))
+	{
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().SetTimerForNextTick(this, &AHectorCharacter::RunCombatSmokeTest);
+		}
+	}
+#endif
 }
 
 void AHectorCharacter::AddDefaultMappingContext()
@@ -159,6 +184,22 @@ void AHectorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	{
 		Input->BindAction(PauseAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_Pause);
 	}
+	if (UseItemAction)
+	{
+		Input->BindAction(UseItemAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_UseItem);
+	}
+	if (ForgeAction)
+	{
+		Input->BindAction(ForgeAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_Forge);
+	}
+	if (QuickSaveAction)
+	{
+		Input->BindAction(QuickSaveAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_QuickSave);
+	}
+	if (QuickLoadAction)
+	{
+		Input->BindAction(QuickLoadAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_QuickLoad);
+	}
 }
 
 void AHectorCharacter::Input_Move(const FInputActionValue& Value)
@@ -206,7 +247,67 @@ void AHectorCharacter::Input_Dodge()
 
 void AHectorCharacter::Input_Interact()
 {
+	TryInteract();
 	OnInteractPressed();
+}
+
+bool AHectorCharacter::TryInteract()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	// Steal from the nearest living, stealable enemy in front of Hector.
+	AEnemyBase* BestTarget = nullptr;
+	float BestDistanceSq = FMath::Square(320.0f);
+	const FVector Forward = GetActorForwardVector();
+	for (TActorIterator<AEnemyBase> It(World); It; ++It)
+	{
+		AEnemyBase* Enemy = *It;
+		if (!Enemy || Enemy->bIsDead || !Enemy->CanBeStolen || Enemy->bHasBeenStolenFrom)
+		{
+			continue;
+		}
+
+		const FVector ToEnemy = Enemy->GetActorLocation() - GetActorLocation();
+		if (FVector::DotProduct(Forward, ToEnemy.GetSafeNormal()) < 0.35f)
+		{
+			continue;
+		}
+
+		const float DistanceSq = ToEnemy.SizeSquared();
+		if (DistanceSq < BestDistanceSq)
+		{
+			BestDistanceSq = DistanceSq;
+			BestTarget = Enemy;
+		}
+	}
+
+	if (!BestTarget || !ItemSystem)
+	{
+		return false;
+	}
+
+	FName StolenItem;
+	if (ItemSystem->TrySteal(BestTarget, StolenItem))
+	{
+		ItemSystem->AddItem(StolenItem, 1);
+		if (WeaponForge)
+		{
+			WeaponForge->AddMaterial(StolenItem, 1);
+		}
+		BestTarget->bHasBeenStolenFrom = true;
+		BestTarget->bIsStealable = false;
+		UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: stole %s from %s."),
+			*StolenItem.ToString(), *BestTarget->EnemyName.ToString());
+		return true;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: steal attempt on %s failed."),
+		*BestTarget->EnemyName.ToString());
+	return false;
 }
 
 void AHectorCharacter::Input_CycleInnocentDevil()
@@ -217,7 +318,11 @@ void AHectorCharacter::Input_CycleInnocentDevil()
 		return;
 	}
 
-	const int32 NextIndex = (GetActiveInnocentDevilIndex() + 1) % Unlocked.Num();
+	const EInnocentDevilType ActiveType = InnocentDevilComponent
+		? InnocentDevilComponent->GetActiveInnocentDevilType()
+		: EInnocentDevilType::None;
+	const int32 CurrentIndex = Unlocked.IndexOfByKey(ActiveType);
+	const int32 NextIndex = (CurrentIndex + 1) % Unlocked.Num();
 	SummonInnocentDevil(Unlocked[NextIndex]);
 }
 
@@ -243,6 +348,280 @@ void AHectorCharacter::Input_Pause()
 	{
 		PC->PauseGame();
 	}
+}
+
+void AHectorCharacter::Input_UseItem()
+{
+	if (!ItemSystem)
+	{
+		return;
+	}
+
+	// R uses a Potion, then a High Potion if no Potion remains. Both are
+	// consumed through the shared item system so HUD and save data stay in sync.
+	if (ItemSystem->UseItem("Potion", this))
+	{
+		UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: used Potion. Health=%.1f."), GetHealth());
+	}
+	else if (ItemSystem->UseItem("High Potion", this))
+	{
+		UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: used High Potion. Health=%.1f."), GetHealth());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NobleArchimedes: no healing item available."));
+	}
+}
+
+void AHectorCharacter::Input_Forge()
+{
+	ForgeBestAvailable();
+}
+
+bool AHectorCharacter::ForgeBestAvailable()
+{
+	if (!WeaponForge)
+	{
+		return false;
+	}
+
+	TArray<FWeaponRecipe> Recipes = WeaponForge->GetAllRecipes();
+	Recipes.Sort([](const FWeaponRecipe& A, const FWeaponRecipe& B)
+	{
+		return A.ForgeLevel < B.ForgeLevel;
+	});
+
+	for (const FWeaponRecipe& Recipe : Recipes)
+	{
+		FName ForgedWeapon;
+		if (WeaponForge->ForgeWeaponByName(Recipe.WeaponName, ForgedWeapon))
+		{
+			if (CombatComponent)
+			{
+				TArray<FString> Equipped = CombatComponent->GetEquippedWeapons();
+				Equipped.AddUnique(ForgedWeapon.ToString());
+				CombatComponent->SetEquippedWeapons(Equipped);
+				CombatComponent->EquipWeaponByName(ForgedWeapon);
+			}
+			UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: forged %s."), *ForgedWeapon.ToString());
+			return true;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("NobleArchimedes: not enough materials to forge a weapon."));
+	return false;
+}
+
+void AHectorCharacter::Input_QuickSave()
+{
+	if (UNobleArchimedesGameInstance* GameInstance = Cast<UNobleArchimedesGameInstance>(GetGameInstance()))
+	{
+		GameInstance->SaveGame(0);
+		UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: quick-saved to slot 0."));
+	}
+}
+
+void AHectorCharacter::Input_QuickLoad()
+{
+	if (UNobleArchimedesGameInstance* GameInstance = Cast<UNobleArchimedesGameInstance>(GetGameInstance()))
+	{
+		if (GameInstance->HasSaveGame(5))
+		{
+			GameInstance->LoadGame(5);
+			UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: loading autosave slot 5."));
+		}
+		else if (GameInstance->HasSaveGame(0))
+		{
+			GameInstance->LoadGame(0);
+			UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: loading quick-save slot 0."));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NobleArchimedes: no save game to load."));
+		}
+	}
+}
+
+void AHectorCharacter::HandleDeath()
+{
+	if (bIsDead)
+	{
+		return;
+	}
+
+	bIsDead = true;
+	UE_LOG(LogTemp, Warning, TEXT("NobleArchimedes: Hector died; reloading the current chapter."));
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		DisableInput(PC);
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		FTimerHandle RespawnTimer;
+		FTimerDelegate RespawnDelegate = FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			if (UWorld* CurrentWorld = GetWorld())
+			{
+				UGameplayStatics::OpenLevel(this, FName(*CurrentWorld->GetMapName()));
+			}
+		});
+		World->GetTimerManager().SetTimer(RespawnTimer, RespawnDelegate, 2.5f, false);
+	}
+}
+
+void AHectorCharacter::RunCombatSmokeTest()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	const FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 140.0f + FVector(0.0f, 0.0f, 10.0f);
+	AEnemyBase* TestEnemy = World->SpawnActor<AEnemyBase>(
+		AEnemyBase::StaticClass(), SpawnLocation, GetActorRotation(), SpawnParams);
+	if (!TestEnemy)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NA-TEST: failed to spawn test enemy."));
+		return;
+	}
+
+	TestEnemy->EnemyName = "Test Skeleton";
+	TestEnemy->MaxHealth = 30.0f;
+	TestEnemy->Health = 30.0f;
+	TestEnemy->CurrentHealth = 30.0f;
+	TestEnemy->ItemDrops = "Bone Shard";
+	TestEnemy->CanBeStolen = true;
+	TestEnemy->StealItem = "Bone Shard";
+	TestEnemy->DetectionRange = 0.0f;
+	TestEnemy->AttackCooldown = 999.0f;
+	TestEnemy->ItemDropClass = LoadClass<AItemDrop>(nullptr, TEXT("/Game/Blueprints/World/BP_ItemDrop.BP_ItemDrop_C"));
+
+	UE_LOG(LogTemp, Log, TEXT("NA-TEST: spawned enemy at %s with %.0f HP."),
+		*SpawnLocation.ToString(), TestEnemy->CurrentHealth);
+
+	FTimerHandle FirstAttackTimer;
+	World->GetTimerManager().SetTimer(FirstAttackTimer, FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		UE_LOG(LogTemp, Log, TEXT("NA-TEST: light attack 1."));
+		LightAttack();
+	}), 0.3f, false);
+
+	FTimerHandle SecondAttackTimer;
+	World->GetTimerManager().SetTimer(SecondAttackTimer, FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		UE_LOG(LogTemp, Log, TEXT("NA-TEST: light attack 2."));
+		LightAttack();
+	}), 1.0f, false);
+
+	FTimerHandle ReportTimer;
+	World->GetTimerManager().SetTimer(ReportTimer, FTimerDelegate::CreateWeakLambda(this, [this, TestEnemy]()
+	{
+		if (IsValid(TestEnemy))
+		{
+			UE_LOG(LogTemp, Log, TEXT("NA-TEST: enemy hp=%.1f dead=%s."),
+				TestEnemy->CurrentHealth, TestEnemy->bIsDead ? TEXT("true") : TEXT("false"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("NA-TEST: enemy was destroyed."));
+		}
+
+		int32 DropCount = 0;
+		for (TActorIterator<AItemDrop> It(GetWorld()); It; ++It)
+		{
+			++DropCount;
+		}
+		UE_LOG(LogTemp, Log, TEXT("NA-TEST: item drops in world=%d."), DropCount);
+
+		SummonInnocentDevil(EInnocentDevilType::Fairy);
+		const EInnocentDevilType ActiveType = InnocentDevilComponent
+			? InnocentDevilComponent->GetActiveInnocentDevilType()
+			: EInnocentDevilType::None;
+		UE_LOG(LogTemp, Log, TEXT("NA-TEST: active innocent devil=%d."), static_cast<int32>(ActiveType));
+
+		ApplyDamage(10.0f, EDamageType::Slash);
+		UE_LOG(LogTemp, Log, TEXT("NA-TEST: player hp after 10 damage=%.1f."), GetHealth());
+
+		if (WeaponForge)
+		{
+			WeaponForge->AddMaterial(TEXT("Iron Shard"), 1);
+			UE_LOG(LogTemp, Log, TEXT("NA-TEST: forge iron=%d."), WeaponForge->GetMaterialQuantity(TEXT("Iron Shard")));
+			const bool bForged = ForgeBestAvailable();
+			UE_LOG(LogTemp, Log, TEXT("NA-TEST: forge success=%s forged=%d."),
+				bForged ? TEXT("true") : TEXT("false"), GetForgedWeapons().Num());
+		}
+
+		if (ItemSystem)
+		{
+			ItemSystem->AddItem(TEXT("Potion"), 1);
+			SetHealth(GetHealth() - 20.0f);
+			const bool bUsed = ItemSystem->UseItem(TEXT("Potion"), this);
+			UE_LOG(LogTemp, Log, TEXT("NA-TEST: potion used=%s hp=%.1f."),
+				bUsed ? TEXT("true") : TEXT("false"), GetHealth());
+		}
+
+		if (UNobleArchimedesGameInstance* GameInstance = Cast<UNobleArchimedesGameInstance>(GetGameInstance()))
+		{
+			GameInstance->SaveGame(4);
+			SetHealth(42.0f);
+			GameInstance->LoadGame(4);
+			UE_LOG(LogTemp, Log, TEXT("NA-TEST: save-load hp=%.1f forged=%d."),
+				GetHealth(), GetForgedWeapons().Num());
+		}
+	}), 2.0f, false);
+
+	FTimerHandle AiSpawnTimer;
+	World->GetTimerManager().SetTimer(AiSpawnTimer, FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		UWorld* CurrentWorld = GetWorld();
+		if (!CurrentWorld)
+		{
+			return;
+		}
+
+		FActorSpawnParameters AiSpawnParams;
+		AiSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		const FVector AiLocation = GetActorLocation() + GetActorForwardVector() * 650.0f;
+		AEnemyBase* Chaser = CurrentWorld->SpawnActor<AEnemyBase>(
+			AEnemyBase::StaticClass(), AiLocation, GetActorRotation(), AiSpawnParams);
+		if (!Chaser)
+		{
+			UE_LOG(LogTemp, Error, TEXT("NA-TEST: failed to spawn chasing enemy."));
+			return;
+		}
+
+		Chaser->EnemyName = "Test Chaser";
+		Chaser->MaxHealth = 1000.0f;
+		Chaser->CurrentHealth = 1000.0f;
+		Chaser->Damage = 5.0f;
+		Chaser->AttackRange = 150.0f;
+		Chaser->DetectionRange = 1000.0f;
+		Chaser->AttackCooldown = 0.5f;
+		Chaser->AttackWindup = 0.2f;
+		Chaser->ItemDrops = "";
+		UE_LOG(LogTemp, Log, TEXT("NA-TEST: chaser spawned; distance=%.0f."),
+			FVector::Dist(GetActorLocation(), AiLocation));
+
+		FTimerHandle AiReportTimer;
+		CurrentWorld->GetTimerManager().SetTimer(AiReportTimer, FTimerDelegate::CreateWeakLambda(this, [this, Chaser]()
+		{
+			if (IsValid(Chaser))
+			{
+				UE_LOG(LogTemp, Log, TEXT("NA-TEST: chaser distance=%.0f player hp=%.1f."),
+					FVector::Dist(GetActorLocation(), Chaser->GetActorLocation()), GetHealth());
+				Chaser->Destroy();
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("NA-TEST: chaser invalid, player hp=%.1f."), GetHealth());
+			}
+		}), 3.5f, false);
+	}), 2.5f, false);
 }
 
 void AHectorCharacter::Move(float ValueX, float ValueY)
@@ -325,14 +704,12 @@ TArray<EInnocentDevilType> AHectorCharacter::GetUnlockedInnocentDevils() const
 
 TArray<FName> AHectorCharacter::GetDiscoveredRecipes() const
 {
-	// No WeaponForge component on Hector; return empty. Populate when WeaponForge is integrated.
-	return TArray<FName>();
+	return WeaponForge ? WeaponForge->GetDiscoveredRecipes() : TArray<FName>();
 }
 
 TArray<FName> AHectorCharacter::GetForgedWeapons() const
 {
-	// No WeaponForge component on Hector; return empty. Populate when WeaponForge is integrated.
-	return TArray<FName>();
+	return WeaponForge ? WeaponForge->GetForgedWeapons() : TArray<FName>();
 }
 
 float AHectorCharacter::GetMasterVolume() const
@@ -360,23 +737,49 @@ void AHectorCharacter::SetActiveInnocentDevilIndex(int32 NewIndex)
 {
 	if (InnocentDevilComponent)
 	{
-		// Implementation would set active devil on the component
-		// Stored via InnocentDevilComponent's internal state
+		const TArray<FInnocentDevilData> Devils = InnocentDevilComponent->GetInnocentDevils();
+		if (Devils.IsValidIndex(NewIndex) && Devils[NewIndex].bIsUnlocked)
+		{
+			InnocentDevilComponent->SummonInnocentDevil(Devils[NewIndex].DevilType);
+		}
 	}
 }
 
 void AHectorCharacter::SetUnlockedInnocentDevils(TArray<EInnocentDevilType> NewUnlocked)
 {
-	// Unlocked devils are tracked via InnocentDevilComponent's bIsUnlocked flags on each devil
-	// This setter is provided for save/load completeness
+	if (!InnocentDevilComponent)
+	{
+		return;
+	}
+
+	TArray<FInnocentDevilData> Devils = InnocentDevilComponent->GetInnocentDevils();
+	for (FInnocentDevilData& Devil : Devils)
+	{
+		Devil.bIsUnlocked = NewUnlocked.Contains(Devil.DevilType);
+	}
+	InnocentDevilComponent->SetInnocentDevils(Devils);
+}
+
+void AHectorCharacter::SetInnocentDevils(const TArray<FInnocentDevilData>& NewDevils)
+{
+	if (InnocentDevilComponent)
+	{
+		InnocentDevilComponent->SetInnocentDevils(NewDevils);
+	}
 }
 
 void AHectorCharacter::SetDiscoveredRecipes(TArray<FName> NewRecipes)
 {
-	// Discovered recipes tracked via WeaponForge component when integrated
+	if (WeaponForge)
+	{
+		WeaponForge->SetDiscoveredRecipes(NewRecipes);
+	}
 }
 
 void AHectorCharacter::SetForgedWeapons(TArray<FName> NewWeapons)
 {
-	// Forged weapons tracked via WeaponForge component when integrated
+	if (WeaponForge)
+	{
+		WeaponForge->SetForgedWeapons(NewWeapons);
+	}
 }

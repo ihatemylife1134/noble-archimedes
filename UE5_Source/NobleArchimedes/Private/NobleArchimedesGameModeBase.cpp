@@ -30,11 +30,9 @@ void ANobleArchimedesGameModeBase::InitializeGameState()
 	// Always unlocked: Short Sword
 	UnlockedWeaponRecipes.Add("Short Sword");
 
-	// Load existing save if available
-	if (GameInstance && GameInstance->HasSaveGame(0))
-	{
-		LoadSaveData(0);
-	}
+	// A new session starts at Chapter 1. Continue/load is driven by the
+	// GameInstance so the destination level can finish streaming before the
+	// saved transform and inventory are applied.
 }
 
 void ANobleArchimedesGameModeBase::StartChapter(int32 ChapterIndex)
@@ -81,11 +79,29 @@ void ANobleArchimedesGameModeBase::LoadGameProgress(int32 SlotIndex)
 
 		if (GameInstance->GetCurrentSaveGame())
 		{
-			CurrentChapter = GameInstance->GetCurrentSaveGame()->CurrentChapter;
-			CompletedChapters = GameInstance->GetCurrentSaveGame()->CompletedChapters;
-			UnlockedInnocentDevils = GameInstance->GetCurrentSaveGame()->UnlockedInnocentDevils;
-			UnlockedWeaponRecipes = GameInstance->GetCurrentSaveGame()->ForgedWeapons;
+			RestoreProgressFromSave(GameInstance->GetCurrentSaveGame());
 		}
+	}
+}
+
+void ANobleArchimedesGameModeBase::RestoreProgressFromSave(const UNobleArchimedesSaveGame* Save)
+{
+	if (!Save)
+	{
+		return;
+	}
+
+	CurrentChapter = Save->CurrentChapter;
+	CompletedChapters = Save->CompletedChapters;
+	UnlockedInnocentDevils = Save->UnlockedInnocentDevils;
+	UnlockedWeaponRecipes = Save->UnlockedWeaponRecipes;
+	if (UnlockedWeaponRecipes.Num() == 0)
+	{
+		UnlockedWeaponRecipes = Save->ForgedWeapons;
+	}
+	if (!UnlockedWeaponRecipes.Contains("Short Sword"))
+	{
+		UnlockedWeaponRecipes.Add("Short Sword");
 	}
 }
 

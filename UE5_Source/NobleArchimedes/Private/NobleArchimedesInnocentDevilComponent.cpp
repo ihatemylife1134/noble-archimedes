@@ -2,7 +2,9 @@
 
 #include "NobleArchimedesInnocentDevilComponent.h"
 #include "HectorCharacter.h"
+#include "InnocentDevilActor.h"
 #include "Engine/World.h"
+#include "TimerManager.h"
 
 UNobleArchimedesInnocentDevilComponent::UNobleArchimedesInnocentDevilComponent()
 {
@@ -21,7 +23,8 @@ void UNobleArchimedesInnocentDevilComponent::BeginPlay()
 	Fairy.Health = 50;
 	Fairy.MaxHealth = 50;
 	Fairy.Attack = 8;
-	Fairy.bIsUnlocked = false;
+	Fairy.bIsUnlocked = true; // Acquired in Chapter 1.
+	Fairy.EvolutionCrystalColor = EEvolutionCrystalType::Light;
 	InnocentDevils.Add(Fairy);
 
 	FInnocentDevilData Griffin;
@@ -32,6 +35,7 @@ void UNobleArchimedesInnocentDevilComponent::BeginPlay()
 	Griffin.MaxHealth = 80;
 	Griffin.Attack = 12;
 	Griffin.bIsUnlocked = false;
+	Griffin.EvolutionCrystalColor = EEvolutionCrystalType::Fire;
 	InnocentDevils.Add(Griffin);
 
 	FInnocentDevilData Salamander;
@@ -42,6 +46,7 @@ void UNobleArchimedesInnocentDevilComponent::BeginPlay()
 	Salamander.MaxHealth = 70;
 	Salamander.Attack = 10;
 	Salamander.bIsUnlocked = false;
+	Salamander.EvolutionCrystalColor = EEvolutionCrystalType::Fire;
 	InnocentDevils.Add(Salamander);
 
 	FInnocentDevilData Ogre;
@@ -52,6 +57,7 @@ void UNobleArchimedesInnocentDevilComponent::BeginPlay()
 	Ogre.MaxHealth = 120;
 	Ogre.Attack = 15;
 	Ogre.bIsUnlocked = false;
+	Ogre.EvolutionCrystalColor = EEvolutionCrystalType::Slash;
 	InnocentDevils.Add(Ogre);
 
 	FInnocentDevilData SkeletonDevil;
@@ -62,6 +68,7 @@ void UNobleArchimedesInnocentDevilComponent::BeginPlay()
 	SkeletonDevil.MaxHealth = 60;
 	SkeletonDevil.Attack = 9;
 	SkeletonDevil.bIsUnlocked = false;
+	SkeletonDevil.EvolutionCrystalColor = EEvolutionCrystalType::Dark;
 	InnocentDevils.Add(SkeletonDevil);
 
 	FInnocentDevilData WitchDevil;
@@ -72,6 +79,7 @@ void UNobleArchimedesInnocentDevilComponent::BeginPlay()
 	WitchDevil.MaxHealth = 55;
 	WitchDevil.Attack = 11;
 	WitchDevil.bIsUnlocked = false;
+	WitchDevil.EvolutionCrystalColor = EEvolutionCrystalType::Magic;
 	InnocentDevils.Add(WitchDevil);
 
 	FInnocentDevilData Pumpkin;
@@ -82,6 +90,7 @@ void UNobleArchimedesInnocentDevilComponent::BeginPlay()
 	Pumpkin.MaxHealth = 100;
 	Pumpkin.Attack = 20;
 	Pumpkin.bIsUnlocked = false;
+	Pumpkin.EvolutionCrystalColor = EEvolutionCrystalType::Special;
 	InnocentDevils.Add(Pumpkin);
 }
 
@@ -93,12 +102,18 @@ void UNobleArchimedesInnocentDevilComponent::TickComponent(float DeltaTime, ELev
 
 void UNobleArchimedesInnocentDevilComponent::SummonInnocentDevil(EInnocentDevilType Type)
 {
-	// Find Innocent Devil data and unlock it
+	// Find Innocent Devil data. Only devils unlocked through progression can
+	// be summoned.
 	for (auto& Data : InnocentDevils)
 	{
 		if (Data.DevilType == Type)
 		{
-			Data.bIsUnlocked = true;
+			if (!Data.bIsUnlocked)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("SummonInnocentDevil: %s is not unlocked yet."), *Data.DevilName.ToString());
+				return;
+			}
+
 			ActiveInnocentDevil = Type;
 			SpawnInnocentDevilActor(Type);
 			return;
@@ -110,6 +125,11 @@ void UNobleArchimedesInnocentDevilComponent::DismissInnocentDevil(EInnocentDevil
 {
 	if (ActiveInnocentDevil == Type)
 	{
+		if (ActiveDevilActor)
+		{
+			ActiveDevilActor->Destroy();
+			ActiveDevilActor = nullptr;
+		}
 		ActiveInnocentDevil = EInnocentDevilType::None;
 	}
 }
@@ -117,6 +137,10 @@ void UNobleArchimedesInnocentDevilComponent::DismissInnocentDevil(EInnocentDevil
 void UNobleArchimedesInnocentDevilComponent::SetMode(EInnocentDevilMode NewMode)
 {
 	CurrentMode = NewMode;
+	if (ActiveDevilActor)
+	{
+		ActiveDevilActor->SetDevilMode(NewMode);
+	}
 }
 
 void UNobleArchimedesInnocentDevilComponent::EvolveInnocentDevil(EInnocentDevilType Type, EEvolutionCrystalType CrystalColor)
@@ -151,6 +175,15 @@ TArray<FInnocentDevilData> UNobleArchimedesInnocentDevilComponent::GetInnocentDe
 	return InnocentDevils;
 }
 
+void UNobleArchimedesInnocentDevilComponent::SetInnocentDevils(const TArray<FInnocentDevilData>& NewDevils)
+{
+	// Preserve the built-in roster if a save has no devil entries.
+	if (NewDevils.Num() > 0)
+	{
+		InnocentDevils = NewDevils;
+	}
+}
+
 bool UNobleArchimedesInnocentDevilComponent::HasInnocentDevil(EInnocentDevilType Type) const
 {
 	for (const auto& Data : InnocentDevils)
@@ -177,6 +210,12 @@ void UNobleArchimedesInnocentDevilComponent::CommandAttack()
 
 	UE_LOG(LogTemp, Warning, TEXT("Innocent Devil (%d) commanded to Attack!"), (int32)ActiveInnocentDevil);
 
+	if (ActiveDevilActor)
+	{
+		ActiveDevilActor->SetDevilMode(EInnocentDevilMode::Command);
+		ActiveDevilActor->CommandAttack();
+	}
+
 	if (GetWorld())
 	{
 		GetWorld()->GetTimerManager().SetTimer(CommandResetTimer, this, &UNobleArchimedesInnocentDevilComponent::ResetToAutoMode, 2.0f, false);
@@ -194,6 +233,12 @@ void UNobleArchimedesInnocentDevilComponent::CommandGuard()
 	CurrentMode = EInnocentDevilMode::Guard;
 
 	UE_LOG(LogTemp, Warning, TEXT("Innocent Devil (%d) commanded to Guard!"), (int32)ActiveInnocentDevil);
+
+	if (ActiveDevilActor)
+	{
+		ActiveDevilActor->SetDevilMode(EInnocentDevilMode::Guard);
+		ActiveDevilActor->CommandGuard();
+	}
 
 	if (GetWorld())
 	{
@@ -238,6 +283,12 @@ void UNobleArchimedesInnocentDevilComponent::CommandHeal()
 
 	CurrentMode = EInnocentDevilMode::Command;
 
+	if (ActiveDevilActor)
+	{
+		ActiveDevilActor->SetDevilMode(EInnocentDevilMode::Command);
+		ActiveDevilActor->CommandHeal();
+	}
+
 	if (GetWorld())
 	{
 		GetWorld()->GetTimerManager().SetTimer(CommandResetTimer, this, &UNobleArchimedesInnocentDevilComponent::ResetToAutoMode, 2.0f, false);
@@ -268,10 +319,46 @@ void UNobleArchimedesInnocentDevilComponent::UpdateInnocentDevilAI(float DeltaTi
 
 void UNobleArchimedesInnocentDevilComponent::SpawnInnocentDevilActor(EInnocentDevilType Type)
 {
-	// Placeholder: full actor spawning requires an Innocent Devil actor class,
-	// which doesn't exist yet. Log the attempt so designers can see when a
-	// spawn is requested.
-	UE_LOG(LogTemp, Warning, TEXT("SpawnInnocentDevilActor: spawn attempted for Innocent Devil type %d, but no Innocent Devil actor class is assigned yet."), (int32)Type);
+	UWorld* World = GetWorld();
+	AHectorCharacter* Owner = Cast<AHectorCharacter>(GetOwner());
+	if (!World || !Owner)
+	{
+		return;
+	}
+
+	if (ActiveDevilActor)
+	{
+		ActiveDevilActor->Destroy();
+		ActiveDevilActor = nullptr;
+	}
+
+	UClass* SpawnClass = DevilActorClass ? DevilActorClass.Get() : AInnocentDevilActor::StaticClass();
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = Owner;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	const FVector SpawnLocation = Owner->GetActorLocation()
+		+ Owner->GetActorRightVector() * 150.0f
+		- Owner->GetActorForwardVector() * 100.0f;
+	ActiveDevilActor = World->SpawnActor<AInnocentDevilActor>(
+		SpawnClass, SpawnLocation, Owner->GetActorRotation(), SpawnParams);
+
+	if (!ActiveDevilActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SpawnInnocentDevilActor: failed to spawn devil type %d."), (int32)Type);
+		return;
+	}
+
+	for (const FInnocentDevilData& Data : InnocentDevils)
+	{
+		if (Data.DevilType == Type)
+		{
+			ActiveDevilActor->InitializeDevil(Data, Owner);
+			ActiveDevilActor->SetDevilMode(CurrentMode);
+			UE_LOG(LogTemp, Log, TEXT("SpawnInnocentDevilActor: summoned %s."), *Data.DevilName.ToString());
+			break;
+		}
+	}
 }
 
 void UNobleArchimedesInnocentDevilComponent::UpdateInnocentDevilStats(FInnocentDevilData& Data)
@@ -307,5 +394,9 @@ void UNobleArchimedesInnocentDevilComponent::UpdateInnocentDevilStats(FInnocentD
 void UNobleArchimedesInnocentDevilComponent::ResetToAutoMode()
 {
 	CurrentMode = EInnocentDevilMode::Auto;
+	if (ActiveDevilActor)
+	{
+		ActiveDevilActor->SetDevilMode(EInnocentDevilMode::Auto);
+	}
 	UE_LOG(LogTemp, Warning, TEXT("Innocent Devil mode reset to Auto."));
 }

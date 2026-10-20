@@ -2,14 +2,15 @@
 
 #include "EnemyBase.h"
 #include "HectorCharacter.h"
+#include "ItemDrop.h"
 #include "NobleArchimedesItemSystem.h"
+#include "Components/CapsuleComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Damage.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AEnemyBase::AEnemyBase()
@@ -21,6 +22,9 @@ AEnemyBase::AEnemyBase()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
+		// Room-spawned enemies have no AIController; allow their movement
+		// component to simulate velocity set by the simple chase logic.
+		GetCharacterMovement()->bRunPhysicsWithNoController = true;
 	}
 
 	CurrentHealth = MaxHealth;
@@ -53,6 +57,47 @@ void AEnemyBase::Tick(float DeltaTime)
 	UpdatePerception(DeltaTime);
 	CheckAttackRange();
 	UpdateStealWindow(DeltaTime);
+
+	AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (!Player)
+	{
+		return;
+	}
+
+	if (bCanSeePlayer)
+	{
+		FacePlayer();
+
+		if (!bIsInAttackRange)
+		{
+			MoveToPlayer();
+			PlayChaseAnimation();
+		}
+		else
+		{
+			if (GetCharacterMovement())
+			{
+				GetCharacterMovement()->StopMovementImmediately();
+			}
+
+			if (!bIsAttacking && GetWorld()->GetTimeSeconds() - LastAttackTime >= AttackCooldown)
+			{
+				bIsAttacking = true;
+				LastAttackTime = GetWorld()->GetTimeSeconds();
+				PlayAttackAnimation();
+				GetWorld()->GetTimerManager().SetTimer(
+					AttackTimer, this, &AEnemyBase::PerformAttack, AttackWindup, false);
+			}
+		}
+	}
+	else
+	{
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->StopMovementImmediately();
+		}
+		PlayIdleAnimation();
+	}
 }
 
 void AEnemyBase::ApplyDamage(float DamageAmount, EDamageType DamageType)
@@ -102,9 +147,14 @@ void AEnemyBase::MoveToPlayer()
 
 	if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
-		FVector Direction = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-		GetCharacterMovement()->Velocity = Direction * GetCharacterMovement()->MaxWalkSpeed;
+		FVector Direction = Player->GetActorLocation() - GetActorLocation();
+		Direction.Z = 0.0f;
+		Direction = Direction.GetSafeNormal();
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+			GetCharacterMovement()->Velocity = Direction * GetCharacterMovement()->MaxWalkSpeed;
+		}
 	}
 }
 
@@ -171,7 +221,26 @@ void AEnemyBase::ApplyDamageToPlayer(class AHectorCharacter* Player)
 {
 	if (!Player) return;
 
-	Player->ApplyDamage(Damage, EDamageType::Slash); // Default damage type, override per enemy
+	if (Player->CombatComponent)
+	{
+		Player->CombatComponent->CheckPerfectGuard();
+	}
+	Player->ApplyDamage(Damage, AttackDamageType);
+}
+
+void AEnemyBase::PerformAttack()
+{
+	bIsAttacking = false;
+	if (bIsDead) return;
+
+	AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (!Player) return;
+
+	const float Distance = FVector::Dist(GetActorLocation(), Player->GetActorLocation());
+	if (Distance <= AttackRange + 60.0f)
+	{
+		ApplyDamageToPlayer(Player);
+	}
 }
 
 void AEnemyBase::UpdatePerception(float DeltaTime)
@@ -196,7 +265,9 @@ void AEnemyBase::CheckAttackRange()
 	if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
 		float DistanceToPlayer = FVector::Dist(GetActorLocation(), Player->GetActorLocation());
-		bIsInAttackRange = (DistanceToPlayer <= AttackRange);
+		// Character capsules stop the enemy slightly before the nominal range;
+		// allow a small contact tolerance so melee attacks can actually land.
+		bIsInAttackRange = (DistanceToPlayer <= AttackRange + 50.0f);
 	}
 	else
 	{
@@ -220,20 +291,59 @@ void AEnemyBase::Die()
 {
 	bIsDead = true;
 	bIsStealable = false;
+	bIsAttacking = false;
 
 	// Disable movement and collision
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->DisableMovement();
 	}
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	DropLoot();
 
 	// Play death animation (handled in Blueprint)
 	// Notify room that this enemy was defeated
 	OnDefeated.Broadcast(this);
 
 	// Destroy after a short delay to allow death animation
-	FTimerHandle DeathTimer;
-	GetWorld()->GetTimerManager().SetTimer(DeathTimer, this, &AEnemyBase::DestroySelf, 2.0f, false);
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(DeathTimer, this, &AEnemyBase::DestroySelf, 2.0f, false);
+	}
+}
+
+void AEnemyBase::DropLoot()
+{
+	TArray<FString> Drops;
+	ItemDrops.ParseIntoArray(Drops, TEXT(";"), true);
+	if (Drops.Num() == 0)
+	{
+		return;
+	}
+
+	const FString& ChosenItem = Drops[FMath::RandRange(0, Drops.Num() - 1)];
+	if (ChosenItem.IsEmpty() || ChosenItem.Equals(TEXT("None"), ESearchCase::IgnoreCase))
+	{
+		return;
+	}
+
+	UClass* DropClass = ItemDropClass ? ItemDropClass.Get() : AItemDrop::StaticClass();
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	AItemDrop* Drop = GetWorld()->SpawnActor<AItemDrop>(
+		DropClass,
+		GetActorLocation() + FVector(0.0f, 0.0f, 60.0f),
+		FRotator::ZeroRotator,
+		SpawnParams);
+	if (Drop)
+	{
+		Drop->InitializeItem(FName(*ChosenItem), false, false);
+		UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: %s dropped %s."), *EnemyName.ToString(), *ChosenItem);
+	}
 }
 
 void AEnemyBase::DestroySelf()

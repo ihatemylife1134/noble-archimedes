@@ -9,6 +9,8 @@
 #include "NobleArchimedesCombatComponent.generated.h"
 
 class AHectorCharacter;
+class AEnemyBase;
+class UDataTable;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class NOBLEARCHIMEDES_API UNobleArchimedesCombatComponent : public UActorComponent
@@ -131,13 +133,40 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void EquipWeapon(EWeaponType NewWeaponType);
 
+	/** Equip an exact forged weapon by its data-table row name. */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool EquipWeaponByName(FName WeaponName);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
 	EWeaponType GetCurrentWeaponType() const { return CurrentWeaponType; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
 	FWeaponData GetCurrentWeaponData() const { return CurrentWeaponData; }
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	FWeaponData GetWeaponDataByName(FName WeaponName) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	TArray<FName> GetKnownWeaponNames() const;
+
 protected:
+	// Weapon rows imported from DT_WeaponDataTable. Assigned on the Hector
+	// Blueprint so combat stats stay data-driven.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Data")
+	TObjectPtr<UDataTable> WeaponDataTableAsset;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Data")
+	FName DefaultWeaponName = "Short Sword";
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Trace")
+	float AttackTraceRadius = 90.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Trace")
+	float AttackTraceForwardOffset = 80.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Trace")
+	float AttackHitDelay = 0.12f;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	float MaxHealth = 100.0f;
 
@@ -190,16 +219,25 @@ private:
 	// Weapon
 	EWeaponType CurrentWeaponType = EWeaponType::Sword;
 	FWeaponData CurrentWeaponData;
+	TMap<FName, FWeaponData> WeaponDataByName;
 
 	// Timers
 	FTimerHandle ComboResetTimer;
 	FTimerHandle InvulnerabilityTimerHandle;
 	FTimerHandle DoubleStepTimerHandle;
+	FTimerHandle AttackStateTimer;
+	FTimerHandle AttackHitTimer;
 
+	void LoadWeaponData();
 	void UpdateCombo(float DeltaTime);
 	void UpdateInvulnerability(float DeltaTime);
 	void UpdateDoubleStep(float DeltaTime);
 	void ApplyDamageReduction(float& Damage, EDamageType DamageType);
 	void PlayAttackMontage(int32 Stage);
 	void PlayFinalAttackMontage(int32 Stage);
+
+	/** Sweep the weapon arc and damage every enemy hit once. */
+	void ApplyAttackHit(int32 ComboStage, bool bHeavyAttack);
+	void EndAttack();
+	float GetAttackDuration() const;
 };

@@ -45,7 +45,7 @@ Deliverables:
 Acceptance: PIE starts, Hector is possessable, WASD/look/attack respond, Data Tables open
 without import errors, level contains the four Chapter 1 rooms.
 
-Verified: compile green, 11 tables imported, 27 input mappings, 4 room instances,
+Verified: compile green, 11 tables imported, 33 input mappings, 4 room instances,
 HUD widget layout builds at runtime, game smoke test reaches Hector BeginPlay with
 zero errors. Note: enemy archetypes still use the placeholder cube mesh until the
 presentation phase; recipes now cover all 19 weapons.
@@ -56,6 +56,21 @@ presentation phase; recipes now cover all 19 weapons.
 - Item drops / stealing from enemy data.
 - Innocent Devil summon, modes, evolution.
 - Save/load across the 6 slots + autosave.
+
+Implemented so far:
+- Sphere-traced light/heavy attacks, combo scaling, knockback, attack-state timers.
+- Enemy chase/attack AI driven by `EnemyDataTable`, loot drops, player death/respawn.
+- Forge component on Hector; `F` forges the lowest-level affordable recipe and equips it.
+- `R` uses Potion/High Potion; `E` steals from the nearest stealable enemy.
+- Innocent Devil actor spawning, auto/command/guard modes, companion attacks.
+- Item, forge-material, devil-roster, equipment, chapter and transform save/load;
+  `F5` quick-saves and `F9` loads the autosave (or quick-save if no autosave).
+- Breakable candles drop forge materials and potions; enemies can be damaged and stolen from.
+
+Remaining Phase 2 work:
+- Weapon forge UI/menu (currently a single-key best-recipe forge).
+- Full evolution UI and crystal acquisition flow.
+- Save/load menu UI (quick-save/load and save-room autosave are functional).
 
 ### Phase 3 — Chapters 2–10
 - Data-driven encounter spawning (room reads `EnemyEncounterTable`).
@@ -79,5 +94,7 @@ presentation phase; recipes now cover all 19 weapons.
 |------|-------|-------|
 | 2026-10 | 0 | Build green, editor verified |
 | 2026-10 | 1 | Struct fields aligned; input wiring added |
-| 2026-10 | 1 | 11 DataTables, 27 mappings, 4-room Chapter 1 blockout, HUD layout, QA gate green |
+| 2026-10 | 1 | 11 DataTables, 33 mappings, 4-room Chapter 1 blockout, HUD layout, QA gate green |
 | 2026-10 | 2 | Started: evolution-crystal data model corrected; recipe coverage completed |
+| 2026-10 | 2 | Combat/AI/loot verified in smoke test: traced hits, enemy chase + attacks, drops |
+| 2026-10 | 2 | Forge, potion use, stealing, Innocent Devil summon, save/load applied; QA green |

@@ -12,6 +12,9 @@
 
 class UNobleArchimedesCameraComponent;
 class UNobleArchimedesInnocentDevilComponent;
+class UNobleArchimedesItemSystem;
+class UNobleArchimedesWeaponForge;
+class AEnemyBase;
 class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
@@ -46,6 +49,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UNobleArchimedesItemSystem* ItemSystem;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UNobleArchimedesWeaponForge* WeaponForge;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USpringArmComponent* CameraBoom;
@@ -97,6 +103,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> PauseAction;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> UseItemAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> ForgeAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> QuickSaveAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> QuickLoadAction;
+
 	//=============================================================================
 	// MOVEMENT
 	//=============================================================================
@@ -129,6 +147,10 @@ protected:
 	void Input_ToggleCameraMode();
 	void Input_ToggleMap();
 	void Input_Pause();
+	void Input_UseItem();
+	void Input_Forge();
+	void Input_QuickSave();
+	void Input_QuickLoad();
 
 	void AddDefaultMappingContext();
 
@@ -160,6 +182,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ApplyDamage(float Damage, EDamageType DamageType) { if (CombatComponent) CombatComponent->TakeDamage(Damage, DamageType); }
+
+	/** Called by the combat component when health reaches zero. */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void HandleDeath();
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void EquipWeapon(EWeaponType WeaponType) { if (CombatComponent) CombatComponent->EquipWeapon(WeaponType); }
@@ -265,6 +291,17 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Items")
 	UNobleArchimedesItemSystem* GetItemSystem() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "WeaponForge")
+	UNobleArchimedesWeaponForge* GetWeaponForge() const { return WeaponForge; }
+
+	/** Forge the lowest-level recipe that the player currently has materials for. */
+	UFUNCTION(BlueprintCallable, Category = "WeaponForge")
+	bool ForgeBestAvailable();
+
+	/** Native interaction: stealing from the nearest enemy in front. */
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	bool TryInteract();
+
 	// Active innocent devil index (index into InnocentDevils array)
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Innocent Devil")
 	int32 GetActiveInnocentDevilIndex() const;
@@ -274,6 +311,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Innocent Devil")
 	void SetUnlockedInnocentDevils(TArray<EInnocentDevilType> NewUnlocked);
+
+	/** Restore the complete Innocent Devil roster from a save. */
+	UFUNCTION(BlueprintCallable, Category = "Innocent Devil")
+	void SetInnocentDevils(const TArray<FInnocentDevilData>& NewDevils);
 
 	UFUNCTION(BlueprintCallable, Category = "SaveLoad")
 	void SetDiscoveredRecipes(TArray<FName> NewRecipes);
@@ -307,8 +348,12 @@ private:
 	FVector MoveInputVector;
 	FVector LookInputVector;
 
+	// Development-only combat smoke test, enabled with -NATestCombat.
+	void RunCombatSmokeTest();
+
 	// Save/load player data
 	FString PlayerName = "Hector";
+	bool bIsDead = false;
 	int32 Level = 1;
 	int32 Experience = 0;
 	int32 SkillPoints = 0;

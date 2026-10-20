@@ -34,6 +34,15 @@ public:
 	int32 GetCurrentChapter() const { return CurrentChapter; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "GameMode")
+	TArray<int32> GetCompletedChapters() const { return CompletedChapters; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "GameMode")
+	TArray<FName> GetUnlockedWeaponRecipes() const { return UnlockedWeaponRecipes; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "GameMode")
+	TArray<EInnocentDevilType> GetUnlockedInnocentDevilsFromMode() const { return UnlockedInnocentDevils; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "GameMode")
 	bool IsChapterCompleted(int32 ChapterIndex) const;
 
 	//=============================================================================
@@ -45,6 +54,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 	void LoadGameProgress(int32 SlotIndex);
+
+	/** Push chapter/progression fields from an already-loaded save into the mode. */
+	UFUNCTION(BlueprintCallable, Category = "GameMode")
+	void RestoreProgressFromSave(const UNobleArchimedesSaveGame* Save);
 
 	UFUNCTION(BlueprintCallable, Category = "GameMode")
 	void AutoSave();

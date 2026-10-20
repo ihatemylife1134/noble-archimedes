@@ -3,6 +3,7 @@
 #include "ItemDrop.h"
 #include "HectorCharacter.h"
 #include "NobleArchimedesItemSystem.h"
+#include "NobleArchimedesWeaponForge.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 
@@ -62,6 +63,12 @@ void AItemDrop::PickupItem(class AHectorCharacter* Player)
 		ItemSystem->AddItem(ItemName, 1);
 	}
 
+	if (UNobleArchimedesWeaponForge* Forge = Player->GetWeaponForge())
+	{
+		Forge->AddMaterial(ItemName, 1);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: picked up %s."), *ItemName.ToString());
 	Destroy();
 }
 

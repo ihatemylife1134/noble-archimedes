@@ -46,6 +46,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Items")
 	void RemoveItem(FName ItemName, int32 Quantity);
 
+	/** Full quantity map, used by save/load and the forge. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Items")
+	TMap<FName, int32> GetAllItems() const { return ItemQuantities; }
+
+	UFUNCTION(BlueprintCallable, Category = "Items")
+	void SetAllItems(const TMap<FName, int32>& NewItems);
+
 	//=============================================================================
 	// DEATH DOLL
 	//=============================================================================

@@ -97,6 +97,7 @@ BPS = {
     "BP_HectorCharacter": "/Game/Blueprints/Characters",
     "BP_EnemyBase": "/Game/Blueprints/Characters",
     "BP_BossBase": "/Game/Blueprints/Characters",
+    "BP_InnocentDevilActor": "/Game/Blueprints/Characters",
     "BP_Room": "/Game/Blueprints/World",
     "BP_SaveRoom": "/Game/Blueprints/World",
     "BP_CandleBreakable": "/Game/Blueprints/World",
@@ -130,11 +131,14 @@ for name, folder in BPS.items():
 
 log("=== CHARACTER DEFAULTS ===")
 hector = BP_CLASSES.get("BP_HectorCharacter")
+hector_cdo = None
 if hector:
     cdo = unreal.get_default_object(hector)
+    hector_cdo = cdo
     for prop in ("DefaultMappingContext", "MoveAction", "LookAction", "JumpAction",
                  "LightAttackAction", "HeavyAttackAction", "GuardAction", "DodgeAction",
-                 "InteractAction", "SummonDevilAction", "CameraModeAction", "MapAction", "PauseAction"):
+                 "InteractAction", "SummonDevilAction", "CameraModeAction", "MapAction", "PauseAction",
+                 "UseItemAction", "ForgeAction", "QuickSaveAction", "QuickLoadAction"):
         value = get_prop(cdo, prop)
         if not value:
             err("BP_HectorCharacter.%s is not set" % prop)
@@ -143,6 +147,83 @@ if hector:
     mesh = get_prop(cdo, "Mesh")
     if mesh:
         log("  Mesh skeletal asset = %s" % brief(get_prop(mesh, "SkeletalMeshAsset")))
+
+    combat = get_prop(cdo, "CombatComponent")
+    if not combat:
+        err("BP_HectorCharacter.CombatComponent is missing")
+    else:
+        weapon_table = get_prop(combat, "WeaponDataTableAsset")
+        if not weapon_table:
+            err("CombatComponent.WeaponDataTableAsset is not set")
+        else:
+            log("  WeaponDataTableAsset = %s" % brief(weapon_table))
+        log("  DefaultWeaponName = %s" % get_prop(combat, "DefaultWeaponName"))
+
+    devil_component = get_prop(cdo, "InnocentDevilComponent")
+    if not devil_component:
+        err("BP_HectorCharacter.InnocentDevilComponent is missing")
+    else:
+        devil_class = get_prop(devil_component, "DevilActorClass")
+        if not devil_class:
+            err("InnocentDevilComponent.DevilActorClass is not set")
+        else:
+            log("  DevilActorClass = %s" % brief(devil_class))
+
+log("=== ENEMY ARCHETYPES ===")
+EXPECTED_ENEMIES = {
+    "BP_Skeleton": ("Skeleton", 50.0, 10.0, True),
+    "BP_Zombie": ("Zombie", 80.0, 15.0, False),
+    "BP_Ghoul": ("Ghoul", 60.0, 12.0, True),
+    "BP_SentinelKnight": ("Castle Elite", 140.0, 35.0, True),
+    "BP_BossBase": ("Final Boss", 500.0, 60.0, False),
+}
+for bp_name, (enemy_name, max_health, damage, can_steal) in EXPECTED_ENEMIES.items():
+    cls = BP_CLASSES.get(bp_name)
+    if not cls:
+        continue
+    cdo = unreal.get_default_object(cls)
+    actual_name = str(get_prop(cdo, "EnemyName"))
+    actual_health = get_prop(cdo, "MaxHealth")
+    actual_damage = get_prop(cdo, "Damage")
+    actual_steal = get_prop(cdo, "CanBeStolen")
+    log("  %s: name=%s hp=%s damage=%s steal=%s" % (
+        bp_name, actual_name, actual_health, actual_damage, actual_steal))
+    if actual_name != enemy_name:
+        err("%s EnemyName is %s, expected %s" % (bp_name, actual_name, enemy_name))
+    if abs(float(actual_health) - max_health) > 0.01:
+        err("%s MaxHealth is %s, expected %s" % (bp_name, actual_health, max_health))
+    if abs(float(actual_damage) - damage) > 0.01:
+        err("%s Damage is %s, expected %s" % (bp_name, actual_damage, damage))
+    if bool(actual_steal) != can_steal:
+        err("%s CanBeStolen is %s, expected %s" % (bp_name, actual_steal, can_steal))
+    if not get_prop(cdo, "ItemDropClass"):
+        err("%s ItemDropClass is not set" % bp_name)
+
+for bp_name in ("BP_InnocentDevilActor", "BP_ItemDrop"):
+    cls = BP_CLASSES.get(bp_name)
+    if not cls:
+        continue
+    cdo = unreal.get_default_object(cls)
+    mesh = get_prop(cdo, "Mesh") if bp_name == "BP_InnocentDevilActor" else get_prop(cdo, "ItemMesh")
+    if not mesh:
+        err("%s mesh component is missing" % bp_name)
+        continue
+    asset = get_prop(mesh, "SkeletalMeshAsset") if bp_name == "BP_InnocentDevilActor" else get_prop(mesh, "StaticMesh")
+    if not asset:
+        err("%s has no visible placeholder mesh" % bp_name)
+    else:
+        log("  %s mesh = %s" % (bp_name, brief(asset)))
+
+candle_cls = BP_CLASSES.get("BP_CandleBreakable")
+if candle_cls:
+    candle_cdo = unreal.get_default_object(candle_cls)
+    if not get_prop(candle_cdo, "ItemDropClass"):
+        err("BP_CandleBreakable.ItemDropClass is not set")
+    drops = get_prop(candle_cdo, "PossibleDrops") or []
+    if "Iron Shard" not in [str(d) for d in drops]:
+        err("BP_CandleBreakable does not drop Iron Shard")
+    else:
+        log("  BP_CandleBreakable drops = %s" % ", ".join(str(d) for d in drops))
 
 log("=== GAME MODE DEFAULTS ===")
 gm = BP_CLASSES.get("BP_NobleArchimedesGameModeBase")

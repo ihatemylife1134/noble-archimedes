@@ -22,6 +22,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "WeaponForge")
 	bool CombineWeapons(TArray<FName> Materials, FName& OutWeapon);
 
+	/** Forge a specific recipe, consuming materials from the forge inventory. */
+	UFUNCTION(BlueprintCallable, Category = "WeaponForge")
+	bool ForgeWeaponByName(FName WeaponName, FName& OutWeapon);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "WeaponForge")
+	bool CanForgeWeaponByName(FName WeaponName) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "WeaponForge")
+	TArray<FName> GetDiscoveredRecipes() const { return DiscoveredRecipes; }
+
+	UFUNCTION(BlueprintCallable, Category = "WeaponForge")
+	void SetDiscoveredRecipes(const TArray<FName>& NewRecipes);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "WeaponForge")
+	TArray<FName> GetForgedWeapons() const { return ForgedWeapons; }
+
+	UFUNCTION(BlueprintCallable, Category = "WeaponForge")
+	void SetForgedWeapons(const TArray<FName>& NewWeapons);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "WeaponForge")
 	bool CanForgeWeapon(TArray<FName> Materials, FName& OutWeapon) const;
 
@@ -37,6 +56,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "WeaponForge")
 	int32 GetMaterialQuantity(FName MaterialName) const;
 
+	/** Full material map, used by save/load. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "WeaponForge")
+	TMap<FName, int32> GetAllMaterialQuantities() const { return MaterialQuantities; }
+
+	UFUNCTION(BlueprintCallable, Category = "WeaponForge")
+	void SetAllMaterialQuantities(const TMap<FName, int32>& NewQuantities);
+
 private:
 	UPROPERTY()
 	TArray<FWeaponRecipe> WeaponRecipes;
@@ -47,6 +73,13 @@ private:
 	UPROPERTY()
 	TMap<FName, int32> MaterialQuantities;
 
+	UPROPERTY()
+	TArray<FName> DiscoveredRecipes;
+
+	UPROPERTY()
+	TArray<FName> ForgedWeapons;
+
 	void InitializeRecipes();
 	void InitializeMaterials();
+	bool ConsumeRecipeMaterials(const FWeaponRecipe& Recipe);
 };

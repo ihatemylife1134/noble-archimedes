@@ -169,6 +169,14 @@ void UNobleArchimedesWeaponForge::InitializeRecipes()
 	Recipe19.RequiredMaterials = { "Mithril Ore", "Adamantite", "Orichalcum", "Wizard's Orb" };
 	Recipe19.ForgeLevel = 5;
 	WeaponRecipes.Add(Recipe19);
+
+	// All recipes are discoverable in this private recreation. The forge menu
+	// lists every recipe so players can work toward the full weapon set.
+	DiscoveredRecipes.Empty();
+	for (const FWeaponRecipe& Recipe : WeaponRecipes)
+	{
+		DiscoveredRecipes.AddUnique(Recipe.WeaponName);
+	}
 }
 
 void UNobleArchimedesWeaponForge::InitializeMaterials()
@@ -365,4 +373,94 @@ void UNobleArchimedesWeaponForge::AddMaterial(FName MaterialName, int32 Quantity
 int32 UNobleArchimedesWeaponForge::GetMaterialQuantity(FName MaterialName) const
 {
 	return MaterialQuantities.Contains(MaterialName) ? MaterialQuantities[MaterialName] : 0;
+}
+
+bool UNobleArchimedesWeaponForge::CanForgeWeaponByName(FName WeaponName) const
+{
+	for (const FWeaponRecipe& Recipe : WeaponRecipes)
+	{
+		if (Recipe.WeaponName != WeaponName)
+		{
+			continue;
+		}
+
+		TMap<FName, int32> RequiredCounts;
+		for (const FName& Material : Recipe.RequiredMaterials)
+		{
+			RequiredCounts.FindOrAdd(Material)++;
+		}
+		for (const auto& Pair : RequiredCounts)
+		{
+			if (GetMaterialQuantity(Pair.Key) < Pair.Value)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+bool UNobleArchimedesWeaponForge::ConsumeRecipeMaterials(const FWeaponRecipe& Recipe)
+{
+	TMap<FName, int32> RequiredCounts;
+	for (const FName& Material : Recipe.RequiredMaterials)
+	{
+		RequiredCounts.FindOrAdd(Material)++;
+	}
+	for (const auto& Pair : RequiredCounts)
+	{
+		if (GetMaterialQuantity(Pair.Key) < Pair.Value)
+		{
+			return false;
+		}
+	}
+	for (const auto& Pair : RequiredCounts)
+	{
+		MaterialQuantities[Pair.Key] = FMath::Max(0, MaterialQuantities[Pair.Key] - Pair.Value);
+	}
+	return true;
+}
+
+bool UNobleArchimedesWeaponForge::ForgeWeaponByName(FName WeaponName, FName& OutWeapon)
+{
+	if (!DiscoveredRecipes.Contains(WeaponName))
+	{
+		return false;
+	}
+
+	for (const FWeaponRecipe& Recipe : WeaponRecipes)
+	{
+		if (Recipe.WeaponName == WeaponName && ConsumeRecipeMaterials(Recipe))
+		{
+			OutWeapon = Recipe.WeaponName;
+			ForgedWeapons.AddUnique(Recipe.WeaponName);
+			return true;
+		}
+	}
+	return false;
+}
+
+void UNobleArchimedesWeaponForge::SetDiscoveredRecipes(const TArray<FName>& NewRecipes)
+{
+	if (NewRecipes.Num() > 0)
+	{
+		DiscoveredRecipes = NewRecipes;
+	}
+}
+
+void UNobleArchimedesWeaponForge::SetForgedWeapons(const TArray<FName>& NewWeapons)
+{
+	ForgedWeapons = NewWeapons;
+}
+
+void UNobleArchimedesWeaponForge::SetAllMaterialQuantities(const TMap<FName, int32>& NewQuantities)
+{
+	for (const auto& Pair : NewQuantities)
+	{
+		if (MaterialQuantities.Contains(Pair.Key))
+		{
+			MaterialQuantities[Pair.Key] = Pair.Value;
+		}
+	}
 }

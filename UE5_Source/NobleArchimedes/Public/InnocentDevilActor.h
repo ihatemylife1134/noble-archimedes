@@ -40,6 +40,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Innocent Devil")
 	class AHectorCharacter* OwnerHector = nullptr;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Innocent Devil")
+	float AttackCooldown = 1.5f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Innocent Devil")
+	float AttackRange = 600.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Innocent Devil")
+	float LastDevilAttackTime = 0.0f;
+
 	//=============================================================================
 	// INNOCENT DEVIL ACTIONS
 	//=============================================================================

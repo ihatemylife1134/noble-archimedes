@@ -7,6 +7,8 @@
 #include "NobleArchimedesTypes.h"
 #include "NobleArchimedesInnocentDevilComponent.generated.h"
 
+class AInnocentDevilActor;
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class NOBLEARCHIMEDES_API UNobleArchimedesInnocentDevilComponent : public UActorComponent
 {
@@ -37,6 +39,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Innocent Devil")
 	TArray<FInnocentDevilData> GetInnocentDevils() const;
 
+	/** Restore the full devil roster from a save game. */
+	UFUNCTION(BlueprintCallable, Category = "Innocent Devil")
+	void SetInnocentDevils(const TArray<FInnocentDevilData>& NewDevils);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Innocent Devil")
 	EInnocentDevilType GetActiveInnocentDevilType() const { return ActiveInnocentDevil; }
 
@@ -66,7 +72,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Innocent Devil")
 	float FollowSpeed = 600.0f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Innocent Devil")
+	TSubclassOf<AInnocentDevilActor> DevilActorClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Innocent Devil")
+	TObjectPtr<AInnocentDevilActor> ActiveDevilActor;
+
 private:
+	UPROPERTY()
 	TArray<FInnocentDevilData> InnocentDevils;
 	EInnocentDevilMode CurrentMode = EInnocentDevilMode::Auto;
 	EInnocentDevilType ActiveInnocentDevil = EInnocentDevilType::None;

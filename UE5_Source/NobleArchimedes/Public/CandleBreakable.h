@@ -9,6 +9,8 @@
 #include "NobleArchimedesTypes.h"
 #include "CandleBreakable.generated.h"
 
+class AItemDrop;
+
 UCLASS()
 class NOBLEARCHIMEDES_API ACandleBreakable : public AActor
 {
@@ -38,6 +40,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Candle")
 	float DropChance = 0.3f; // 30% base chance to drop an item
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Candle")
+	TSubclassOf<AItemDrop> ItemDropClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Candle")
 	UStaticMeshComponent* CandleMesh;

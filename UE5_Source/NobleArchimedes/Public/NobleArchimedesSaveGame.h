@@ -70,6 +70,9 @@ public:
 	TArray<FInventoryItem> InventoryItems;
 
 	UPROPERTY(SaveGame)
+	TArray<FInventoryItem> ForgeMaterials;
+
+	UPROPERTY(SaveGame)
 	TArray<FString> EquippedWeapons;
 
 	UPROPERTY(SaveGame)
@@ -104,6 +107,9 @@ public:
 
 	UPROPERTY(SaveGame)
 	TArray<FName> ForgedWeapons;
+
+	UPROPERTY(SaveGame)
+	TArray<FName> UnlockedWeaponRecipes;
 
 	//=============================================================================
 	// SETTINGS

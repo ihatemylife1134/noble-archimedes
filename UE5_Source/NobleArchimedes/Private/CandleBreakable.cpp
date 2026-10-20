@@ -2,6 +2,7 @@
 
 #include "CandleBreakable.h"
 #include "HectorCharacter.h"
+#include "ItemDrop.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -75,10 +76,18 @@ void ACandleBreakable::SpawnDropItem(FName ItemName)
 {
 	if (!GetWorld()) return;
 
-	// Spawn item drop actor at candle location
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	// Item drop spawning would use AItemDrop class - placeholder for now
-	// In a full implementation, this would spawn AItemDrop with the given ItemName
+	UClass* DropClass = ItemDropClass ? ItemDropClass.Get() : AItemDrop::StaticClass();
+	AItemDrop* Drop = GetWorld()->SpawnActor<AItemDrop>(
+		DropClass,
+		GetActorLocation() + FVector(0.0f, 0.0f, 50.0f),
+		FRotator::ZeroRotator,
+		SpawnParams);
+	if (Drop)
+	{
+		Drop->InitializeItem(ItemName, false, false);
+	}
 }

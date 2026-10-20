@@ -2,6 +2,8 @@
 
 #include "InnocentDevilActor.h"
 #include "HectorCharacter.h"
+#include "EnemyBase.h"
+#include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -15,6 +17,7 @@ AInnocentDevilActor::AInnocentDevilActor()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = 400.0f;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->bRunPhysicsWithNoController = true;
 	}
 }
 
@@ -93,6 +96,7 @@ void AInnocentDevilActor::UpdateDevilAI(float DeltaTime)
 	{
 	case EInnocentDevilMode::Auto:
 		FollowOwner();
+		AttackTarget();
 		break;
 	case EInnocentDevilMode::Command:
 		AttackTarget();
@@ -119,8 +123,55 @@ void AInnocentDevilActor::FollowOwner()
 
 void AInnocentDevilActor::AttackTarget()
 {
-	// Attack logic would target nearby enemies
-	// Implemented in Blueprint with specific attack montages per devil type
+	if (!GetWorld() || GetWorld()->GetTimeSeconds() - LastDevilAttackTime < AttackCooldown)
+	{
+		return;
+	}
+
+	AEnemyBase* NearestEnemy = nullptr;
+	float BestDistanceSq = AttackRange * AttackRange;
+	for (TActorIterator<AEnemyBase> It(GetWorld()); It; ++It)
+	{
+		AEnemyBase* Enemy = *It;
+		if (!Enemy || Enemy->bIsDead)
+		{
+			continue;
+		}
+
+		const float DistanceSq = FVector::DistSquared(GetActorLocation(), Enemy->GetActorLocation());
+		if (DistanceSq < BestDistanceSq)
+		{
+			BestDistanceSq = DistanceSq;
+			NearestEnemy = Enemy;
+		}
+	}
+
+	if (!NearestEnemy)
+	{
+		return;
+	}
+
+	const float Distance = FMath::Sqrt(BestDistanceSq);
+	if (Distance > 220.0f)
+	{
+		FVector Direction = (NearestEnemy->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+			GetCharacterMovement()->Velocity = Direction * GetCharacterMovement()->MaxWalkSpeed;
+		}
+		return;
+	}
+
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+
+	LastDevilAttackTime = GetWorld()->GetTimeSeconds();
+	NearestEnemy->ApplyDamage(static_cast<float>(DevilData.Attack), EDamageType::Magic);
+	UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: %s attacked %s for %d."),
+		*DevilData.DevilName.ToString(), *NearestEnemy->GetName(), DevilData.Attack);
 }
 
 void AInnocentDevilActor::GuardOwner()

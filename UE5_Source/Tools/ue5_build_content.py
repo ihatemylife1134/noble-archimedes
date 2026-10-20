@@ -451,33 +451,67 @@ BLUEPRINTS = [
     ("BP_NobleArchimedesGameInstance", "/Game/Blueprints/Core", "/Script/NobleArchimedes.NobleArchimedesGameInstance"),
 ]
 
-# Chapter 1 enemy archetypes (stats seeded from EnemyDataTable.csv).
+# Chapter 1 enemy archetypes. The CSV row is the source of truth for stats;
+# the Blueprint only supplies the class and the mesh.
 ENEMY_ARCHETYPES = {
-    "BP_Skeleton": ("BP_EnemyBase", {"Health": 50.0, "MaxHealth": 50.0, "Damage": 10.0,
-                                    "AttackRange": 150.0, "DetectionRange": 600.0,
-                                    "Weaknesses": "Light", "Tolerances": "Dark",
-                                    "ItemDrops": "Bone Shard;Stone Shard", "CanBeStolen": True}),
-    "BP_Zombie": ("BP_EnemyBase", {"Health": 40.0, "MaxHealth": 40.0, "Damage": 8.0,
-                                  "AttackRange": 140.0, "DetectionRange": 500.0,
-                                  "Weaknesses": "Fire;Light", "Tolerances": "Dark",
-                                  "ItemDrops": "Rotten Flesh", "CanBeStolen": False}),
-    "BP_Ghoul": ("BP_EnemyBase", {"Health": 60.0, "MaxHealth": 60.0, "Damage": 12.0,
-                                 "AttackRange": 160.0, "DetectionRange": 650.0,
-                                 "Weaknesses": "Light", "Tolerances": "Dark",
-                                 "ItemDrops": "Bone Shard", "CanBeStolen": True}),
-    "BP_SentinelKnight": ("BP_BossBase", {"Health": 250.0, "MaxHealth": 250.0, "Damage": 18.0,
-                                         "AttackRange": 220.0, "DetectionRange": 900.0,
-                                         "Weaknesses": "Light", "Tolerances": "Dark;Slash",
-                                         "ItemDrops": "Knight Crest", "CanBeStolen": True,
-                                         "bIsBoss": True}),
+    "BP_Skeleton": ("BP_EnemyBase", "Skeleton"),
+    "BP_Zombie": ("BP_EnemyBase", "Zombie"),
+    "BP_Ghoul": ("BP_EnemyBase", "Ghoul"),
+    "BP_SentinelKnight": ("BP_BossBase", "Castle Elite"),
 }
+
+
+def load_enemy_stats():
+    path = os.path.join(DATA_TABLE_DIR, "EnemyDataTable.csv")
+    if not os.path.exists(path):
+        error("Missing enemy stats CSV: %s" % path)
+        return {}
+    return {row["EnemyName"]: row for row in read_csv(path)}
+
+
+def apply_enemy_stats(cdo, row, drop_class, is_boss=False):
+    if not row:
+        return False
+
+    set_prop(cdo, "EnemyName", row["EnemyName"])
+    set_prop(cdo, "ChapterNumber", int(float(row.get("Chapter", 1))))
+    health = float(row.get("Health", 50.0))
+    set_prop(cdo, "Health", health)
+    set_prop(cdo, "MaxHealth", health)
+    set_prop(cdo, "Damage", float(row.get("Damage", 10.0)))
+    set_prop(cdo, "AttackRange", float(row.get("AttackRange", 150.0)))
+    set_prop(cdo, "DetectionRange", float(row.get("DetectionRange", 600.0)))
+    set_prop(cdo, "Weaknesses", row.get("Weaknesses", ""))
+    set_prop(cdo, "Tolerances", row.get("Tolerances", ""))
+    set_prop(cdo, "ItemDrops", row.get("ItemDrops", ""))
+    can_steal = str(row.get("CanBeStolen", "false")).lower() == "true"
+    set_prop(cdo, "CanBeStolen", can_steal)
+    set_prop(cdo, "bIsBoss", bool(is_boss))
+
+    drops = [part.strip() for part in row.get("ItemDrops", "").split(";")
+             if part.strip() and part.strip().lower() != "none"]
+    if can_steal and drops:
+        set_prop(cdo, "StealItem", drops[0])
+
+    if drop_class:
+        set_prop(cdo, "ItemDropClass", drop_class)
+    return True
 
 
 def create_all_blueprints():
     for name, folder, parent in BLUEPRINTS:
         ensure_blueprint(name, folder, parent)
 
-    for name, (parent_name, stats) in ENEMY_ARCHETYPES.items():
+    enemy_stats = load_enemy_stats()
+    drop_class = bp_class("/Game/Blueprints/World", "BP_ItemDrop")
+
+    # Base classes keep the drop class so every child can spawn loot.
+    for base_name in ("BP_EnemyBase", "BP_BossBase"):
+        base_cls = bp_class("/Game/Blueprints/Characters", base_name)
+        if base_cls and drop_class:
+            set_prop(unreal.get_default_object(base_cls), "ItemDropClass", drop_class)
+
+    for name, (parent_name, row_name) in ENEMY_ARCHETYPES.items():
         parent_folder = "/Game/Blueprints/Characters"
         parent_path = asset_path(parent_folder, parent_name)
         bp = ensure_blueprint(name, parent_folder, parent_path)
@@ -488,11 +522,52 @@ def create_all_blueprints():
             error("Missing generated class for %s" % name)
             continue
         cdo = unreal.get_default_object(cls)
-        set_prop(cdo, "EnemyName", name.replace("BP_", ""))
-        set_prop(cdo, "ChapterNumber", 1)
-        for key, value in stats.items():
-            set_prop(cdo, key, value)
+        if not apply_enemy_stats(cdo, enemy_stats.get(row_name), drop_class, row_name == "Final Boss"):
+            warn("No enemy data for %s (%s)" % (name, row_name))
         unreal.EditorAssetLibrary.save_asset(asset_path(parent_folder, name))
+
+    # The reusable boss base gets the final-boss baseline.
+    boss_cls = bp_class("/Game/Blueprints/Characters", "BP_BossBase")
+    if boss_cls:
+        boss_cdo = unreal.get_default_object(boss_cls)
+        apply_enemy_stats(boss_cdo, enemy_stats.get("Final Boss"), drop_class, True)
+        unreal.EditorAssetLibrary.save_asset(asset_path("/Game/Blueprints/Characters", "BP_BossBase"))
+
+    # Give the Innocent Devil placeholder a visible body.
+    devil_cls = bp_class("/Game/Blueprints/Characters", "BP_InnocentDevilActor")
+    if devil_cls:
+        devil_cdo = unreal.get_default_object(devil_cls)
+        skeletal_cube = unreal.load_asset("/Engine/EngineMeshes/SkeletalCube.SkeletalCube")
+        mesh = get_prop(devil_cdo, "Mesh")
+        if skeletal_cube and mesh:
+            set_prop(mesh, "SkeletalMeshAsset", skeletal_cube)
+            set_prop(mesh, "RelativeScale3D", unreal.Vector(0.6, 0.6, 1.1))
+        unreal.EditorAssetLibrary.save_asset(asset_path("/Game/Blueprints/Characters", "BP_InnocentDevilActor"))
+
+    # Make dropped items visible in the blockout.
+    item_cls = bp_class("/Game/Blueprints/World", "BP_ItemDrop")
+    if item_cls:
+        item_cdo = unreal.get_default_object(item_cls)
+        cube = unreal.load_asset("/Engine/BasicShapes/Cube.Cube")
+        item_mesh = get_prop(item_cdo, "ItemMesh")
+        if cube and item_mesh:
+            set_prop(item_mesh, "StaticMesh", cube)
+            set_prop(item_mesh, "RelativeScale3D", unreal.Vector(0.25, 0.25, 0.25))
+        unreal.EditorAssetLibrary.save_asset(asset_path("/Game/Blueprints/World", "BP_ItemDrop"))
+
+    # Candles are the early source of forge materials.
+    candle_cls = bp_class("/Game/Blueprints/World", "BP_CandleBreakable")
+    if candle_cls:
+        candle_cdo = unreal.get_default_object(candle_cls)
+        candle_mesh = get_prop(candle_cdo, "CandleMesh")
+        if cube and candle_mesh:
+            set_prop(candle_mesh, "StaticMesh", cube)
+            set_prop(candle_mesh, "RelativeScale3D", unreal.Vector(0.12, 0.12, 0.5))
+        if item_cls:
+            set_prop(candle_cdo, "ItemDropClass", item_cls)
+        set_prop(candle_cdo, "PossibleDrops", ["Iron Shard", "Potion", "Silver Ingot"])
+        set_prop(candle_cdo, "DropChance", 1.0)
+        unreal.EditorAssetLibrary.save_asset(asset_path("/Game/Blueprints/World", "BP_CandleBreakable"))
 
 
 def configure_character_blueprint(input_assets, imc):
@@ -517,10 +592,31 @@ def configure_character_blueprint(input_assets, imc):
         ("CameraModeAction", "IA_CameraMode"),
         ("MapAction", "IA_Map"),
         ("PauseAction", "IA_Pause"),
+        ("UseItemAction", "IA_UseItem"),
+        ("ForgeAction", "IA_Forge"),
+        ("QuickSaveAction", "IA_QuickSave"),
+        ("QuickLoadAction", "IA_QuickLoad"),
     ):
         ia = input_assets.get(asset_name)
         if ia:
             set_prop(cdo, prop, ia, required=True)
+
+    # Data-driven combat: point the component at the imported weapon table.
+    combat = get_prop(cdo, "CombatComponent")
+    weapon_table = unreal.load_asset("/Game/DataTables/DT_WeaponDataTable")
+    if combat and weapon_table:
+        set_prop(combat, "WeaponDataTableAsset", weapon_table, required=True)
+        set_prop(combat, "DefaultWeaponName", "Short Sword")
+    elif not combat:
+        warn("BP_HectorCharacter has no CombatComponent default subobject")
+
+    # Spawn the visible Innocent Devil actor when one is summoned.
+    devil_component = get_prop(cdo, "InnocentDevilComponent")
+    devil_class = bp_class("/Game/Blueprints/Characters", "BP_InnocentDevilActor")
+    if devil_component and devil_class:
+        set_prop(devil_component, "DevilActorClass", devil_class, required=True)
+    elif not devil_component:
+        warn("BP_HectorCharacter has no InnocentDevilComponent default subobject")
 
     # Placeholder silhouette so the knight is visible during the blockout.
     skeletal_cube = unreal.load_asset("/Engine/EngineMeshes/SkeletalCube.SkeletalCube")
@@ -577,6 +673,10 @@ INPUT_ACTIONS = [
     ("IA_CameraMode", unreal.InputActionValueType.BOOLEAN),
     ("IA_Map", unreal.InputActionValueType.BOOLEAN),
     ("IA_Pause", unreal.InputActionValueType.BOOLEAN),
+    ("IA_UseItem", unreal.InputActionValueType.BOOLEAN),
+    ("IA_Forge", unreal.InputActionValueType.BOOLEAN),
+    ("IA_QuickSave", unreal.InputActionValueType.BOOLEAN),
+    ("IA_QuickLoad", unreal.InputActionValueType.BOOLEAN),
 ]
 
 # (action, key, negate X, negate Y, swizzle YXZ)
@@ -608,6 +708,12 @@ INPUT_MAPPINGS = [
     ("IA_Map", "Gamepad_Special_Left", False, False, False),
     ("IA_Pause", "Escape", False, False, False),
     ("IA_Pause", "Gamepad_Special_Right", False, False, False),
+    ("IA_UseItem", "R", False, False, False),
+    ("IA_UseItem", "Gamepad_DPad_Left", False, False, False),
+    ("IA_Forge", "F", False, False, False),
+    ("IA_Forge", "Gamepad_DPad_Right", False, False, False),
+    ("IA_QuickSave", "F5", False, False, False),
+    ("IA_QuickLoad", "F9", False, False, False),
 ]
 
 
@@ -826,7 +932,8 @@ def build_chapter_one():
 
     bp_item = bp_class("/Game/Blueprints/World", "BP_ItemDrop")
     if bp_item:
-        for index, item in enumerate(("Potion", "Potion", "Potion")):
+        for index, item in enumerate(("Potion", "Potion", "Potion",
+                                      "Iron Shard", "Iron Shard", "Silver Ingot")):
             drop = EAS.spawn_actor_from_class(bp_item, unreal.Vector(400 + index * 150, -400, 80),
                                               unreal.Rotator(0, 0, 0))
             if drop:
@@ -842,6 +949,10 @@ def build_chapter_one():
             if candle:
                 candle.set_actor_label("Candle_%d" % index)
                 candle.set_editor_property("tags", [BLOCKOUT_TAG])
+                set_prop(candle, "PossibleDrops", ["Iron Shard", "Potion", "Silver Ingot"])
+                set_prop(candle, "DropChance", 1.0)
+                if bp_item:
+                    set_prop(candle, "ItemDropClass", bp_item)
 
     # Directional light for global readability.
     sun = EAS.spawn_actor_from_class(unreal.DirectionalLight, unreal.Vector(0, 0, 1500),

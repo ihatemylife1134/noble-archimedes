@@ -84,6 +84,11 @@ void UNobleArchimedesItemSystem::RemoveItem(FName ItemName, int32 Quantity)
 	}
 }
 
+void UNobleArchimedesItemSystem::SetAllItems(const TMap<FName, int32>& NewItems)
+{
+	ItemQuantities = NewItems;
+}
+
 bool UNobleArchimedesItemSystem::HasDeathDoll() const
 {
 	return ItemQuantities.Contains("Death Doll") && ItemQuantities["Death Doll"] > 0;

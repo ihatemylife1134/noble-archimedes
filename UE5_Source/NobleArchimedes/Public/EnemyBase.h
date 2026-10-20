@@ -9,6 +9,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDefeated, AEnemyBase*, DefeatedEnemy);
 
+class AItemDrop;
+
 UCLASS()
 class NOBLEARCHIMEDES_API AEnemyBase : public ACharacter
 {
@@ -81,6 +83,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Enemy")
 	float AttackCooldown = 2.0f;
 
+	/** Delay between the attack animation starting and the hit landing. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Enemy")
+	float AttackWindup = 0.35f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Enemy")
+	EDamageType AttackDamageType = EDamageType::Slash;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Enemy")
+	TSubclassOf<AItemDrop> ItemDropClass;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Enemy")
 	bool bIsBoss = false;
 
@@ -114,6 +126,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy")
 	bool bIsDead = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enemy")
+	bool bIsAttacking = false;
 
 	//=============================================================================
 	// DELEGATES
@@ -174,9 +189,14 @@ private:
 	float PatrolWaitTimer = 0.0f;
 	int32 CurrentPatrolIndex = 0;
 
+	FTimerHandle AttackTimer;
+	FTimerHandle DeathTimer;
+
 	void UpdatePerception(float DeltaTime);
 	void CheckAttackRange();
 	void UpdateStealWindow(float DeltaTime);
+	void PerformAttack();
+	void DropLoot();
 	void Die();
 	void DestroySelf();
 };
