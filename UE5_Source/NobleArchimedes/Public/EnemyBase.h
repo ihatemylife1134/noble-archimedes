@@ -4,9 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Delegates/DelegateCombinations.h"
 #include "NobleArchimedesTypes.h"
 #include "EnemyBase.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDefeated);
 
 UCLASS()
 class NOBLEARCHIMEDES_API AEnemyBase : public ACharacter
@@ -119,7 +120,7 @@ public:
 	//=============================================================================
 
 	UPROPERTY(BlueprintAssignable, Category = "Enemy")
-	FScriptMulticastDelegate OnDefeated;
+	FOnDefeated OnDefeated;
 
 	//=============================================================================
 	// ENEMY ACTIONS

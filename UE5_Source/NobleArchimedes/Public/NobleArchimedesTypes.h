@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Animation/AnimMontage.h"
 #include "NobleArchimedesTypes.generated.h"
 
 //=============================================================================
@@ -129,10 +128,10 @@ struct FWeaponData
 	EInnocentDevilType EvoCrystalColor = EInnocentDevilType::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	TArray<FAnimMontage> ComboAnimations;
+	TArray<UAnimMontage*> ComboAnimations;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	TArray<FAnimMontage> FinalAttackAnimations;
+	TArray<UAnimMontage*> FinalAttackAnimations;
 };
 
 USTRUCT(BlueprintType)
