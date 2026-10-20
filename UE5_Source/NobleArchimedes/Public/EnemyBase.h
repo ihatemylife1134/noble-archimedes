@@ -7,7 +7,7 @@
 #include "NobleArchimedesTypes.h"
 #include "EnemyBase.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDefeated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDefeated, AEnemyBase*, DefeatedEnemy);
 
 UCLASS()
 class NOBLEARCHIMEDES_API AEnemyBase : public ACharacter
