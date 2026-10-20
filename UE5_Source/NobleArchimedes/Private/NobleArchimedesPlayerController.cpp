@@ -23,7 +23,7 @@ void ANobleArchimedesPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
+	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInput))
 	{
 		// Input actions are bound in Blueprints via Input Mapping Context
 	}

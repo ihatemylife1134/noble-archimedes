@@ -103,7 +103,7 @@ void AEnemyBase::MoveToPlayer()
 	if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
 		FVector Direction = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walk);
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 		GetCharacterMovement()->Velocity = Direction * GetCharacterMovement()->MaxWalkSpeed;
 	}
 }

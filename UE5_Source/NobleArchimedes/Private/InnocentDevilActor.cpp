@@ -111,7 +111,7 @@ void AInnocentDevilActor::FollowOwner()
 		if (DistanceToOwner > 300.0f)
 		{
 			FVector Direction = (OwnerHector->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walk);
+			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 			GetCharacterMovement()->Velocity = Direction * GetCharacterMovement()->MaxWalkSpeed;
 		}
 	}
