@@ -31,7 +31,7 @@ Create these C++ structs (already defined in `NobleArchimedesTypes.h`):
 
 Additional structs to create for encounter/drop/evolution data:
 - `FEnemyEncounter` (Chapter, EnemyName, Count, SpawnLocation, RespawnTime, IsBoss, Stealable, StealItem, Weakness, Tolerance, Health, Damage)
-- `FItemDrop` (EnemyName, ItemName, DropChance, IsStealOnly, IsRare)
+- `FItemDropData` (EnemyName, ItemName, DropChance, IsStealOnly, IsRare)
 - `FWeaponMaterialRequirement` (WeaponName, Material1-4, Material1-4Count)
 - `FInnocentDevilEvolution` (DevilName, DevilType, Level, BaseForm, EvolvedForm, FinalForm, EvoCrystalRequired, EvoCrystalCount, AbilityUnlock)
 - `FChapterProgression` (Chapter, ChapterName, UnlockRequirement, SaveRooms, GreenDoorRooms, InnocentDevilAcquired, WeaponUnlocked, AreaType)

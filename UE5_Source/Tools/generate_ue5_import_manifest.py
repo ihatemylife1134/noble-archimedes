@@ -22,7 +22,7 @@ CSV_TO_STRUCT = {
     "InnocentDevilDataTable.csv": "FInnocentDevilData",
     "EnemyDataTable.csv": "FEnemyData",
     "EnemyEncounterTable.csv": "FEnemyEncounter",
-    "ItemDropTable.csv": "FItemDrop",
+    "ItemDropTable.csv": "FItemDropData",
     "InnocentDevilEvolutionTable.csv": "FInnocentDevilEvolution",
     "ChapterProgressionTable.csv": "FChapterProgression",
 }

@@ -312,7 +312,7 @@ struct FEnemyEncounter
 //=============================================================================
 
 USTRUCT(BlueprintType)
-struct FItemDrop
+struct FItemDropData
 {
 	GENERATED_BODY()
 
