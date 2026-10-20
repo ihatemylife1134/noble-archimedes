@@ -2,4 +2,4 @@
 
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, NobleArchimedes, "NobleArchimedes");
+IMPLEMENT_MODULE(FDefaultModuleImpl, NobleArchimedes);
