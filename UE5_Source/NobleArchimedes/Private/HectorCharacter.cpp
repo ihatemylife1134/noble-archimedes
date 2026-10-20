@@ -6,7 +6,6 @@
 #include "NobleArchimedesItemSystem.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/LocalPlayer.h"
 
 
 AHectorCharacter::AHectorCharacter()
@@ -39,15 +38,6 @@ AHectorCharacter::AHectorCharacter()
 void AHectorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Setup enhanced input subsystem
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
-		{
-			// Input mapping context would be added here in Blueprint
-		}
-	}
 }
 
 void AHectorCharacter::Tick(float DeltaTime)
