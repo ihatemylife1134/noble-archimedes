@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AEnemyBase::AEnemyBase()
@@ -102,7 +103,7 @@ void AEnemyBase::MoveToPlayer()
 	if (AHectorCharacter* Player = Cast<AHectorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
 		FVector Direction = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-		GetCharacterMovement()->SetMovementMode(MOVE_Walk);
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walk);
 		GetCharacterMovement()->Velocity = Direction * GetCharacterMovement()->MaxWalkSpeed;
 	}
 }
