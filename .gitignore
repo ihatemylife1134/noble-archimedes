@@ -1,3 +1,16 @@
+# Unreal Engine generated content (the active project keeps its own copy)
+UE5_Source/Binaries/
+UE5_Source/Intermediate/
+UE5_Source/Saved/
+UE5_Source/DerivedDataCache/
+UE5_Source/.vs/
+*.uasset
+*.uexp
+*.ubulk
+*.pak
+*.ucas
+*.utoc
+
 # Build outputs
 build/
 bin/

@@ -21,7 +21,7 @@
       "csv_file": "WeaponRecipeTable.csv",
       "struct_name": "FWeaponRecipe",
       "suggested_name": "DT_WeaponRecipeTable",
-      "row_count": 15,
+      "row_count": 19,
       "status": "pending_import"
     },
     {

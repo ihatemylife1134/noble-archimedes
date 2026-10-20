@@ -16,7 +16,9 @@ public class NobleArchimedes : ModuleRules
 			"AIModule",
 			"GameplayTasks",
 			"Niagara",
-			"UMG"
+			"UMG",
+			"Slate",
+			"SlateCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {

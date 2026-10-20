@@ -4,6 +4,7 @@
 #include "EnemyBase.h"
 #include "HectorCharacter.h"
 #include "Components/BoxComponent.h"
+#include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
@@ -40,12 +41,8 @@ void ARoom::BeginPlay()
 	RoomTriggerBox->OnComponentBeginOverlap.AddDynamic(this, &ARoom::OnPlayerEnterRoom);
 	RoomTriggerBox->OnComponentEndOverlap.AddDynamic(this, &ARoom::OnPlayerExitRoom);
 
-	// If room is locked, spawn enemies and keep locked
-	if (bIsLocked && !bHasBeenCleared)
-	{
-		SpawnEnemies();
-	}
-	else if (bHasBeenCleared)
+	// Enemies spawn when the player first enters the room, not at level start.
+	if (bHasBeenCleared)
 	{
 		UnlockRoom();
 	}
@@ -89,6 +86,13 @@ bool ARoom::IsRoomCleared() const
 void ARoom::SpawnEnemies()
 {
 	if (!GetWorld()) return;
+
+	// Guard against double-spawning when BeginPlay and the overlap event both
+	// try to populate the room.
+	if (ActiveEnemies.Num() > 0)
+	{
+		return;
+	}
 
 	ActiveEnemyCount = EnemyClassesToSpawn.Num();
 	ActiveEnemies.Empty();
@@ -137,8 +141,8 @@ void ARoom::OnPlayerEnterRoom(UPrimitiveComponent* OverlappedComponent, AActor* 
 {
 	if (AHectorCharacter* Hector = Cast<AHectorCharacter>(OtherActor))
 	{
-		// If room is locked and has enemies, ensure enemies are active
-		if (bIsLocked && !bHasBeenCleared)
+		// If room is locked and has enemies, ensure enemies are active.
+		if (bIsLocked && !bHasBeenCleared && ActiveEnemies.Num() == 0)
 		{
 			SpawnEnemies();
 		}

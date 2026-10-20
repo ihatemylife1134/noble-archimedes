@@ -251,16 +251,16 @@ void UNobleArchimedesVFXComponent::PlayInnocentDevilEvolve(FVector Location, EIn
 	}
 }
 
-void UNobleArchimedesVFXComponent::PlayInnocentDevilAttack(FVector Location, EInnocentDevilType Type)
+void UNobleArchimedesVFXComponent::PlayInnocentDevilAttack(FVector Location, EEvolutionCrystalType Element)
 {
 	UNiagaraSystem* AttackSystem = nullptr;
-	switch (Type)
+	switch (Element)
 	{
-		case EInnocentDevilType::Fire:   AttackSystem = NS_InnocentDevilAttack_Fire; break;
-		case EInnocentDevilType::Ice:    AttackSystem = NS_InnocentDevilAttack_Ice; break;
-		case EInnocentDevilType::Light:  AttackSystem = NS_InnocentDevilAttack_Light; break;
-		case EInnocentDevilType::Dark:   AttackSystem = NS_InnocentDevilAttack_Dark; break;
-		default:                         AttackSystem = NS_InnocentDevilAttack_Fire; break;
+		case EEvolutionCrystalType::Fire:   AttackSystem = NS_InnocentDevilAttack_Fire; break;
+		case EEvolutionCrystalType::Ice:    AttackSystem = NS_InnocentDevilAttack_Ice; break;
+		case EEvolutionCrystalType::Light:  AttackSystem = NS_InnocentDevilAttack_Light; break;
+		case EEvolutionCrystalType::Dark:   AttackSystem = NS_InnocentDevilAttack_Dark; break;
+		default:                            AttackSystem = NS_InnocentDevilAttack_Fire; break;
 	}
 
 	if (AttackSystem && GetWorld())

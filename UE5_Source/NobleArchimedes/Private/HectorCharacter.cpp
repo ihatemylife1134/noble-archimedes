@@ -7,6 +7,13 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "NobleArchimedesPlayerController.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputActionValue.h"
+#include "InputMappingContext.h"
+#include "InputAction.h"
 
 
 AHectorCharacter::AHectorCharacter()
@@ -39,16 +46,48 @@ AHectorCharacter::AHectorCharacter()
 void AHectorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AddDefaultMappingContext();
+	UE_LOG(LogTemp, Display,
+		TEXT("NobleArchimedes: Hector BeginPlay. Controller=%s MappingContext=%s"),
+		*GetNameSafe(GetController()), *GetNameSafe(DefaultMappingContext));
+}
+
+void AHectorCharacter::AddDefaultMappingContext()
+{
+	if (bDefaultMappingContextAdded || !DefaultMappingContext)
+	{
+		return;
+	}
+
+	if (const APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+				ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
+			{
+				Subsystem->AddMappingContext(DefaultMappingContext, 0);
+				bDefaultMappingContextAdded = true;
+			}
+		}
+	}
 }
 
 void AHectorCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// Apply movement
+	// Apply movement relative to the camera yaw. MoveInputVector.X is forward,
+	// MoveInputVector.Y is right.
 	if (MoveInputVector.SizeSquared() > 0.0f)
 	{
-		AddMovementInput(MoveInputVector, 1.0f);
+		const FRotator ControlRotation = GetControlRotation();
+		const FRotator YawRotation(0.0f, ControlRotation.Yaw, 0.0f);
+		const FVector Forward = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector Right = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(Forward, MoveInputVector.X);
+		AddMovementInput(Right, MoveInputVector.Y);
 	}
 
 	// Apply look input
@@ -62,6 +101,148 @@ void AHectorCharacter::Tick(float DeltaTime)
 void AHectorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	AddDefaultMappingContext();
+
+	UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (!Input)
+	{
+		return;
+	}
+
+	if (MoveAction)
+	{
+		Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AHectorCharacter::Input_Move);
+	}
+	if (LookAction)
+	{
+		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &AHectorCharacter::Input_Look);
+	}
+	if (JumpAction)
+	{
+		Input->BindAction(JumpAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_JumpStarted);
+	}
+	if (LightAttackAction)
+	{
+		Input->BindAction(LightAttackAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_LightAttack);
+	}
+	if (HeavyAttackAction)
+	{
+		Input->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_HeavyAttack);
+	}
+	if (GuardAction)
+	{
+		Input->BindAction(GuardAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_GuardStarted);
+		Input->BindAction(GuardAction, ETriggerEvent::Completed, this, &AHectorCharacter::Input_GuardCompleted);
+	}
+	if (DodgeAction)
+	{
+		Input->BindAction(DodgeAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_Dodge);
+	}
+	if (InteractAction)
+	{
+		Input->BindAction(InteractAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_Interact);
+	}
+	if (SummonDevilAction)
+	{
+		Input->BindAction(SummonDevilAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_CycleInnocentDevil);
+	}
+	if (CameraModeAction)
+	{
+		Input->BindAction(CameraModeAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_ToggleCameraMode);
+	}
+	if (MapAction)
+	{
+		Input->BindAction(MapAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_ToggleMap);
+	}
+	if (PauseAction)
+	{
+		Input->BindAction(PauseAction, ETriggerEvent::Started, this, &AHectorCharacter::Input_Pause);
+	}
+}
+
+void AHectorCharacter::Input_Move(const FInputActionValue& Value)
+{
+	const FVector2D Axis = Value.Get<FVector2D>();
+	Move(Axis.X, Axis.Y);
+}
+
+void AHectorCharacter::Input_Look(const FInputActionValue& Value)
+{
+	const FVector2D Axis = Value.Get<FVector2D>();
+	Look(Axis.X, Axis.Y);
+}
+
+void AHectorCharacter::Input_JumpStarted()
+{
+	Jump();
+}
+
+void AHectorCharacter::Input_LightAttack()
+{
+	LightAttack();
+}
+
+void AHectorCharacter::Input_HeavyAttack()
+{
+	HeavyAttack();
+}
+
+void AHectorCharacter::Input_GuardStarted()
+{
+	StartGuard();
+}
+
+void AHectorCharacter::Input_GuardCompleted()
+{
+	EndGuard();
+}
+
+void AHectorCharacter::Input_Dodge()
+{
+	const FVector Direction = MoveInputVector.IsNearlyZero() ? GetActorForwardVector() : MoveInputVector;
+	QuickStep(Direction);
+}
+
+void AHectorCharacter::Input_Interact()
+{
+	OnInteractPressed();
+}
+
+void AHectorCharacter::Input_CycleInnocentDevil()
+{
+	const TArray<EInnocentDevilType> Unlocked = GetUnlockedInnocentDevils();
+	if (Unlocked.Num() == 0)
+	{
+		return;
+	}
+
+	const int32 NextIndex = (GetActiveInnocentDevilIndex() + 1) % Unlocked.Num();
+	SummonInnocentDevil(Unlocked[NextIndex]);
+}
+
+void AHectorCharacter::Input_ToggleCameraMode()
+{
+	if (ANobleArchimedesPlayerController* PC = Cast<ANobleArchimedesPlayerController>(GetController()))
+	{
+		PC->ToggleCameraMode();
+	}
+}
+
+void AHectorCharacter::Input_ToggleMap()
+{
+	if (ANobleArchimedesPlayerController* PC = Cast<ANobleArchimedesPlayerController>(GetController()))
+	{
+		PC->OpenMap();
+	}
+}
+
+void AHectorCharacter::Input_Pause()
+{
+	if (ANobleArchimedesPlayerController* PC = Cast<ANobleArchimedesPlayerController>(GetController()))
+	{
+		PC->PauseGame();
+	}
 }
 
 void AHectorCharacter::Move(float ValueX, float ValueY)

@@ -26,7 +26,7 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	SwordData.AttackSpeed = 1.0f;
 	SwordData.BaseDamage = 15.0f;
 	SwordData.DamageType = EDamageType::Slash;
-	SwordData.EvoCrystalColor = EInnocentDevilType::Light;
+	SwordData.EvoCrystalColor = EEvolutionCrystalType::Light;
 	WeaponDataTable.Add(EWeaponType::Sword, SwordData);
 
 	FWeaponData AxeData;
@@ -36,7 +36,7 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	AxeData.AttackSpeed = 0.7f;
 	AxeData.BaseDamage = 25.0f;
 	AxeData.DamageType = EDamageType::Blunt;
-	AxeData.EvoCrystalColor = EInnocentDevilType::Dark;
+	AxeData.EvoCrystalColor = EEvolutionCrystalType::Dark;
 	WeaponDataTable.Add(EWeaponType::Axe, AxeData);
 
 	FWeaponData SpearData;
@@ -46,7 +46,7 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	SpearData.AttackSpeed = 0.8f;
 	SpearData.BaseDamage = 18.0f;
 	SpearData.DamageType = EDamageType::Slash;
-	SpearData.EvoCrystalColor = EInnocentDevilType::Fire;
+	SpearData.EvoCrystalColor = EEvolutionCrystalType::Fire;
 	WeaponDataTable.Add(EWeaponType::Spear, SpearData);
 
 	FWeaponData KnucklesData;
@@ -56,7 +56,7 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	KnucklesData.AttackSpeed = 1.3f;
 	KnucklesData.BaseDamage = 12.0f;
 	KnucklesData.DamageType = EDamageType::Blunt;
-	KnucklesData.EvoCrystalColor = EInnocentDevilType::Ice;
+	KnucklesData.EvoCrystalColor = EEvolutionCrystalType::Ice;
 	WeaponDataTable.Add(EWeaponType::Knuckles, KnucklesData);
 
 	FWeaponData SpecialData;
@@ -66,7 +66,7 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	SpecialData.AttackSpeed = 0.5f;
 	SpecialData.BaseDamage = 10.0f;
 	SpecialData.DamageType = EDamageType::Magic;
-	SpecialData.EvoCrystalColor = EInnocentDevilType::None;
+	SpecialData.EvoCrystalColor = EEvolutionCrystalType::None;
 	WeaponDataTable.Add(EWeaponType::Special, SpecialData);
 
 	CurrentWeaponData = SwordData;
@@ -300,10 +300,10 @@ void UNobleArchimedesCombatComponent::ApplyDamageReduction(float& Damage, EDamag
 {
 	// Weakness/tolerance logic
 	// Fire <-> Ice, Light <-> Dark
-	if ((DamageType == EDamageType::Fire && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Ice) ||
-		(DamageType == EDamageType::Ice && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Fire) ||
-		(DamageType == EDamageType::Light && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Dark) ||
-		(DamageType == EDamageType::Dark && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Light))
+	if ((DamageType == EDamageType::Fire && CurrentWeaponData.EvoCrystalColor == EEvolutionCrystalType::Ice) ||
+		(DamageType == EDamageType::Ice && CurrentWeaponData.EvoCrystalColor == EEvolutionCrystalType::Fire) ||
+		(DamageType == EDamageType::Light && CurrentWeaponData.EvoCrystalColor == EEvolutionCrystalType::Dark) ||
+		(DamageType == EDamageType::Dark && CurrentWeaponData.EvoCrystalColor == EEvolutionCrystalType::Light))
 	{
 		Damage *= 1.5f; // Weakness bonus
 	}

@@ -55,7 +55,7 @@ public:
 	void PlayInnocentDevilEvolve(FVector Location, EInnocentDevilType Type);
 
 	UFUNCTION(BlueprintCallable, Category = "VFX")
-	void PlayInnocentDevilAttack(FVector Location, EInnocentDevilType Type);
+	void PlayInnocentDevilAttack(FVector Location, EEvolutionCrystalType Element);
 
 	//=============================================================================
 	// ITEM VFX

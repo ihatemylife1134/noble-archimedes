@@ -119,12 +119,20 @@ void UNobleArchimedesInnocentDevilComponent::SetMode(EInnocentDevilMode NewMode)
 	CurrentMode = NewMode;
 }
 
-void UNobleArchimedesInnocentDevilComponent::EvolveInnocentDevil(EInnocentDevilType Type, EInnocentDevilType CrystalColor)
+void UNobleArchimedesInnocentDevilComponent::EvolveInnocentDevil(EInnocentDevilType Type, EEvolutionCrystalType CrystalColor)
 {
 	for (auto& Data : InnocentDevils)
 	{
 		if (Data.DevilType == Type)
 		{
+			// Reject the wrong crystal family instead of silently evolving.
+			if (CrystalColor != EEvolutionCrystalType::None
+				&& Data.EvolutionCrystalColor != EEvolutionCrystalType::None
+				&& Data.EvolutionCrystalColor != CrystalColor)
+			{
+				return;
+			}
+
 			if (!Data.bIsEvolved)
 			{
 				Data.bIsEvolved = true;

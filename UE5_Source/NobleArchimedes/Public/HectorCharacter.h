@@ -12,6 +12,9 @@
 
 class UNobleArchimedesCameraComponent;
 class UNobleArchimedesInnocentDevilComponent;
+class UInputAction;
+class UInputMappingContext;
+struct FInputActionValue;
 
 UCLASS()
 class NOBLEARCHIMEDES_API AHectorCharacter : public ACharacter
@@ -51,6 +54,50 @@ public:
 	UCameraComponent* FollowCamera;
 
 	//=============================================================================
+	// INPUT (Enhanced Input)
+	//=============================================================================
+
+	/** Mapping context applied on BeginPlay. Assign IMC_Default in the Blueprint. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputMappingContext> DefaultMappingContext;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> MoveAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> LookAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> JumpAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> LightAttackAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> HeavyAttackAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> GuardAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> DodgeAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> InteractAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> SummonDevilAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> CameraModeAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> MapAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> PauseAction;
+
+	//=============================================================================
 	// MOVEMENT
 	//=============================================================================
 
@@ -59,6 +106,35 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void Look(float ValueX, float ValueY);
+
+	/** Extension hook fired when the player presses Interact (no built-in behaviour yet). */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Input")
+	void OnInteractPressed();
+
+protected:
+	//=============================================================================
+	// INPUT HANDLERS
+	//=============================================================================
+
+	void Input_Move(const FInputActionValue& Value);
+	void Input_Look(const FInputActionValue& Value);
+	void Input_JumpStarted();
+	void Input_LightAttack();
+	void Input_HeavyAttack();
+	void Input_GuardStarted();
+	void Input_GuardCompleted();
+	void Input_Dodge();
+	void Input_Interact();
+	void Input_CycleInnocentDevil();
+	void Input_ToggleCameraMode();
+	void Input_ToggleMap();
+	void Input_Pause();
+
+	void AddDefaultMappingContext();
+
+	bool bDefaultMappingContextAdded = false;
+
+public:
 
 	//=============================================================================
 	// COMBAT (delegated to CombatComponent)

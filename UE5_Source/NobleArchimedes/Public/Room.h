@@ -30,31 +30,33 @@ public:
 	// ROOM PROPERTIES
 	//=============================================================================
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Room")
+	// Editable per placement so level designers can name rooms and flag their
+	// purpose without creating a Blueprint subclass per room.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room")
 	FName RoomName;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Room")
-	int32 ChapterNumber;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room")
+	int32 ChapterNumber = 1;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Room")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room")
 	bool bIsSaveRoom = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Room")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room")
 	bool bIsBossArena = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Room")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room")
 	bool bIsLocked = true;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Room")
 	bool bHasBeenCleared = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Room")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room")
 	TArray<TSubclassOf<class AEnemyBase>> EnemyClassesToSpawn;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Room")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room")
 	TArray<FVector> EnemySpawnLocations;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Room")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room")
 	TArray<FName> ExitRoomNames;
 
 	//=============================================================================

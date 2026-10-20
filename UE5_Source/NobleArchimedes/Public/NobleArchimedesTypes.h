@@ -79,11 +79,25 @@ enum class EInnocentDevilType : uint8
 	Skeleton,
 	Witch,
 	Pumpkin, // Secret Innocent Devil
+	None
+};
+
+/**
+ * Evolution crystal families. The source guide uses weapon-flavoured crystals
+ * for the non-elemental devils (Ogre = Slash, Witch = Magic, Pumpkin = Special),
+ * so this is deliberately wider than the elemental set.
+ */
+UENUM(BlueprintType)
+enum class EEvolutionCrystalType : uint8
+{
+	None,
 	Light,
 	Dark,
 	Fire,
 	Ice,
-	None
+	Slash,
+	Magic,
+	Special
 };
 
 //=============================================================================
@@ -126,13 +140,22 @@ struct FWeaponData
 	EDamageType DamageType = EDamageType::Slash;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	EInnocentDevilType EvoCrystalColor = EInnocentDevilType::None;
+	EEvolutionCrystalType EvoCrystalColor = EEvolutionCrystalType::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TArray<UAnimMontage*> ComboAnimations;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TArray<UAnimMontage*> FinalAttackAnimations;
+
+	// Number of montages required for the combo / finisher. Kept in sync with
+	// ComboAnimations and FinalAttackAnimations so data tables can describe a
+	// weapon before animations are authored.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	int32 ComboAnimCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	int32 FinalAttackAnimCount = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -205,6 +228,10 @@ struct FInnocentDevilData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
 	bool bIsEvolved = false;
+
+	// Crystal family required for evolution (matches the source CSV column).
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	EEvolutionCrystalType EvolutionCrystalColor = EEvolutionCrystalType::None;
 };
 
 USTRUCT(BlueprintType)
@@ -425,14 +452,19 @@ struct FChapterProgression
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
 	FString UnlockRequirement;
 
+	// The source progression table stores how many save rooms / green-door
+	// rooms a chapter contains rather than their names.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
-	TArray<FName> SaveRooms;
+	int32 SaveRoomCount = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
-	TArray<FName> GreenDoorRooms;
+	int32 GreenDoorRoomCount = 0;
 
+	// Display name of the Innocent Devil acquired in this chapter ("Fairy",
+	// "Skeleton Devil", ...). Kept as a name because the source table uses the
+	// full display name for the two "Devil" companions.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
-	EInnocentDevilType InnocentDevilAcquired = EInnocentDevilType::None;
+	FName InnocentDevilAcquired;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
 	FName WeaponUnlocked;

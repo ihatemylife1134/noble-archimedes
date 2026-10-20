@@ -32,7 +32,7 @@ public:
 	void SetMode(EInnocentDevilMode NewMode);
 
 	UFUNCTION(BlueprintCallable, Category = "Innocent Devil")
-	void EvolveInnocentDevil(EInnocentDevilType Type, EInnocentDevilType CrystalColor);
+	void EvolveInnocentDevil(EInnocentDevilType Type, EEvolutionCrystalType CrystalColor);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Innocent Devil")
 	TArray<FInnocentDevilData> GetInnocentDevils() const;
