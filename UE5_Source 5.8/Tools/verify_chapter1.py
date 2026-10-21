@@ -59,10 +59,17 @@ else:
     rooms, save_actors, portals, starts, navs, spots = [], 0, 0, 0, 0, 0
     candles = pickups = lights = 0
     enemy_counts = {}
+    dressing = {"Ceiling": 0, "Column":
+                0, "Altar": 0, "Dais": 0, "Pedestal": 0}
 
     for actor in EAS.get_all_level_actors():
         cls = actor.get_class().get_name()
         label = actor.get_actor_label()
+
+        # Interior dressing is identified by static-mesh label prefix.
+        for key in dressing:
+            if str(label).startswith(key):
+                dressing[key] += 1
 
         if cls.startswith("BP_Room"):
             rooms.append(get_prop(actor, "RoomName"))
@@ -99,6 +106,19 @@ else:
         (starts, portals, save_actors, navs))
     log("lights       = %d point + %d spot  candles=%d pickups=%d" %
         (lights, spots, candles, pickups))
+    log("dressing     = %s" % dressing)
+
+    # Every room needs a ceiling, and the chapter needs its landmarks.
+    if dressing["Ceiling"] < len(EXPECTED_ROOMS):
+        err("only %d ceilings for %d rooms" % (dressing["Ceiling"], len(EXPECTED_ROOMS)))
+    if dressing["Column"] < 4:
+        err("entrance hall has %d columns, expected 4" % dressing["Column"])
+    if dressing["Altar"] < 1:
+        err("chapel has no altar")
+    if dressing["Dais"] < 1:
+        err("boss arena has no dais")
+    if dressing["Pedestal"] < 1:
+        err("save room has no pedestal")
 
     found_rooms = {str(r) for r in rooms if r}
     if found_rooms != EXPECTED_ROOMS:

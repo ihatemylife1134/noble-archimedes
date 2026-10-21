@@ -1457,6 +1457,42 @@ def build_corridor(name, center, size, cube, material):
     # center is a plain tuple here, so indexing is intentional.
 
 
+def dress_chapter_one(cube, material, rooms):
+    """Give Chapter 1 its interior: ceilings, columns, an altar and a boss dais.
+
+    The shells are floor-plus-walls only, so without this the chapter renders as
+    empty boxes with light leaking out of the open tops.
+    """
+    if not cube:
+        return
+
+    for name, (center, size, height) in rooms.items():
+        spawn_box("Ceiling_%s" % name,
+                  unreal.Vector(center.x, center.y, height),
+                  (size[0], size[1], 30.0), cube, material)
+
+    # Entrance Hall: four columns framing the fight space.
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            spawn_box("Column_Hall_%d_%d" % (sx, sy),
+                      unreal.Vector(sx * 620, sy * 620, 210),
+                      (160, 160, 420), cube, material)
+
+    # Chapel: stepped altar at the far end.
+    spawn_box("AltarStep_Chapel", unreal.Vector(0, 3400, 20),
+              (1200, 500, 40), cube, material)
+    spawn_box("Altar_Chapel", unreal.Vector(0, 3400, 60),
+              (900, 300, 80), cube, material)
+
+    # Boss Arena: dais under the Sentinel Knight.
+    spawn_box("Dais_BossArena", unreal.Vector(0, 5900, 30),
+              (700, 700, 60), cube, material)
+
+    # Save Room: pedestal for the save flame.
+    spawn_box("Pedestal_SaveRoom", unreal.Vector(-2800, 0, 40),
+              (300, 300, 80), cube, material)
+
+
 def build_chapter_one():
     if not load_or_create_map():
         return
@@ -1501,6 +1537,9 @@ def build_chapter_one():
     build_corridor("HallToChapel", (0, 1450), (620, 700), cube, material)
     build_corridor("HallToSave", (-1550, 0), (1700, 500), cube, material)
     build_corridor("ChapelToBoss", (0, 3750), (700, 500), cube, material)
+
+    # Interior dressing: ceilings, columns, altar, dais, pedestal.
+    dress_chapter_one(cube, material, rooms)
 
     # Player start in the south of the Entrance Hall.
     start = EAS.spawn_actor_from_class(unreal.PlayerStart, unreal.Vector(0, -700, 120), unreal.Rotator(roll=0.0, pitch=0.0, yaw=90.0))
@@ -1554,8 +1593,8 @@ def build_chapter_one():
     bp_item = bp_class("/Game/Blueprints/World", "BP_ItemDrop")
     if bp_item:
         hall_loot = (("Short Sword", 0, -900),      # recipe reward
-                     ("Iron Shard", -1400, -1150), ("Iron Shard", -1250, -1150),
-                     ("Iron Shard", -1100, -1150))  # hidden alcove
+                     ("Iron Shard", -900, -900), ("Iron Shard", -780, -900),
+                     ("Iron Shard", -660, -900))    # hidden alcove, west corner
         for index, (item, x, y) in enumerate(hall_loot):
             drop = EAS.spawn_actor_from_class(bp_item, unreal.Vector(x, y, 80),
                                               unreal.Rotator(0, 0, 0))
