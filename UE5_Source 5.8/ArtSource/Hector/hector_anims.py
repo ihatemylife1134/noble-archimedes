@@ -1,8 +1,11 @@
 """Hector keyframed animations (30 fps). Rotations are bone-local XYZ degrees.
 Root motion is authored on the 'root' bone ('root_loc', cm).
-Arms rest along +/-X in bind pose, so idle drops them via Z rotation."""
+Arms rest along +/-X in bind pose, so idle drops them with Y, not Z: with the bone
+running along its own X, a Z rotation sweeps the arm horizontally forward, which
+is why the shipped clips held both arms out in front of the chest. Y pitches the
+arm down to the side."""
 
-ARMS = dict(upperarm_l=(0, 0, -62), upperarm_r=(0, 0, 62), lowerarm_l=(0, 0, -12), lowerarm_r=(0, 0, 18))
+ARMS = dict(upperarm_l=(0, -62, 0), upperarm_r=(0, 62, 0), lowerarm_l=(0, -12, 0), lowerarm_r=(0, 18, 0))
 
 
 def P(base=None, **kw):

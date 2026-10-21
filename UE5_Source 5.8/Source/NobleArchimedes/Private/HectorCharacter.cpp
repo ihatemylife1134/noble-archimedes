@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "HectorCharacter.h"
+#include "AnimVariableBridge.h"
 #include "NobleArchimedesCameraComponent.h"
 #include "NobleArchimedesInnocentDevilComponent.h"
 #include "NobleArchimedesItemSystem.h"
@@ -93,6 +94,20 @@ void AHectorCharacter::BeginPlay()
 	UE_LOG(LogTemp, Display, TEXT("NA-INPUT cameras: mode=%s follow=%s"),
 		CameraComponent && CameraComponent->IsActive() ? TEXT("active") : TEXT("inactive"),
 		FollowCamera && FollowCamera->IsActive() ? TEXT("active") : TEXT("inactive"));
+
+	// Why this matters: a mesh whose AnimationMode is not AnimationBlueprint, or
+	// whose AnimClass fails to instantiate, renders the reference pose and looks
+	// exactly like a broken state machine.
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		UE_LOG(LogTemp, Display,
+			TEXT("NA-ANIMSTATE mesh=%s skel=%s mode=%d animClass=%s animInstance=%s"),
+			*GetNameSafe(MeshComp->GetSkeletalMeshAsset()),
+			*GetNameSafe(MeshComp->GetSkeletalMeshAsset() ? MeshComp->GetSkeletalMeshAsset()->GetSkeleton() : nullptr),
+			static_cast<int32>(MeshComp->GetAnimationMode()),
+			*GetNameSafe(MeshComp->AnimClass),
+			*GetNameSafe(MeshComp->GetAnimInstance()));
+	}
 
 	UE_LOG(LogTemp, Display,
 		TEXT("NobleArchimedes: Hector BeginPlay. Controller=%s MappingContext=%s"),
@@ -206,6 +221,19 @@ void AHectorCharacter::Tick(float DeltaTime)
 		const FVector Right = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Forward, MoveInputVector.X);
 		AddMovementInput(Right, MoveInputVector.Y);
+	}
+
+	// Drive the anim blueprint's locomotion machine. Its transitions fire on
+	// these bools, but nothing ever set them, so the machine never left Idle and
+	// the mesh held the reference pose (the T-pose seen in playtests).
+	if (UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+	{
+		const float Speed2D = GetVelocity().Size2D();
+		const bool bMovingNow = Speed2D > 10.0f;
+		const bool bRunningNow = Speed2D > WalkSpeed + 1.0f;
+		AnimVariableBridge::SetBool(AnimInstance, TEXT("bIsMoving"), bMovingNow);
+		AnimVariableBridge::SetBool(AnimInstance, TEXT("bIsRunning"), bRunningNow);
+		AnimVariableBridge::SetBool(AnimInstance, TEXT("bIsIdle"), !bMovingNow);
 	}
 
 	// Apply look input. Enhanced Input reports mouse deltas per frame, so the
