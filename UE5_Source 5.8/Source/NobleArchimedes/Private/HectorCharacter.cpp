@@ -40,8 +40,16 @@ AHectorCharacter::AHectorCharacter()
 	// Setup camera boom
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f;
+	CameraBoom->TargetArmLength = 350.0f;
 	CameraBoom->bUsePawnControlRotation = true;
+
+	// The collision probe kept jamming the boom against walls and the lock
+	// barriers, pinning the camera inside geometry and rendering the screen
+	// black. In a tight blockout it is better to clip through architecture than
+	// to blind the player, so the probe is off and the camera rides high enough
+	// to see over Hector.
+	CameraBoom->bDoCollisionTest = false;
+	CameraBoom->SocketOffset = FVector(0.0f, 0.0f, 70.0f);
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -61,6 +69,31 @@ void AHectorCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	AddDefaultMappingContext();
+
+	// Two camera components competed for the view target. CameraComponent (the
+	// mode camera) only moves when SetInput() is called, and nothing ever called
+	// it, so the view stayed frozen and ignored the control rotation entirely --
+	// mouse look appeared dead. Keep the boom camera, which follows the pawn's
+	// control rotation, and switch the mode camera back on once it is driven.
+	if (CameraComponent)
+	{
+		// Deactivate() alone does not stop a component's tick, so this kept
+		// running every frame and overwrote FollowCamera's world transform with
+		// its own frozen yaw -- the view snapped back toward the character as
+		// soon as the boom moved it. Disable the tick outright.
+		CameraComponent->SetComponentTickEnabled(false);
+		CameraComponent->SetAutoActivate(false);
+		CameraComponent->Deactivate();
+	}
+	if (FollowCamera)
+	{
+		FollowCamera->SetActive(true);
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("NA-INPUT cameras: mode=%s follow=%s"),
+		CameraComponent && CameraComponent->IsActive() ? TEXT("active") : TEXT("inactive"),
+		FollowCamera && FollowCamera->IsActive() ? TEXT("active") : TEXT("inactive"));
+
 	UE_LOG(LogTemp, Display,
 		TEXT("NobleArchimedes: Hector BeginPlay. Controller=%s MappingContext=%s"),
 		*GetNameSafe(GetController()), *GetNameSafe(DefaultMappingContext));
@@ -184,6 +217,26 @@ void AHectorCharacter::Tick(float DeltaTime)
 		AddControllerPitchInput(LookInputVector.Y);
 		LookInputVector = FVector::ZeroVector;
 	}
+
+	// Frame-rate recorder so playtest stutter can be measured from the log.
+	{
+		static float PerfAccum = 0.0f;
+		static int32 PerfFrames = 0;
+		static float PerfWorst = 0.0f;
+		PerfAccum += DeltaTime;
+		++PerfFrames;
+		PerfWorst = FMath::Max(PerfWorst, DeltaTime);
+		if (PerfAccum >= 1.0f)
+		{
+			UE_LOG(LogTemp, Display, TEXT("NA-PERF fps=%.1f avg_ms=%.2f worst_ms=%.2f"),
+				PerfFrames / PerfAccum,
+				(PerfAccum * 1000.0f) / PerfFrames,
+				PerfWorst * 1000.0f);
+			PerfAccum = 0.0f;
+			PerfFrames = 0;
+			PerfWorst = 0.0f;
+		}
+	}
 }
 
 void AHectorCharacter::Input_MoveCompleted()
@@ -288,12 +341,24 @@ void AHectorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void AHectorCharacter::Input_Move(const FInputActionValue& Value)
 {
 	const FVector2D Axis = Value.Get<FVector2D>();
+	static int32 MoveLogs = 0;
+	if (MoveLogs < 5)
+	{
+		UE_LOG(LogTemp, Display, TEXT("NA-INPUT move x=%.3f y=%.3f"), Axis.X, Axis.Y);
+		++MoveLogs;
+	}
 	Move(Axis.X, Axis.Y);
 }
 
 void AHectorCharacter::Input_Look(const FInputActionValue& Value)
 {
 	const FVector2D Axis = Value.Get<FVector2D>();
+	static int32 LookLogs = 0;
+	if (LookLogs < 5)
+	{
+		UE_LOG(LogTemp, Display, TEXT("NA-INPUT look x=%.4f y=%.4f"), Axis.X, Axis.Y);
+		++LookLogs;
+	}
 	Look(Axis.X, Axis.Y);
 }
 
@@ -742,10 +807,44 @@ void AHectorCharacter::SetWalkMode(bool bInWalking)
 
 void AHectorCharacter::SetCameraMode(ECameraMode NewMode)
 {
+	// The mode camera no longer drives the view (its tick is disabled), so the
+	// camera modes now adjust the spring arm instead of doing nothing.
+	float ArmLength = 350.0f;
+	float FOV = 90.0f;
+	FVector SocketOffset(0.0f, 0.0f, 70.0f);
+
+	switch (NewMode)
+	{
+	case ECameraMode::Classic:
+		break;
+	case ECameraMode::ActionOrbit:
+		ArmLength = 450.0f;
+		FOV = 80.0f;
+		SocketOffset = FVector(0.0f, 0.0f, 110.0f);
+		break;
+	case ECameraMode::OverTheShoulder:
+		ArmLength = 250.0f;
+		FOV = 75.0f;
+		SocketOffset = FVector(0.0f, 60.0f, 90.0f);
+		break;
+	}
+
 	if (CameraComponent)
 	{
 		CameraComponent->SetMode(NewMode);
 	}
+	if (CameraBoom)
+	{
+		CameraBoom->TargetArmLength = ArmLength;
+		CameraBoom->SocketOffset = SocketOffset;
+	}
+	if (FollowCamera)
+	{
+		FollowCamera->SetFieldOfView(FOV);
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("NA-INPUT camera mode=%d arm=%.0f fov=%.0f"),
+		static_cast<int32>(NewMode), ArmLength, FOV);
 }
 
 ECameraMode AHectorCharacter::GetCameraMode() const

@@ -79,7 +79,7 @@ MATERIAL_SPECS = {
     "Foliage": ((0.025, 0.105, 0.040), 0.92, 0.00, None, False),
     "Water": ((0.012, 0.075, 0.14), 0.12, 0.20, None, False),
     "Flesh": ((0.17, 0.095, 0.085), 0.72, 0.00, None, False),
-    "Armor": ((0.030, 0.035, 0.050), 0.28, 0.88, None, False),
+    "Armor": ((0.180, 0.195, 0.240), 0.32, 0.90, None, False),
     "Barrier": ((0.0, 0.0, 0.0), 0.4, 0.0, (4.0, 0.10, 0.05), True),
     "Flame": ((0.0, 0.0, 0.0), 0.4, 0.0, (7.0, 2.2, 0.30), True),
     "Portal": ((0.0, 0.0, 0.0), 0.4, 0.0, (1.2, 0.20, 3.5), True),
@@ -152,6 +152,13 @@ def ensure_material(name):
         error("Could not create material %s" % name)
         return None
 
+    # Character meshes are skeletal; without this flag the engine silently swaps
+    # in the default material at runtime and logs a missing-usage warning.
+    try:
+        material.set_editor_property("used_with_skeletal_mesh", True)
+    except Exception as exc:
+        warn("could not flag %s for skeletal meshes: %s" % (name, exc))
+
     base = unreal.MaterialEditingLibrary.create_material_expression(
         material, unreal.MaterialExpressionVectorParameter, -360, 0)
     base.set_editor_property("parameter_name", "BaseColor")
@@ -197,6 +204,13 @@ def ensure_material(name):
 
 
 def load_materials():
+    # Armor was authored near-black and already exists on disk, so the new
+    # steel colour would be skipped by the reuse path. Drop the stale asset so
+    # it regenerates with the corrected spec and usage flag.
+    for stale in ("%s/Armor" % MAT_DIR, "%s/MI_Armor" % GEN_MAT_DIR):
+        if unreal.EditorAssetLibrary.does_asset_exist(stale):
+            unreal.EditorAssetLibrary.delete_asset(stale)
+            log("  removed stale material %s" % stale)
     for name in MATERIAL_SPECS:
         MATERIALS[name] = ensure_material(name)
 
@@ -337,6 +351,36 @@ def find_actors(prefix):
         if label and label.startswith(prefix):
             result.append(actor)
     return result
+
+
+def make_scene_playable():
+    """Finish the map so it renders and paths without an editor build step.
+
+    Levels are authored from a commandlet, so Build Lighting and Build Paths
+    never run: Chapter 1 shipped with 713 unbuilt light interactions (black,
+    unlit geometry) and an unbuilt navmesh, which stops enemies from chasing.
+    Making every light movable removes the dependency on a lighting build, and
+    switching the navmesh to runtime generation removes the dependency on a
+    paths build.
+    """
+    lights = 0
+    navmeshes = 0
+    for actor in EAS.get_all_level_actors():
+        try:
+            if isinstance(actor, unreal.WorldSettings):
+                actor.set_editor_property("bForceNoPrecomputedLighting", True)
+            elif isinstance(actor, unreal.RecastNavMesh):
+                actor.set_editor_property(
+                    "runtime_generation", unreal.RuntimeGenerationType.DYNAMIC)
+                navmeshes += 1
+            elif isinstance(actor, unreal.Light):
+                if actor.root_component:
+                    actor.root_component.set_mobility(
+                        unreal.ComponentMobility.MOVABLE)
+                    lights += 1
+        except Exception as exc:
+            warn("scene prep skipped %s: %s" % (actor.get_class().get_name(), exc))
+    log("  scene prep: %d lights movable, %d navmesh runtime-dynamic" % (lights, navmeshes))
 
 
 def dress_lock_barriers():
@@ -678,6 +722,7 @@ def build_chapter(chapter):
     barriers = dress_lock_barriers()
     if barriers:
         log("  chapter %d: dressed %d lock barriers" % (chapter, barriers))
+    make_scene_playable()
     save_map()
     log("Dressed chapter %d (%s)" % (chapter, map_name))
     return True

@@ -1537,8 +1537,10 @@ def build_chapter_one():
     # Interior dressing: ceilings, columns, altar, dais, pedestal.
     dress_chapter_one(cube, material, rooms)
 
-    # Player start in the south of the Entrance Hall.
-    start = EAS.spawn_actor_from_class(unreal.PlayerStart, unreal.Vector(0, -700, 120), unreal.Rotator(roll=0.0, pitch=0.0, yaw=90.0))
+    # Player start in the south of the Entrance Hall. Kept at least 300 units
+    # clear of the south wall: the follow camera sits 400 units behind the
+    # character, and spawning any closer parked the boom inside the wall.
+    start = EAS.spawn_actor_from_class(unreal.PlayerStart, unreal.Vector(0, -400, 120), unreal.Rotator(roll=0.0, pitch=0.0, yaw=90.0))
     if start:
         start.set_actor_label("PlayerStart_Chap01")
         start.set_editor_property("tags", [BLOCKOUT_TAG])
@@ -1800,7 +1802,7 @@ def build_generic_chapter(chapter):
     build_corridor("MidToBoss_%d" % chapter, (0, 3750), (700, 500), cube, material)
 
     start = EAS.spawn_actor_from_class(
-        unreal.PlayerStart, unreal.Vector(0, -700, 120),
+        unreal.PlayerStart, unreal.Vector(0, -400, 120),
         unreal.Rotator(roll=0.0, pitch=0.0, yaw=90.0))
     if start:
         start.set_actor_label("PlayerStart_Chap%02d" % chapter)
