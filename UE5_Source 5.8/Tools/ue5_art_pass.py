@@ -203,16 +203,62 @@ def ensure_material(name):
     return material
 
 
+def retint_material(name):
+    """Push MATERIAL_SPECS values into an existing material asset in place.
+
+    Deleting and recreating was unreliable: does_asset_exist() consults the
+    asset registry, which is not populated at commandlet start, so the delete
+    silently never ran and stale colours survived. The materials expose named
+    parameters, so overwrite those instead and recompile.
+    """
+    path = "%s/%s" % (MAT_DIR, name)
+    if not unreal.EditorAssetLibrary.does_asset_exist(path):
+        return False
+    mat = unreal.EditorAssetLibrary.load_asset(path)
+    if not mat:
+        return False
+
+    base_color, roughness, metallic, emissive, unlit = MATERIAL_SPECS[name]
+    changed = False
+
+    try:
+        if not mat.get_editor_property("used_with_skeletal_mesh"):
+            mat.set_editor_property("used_with_skeletal_mesh", True)
+            changed = True
+    except Exception:
+        pass
+
+    for expr in unreal.MaterialEditingLibrary.get_material_expressions(mat):
+        try:
+            pname = str(expr.get_editor_property("parameter_name"))
+        except Exception:
+            continue
+        if pname == "BaseColor":
+            expr.set_editor_property("default_value", unreal.LinearColor(
+                base_color[0], base_color[1], base_color[2], 1.0))
+            changed = True
+        elif pname == "Roughness":
+            expr.set_editor_property("default_value", roughness)
+            changed = True
+        elif pname == "Metallic":
+            expr.set_editor_property("default_value", metallic)
+            changed = True
+        elif pname == "Emissive" and emissive:
+            expr.set_editor_property("default_value", unreal.LinearColor(
+                emissive[0], emissive[1], emissive[2], 1.0))
+            changed = True
+
+    if changed:
+        unreal.MaterialEditingLibrary.recompile_material(mat)
+        unreal.EditorAssetLibrary.save_asset(path, only_if_is_dirty=False)
+        log("  retinted %s" % path)
+    return changed
+
+
 def load_materials():
-    # Armor was authored near-black and already exists on disk, so the new
-    # steel colour would be skipped by the reuse path. Drop the stale asset so
-    # it regenerates with the corrected spec and usage flag.
-    for stale in ("%s/Armor" % MAT_DIR, "%s/MI_Armor" % GEN_MAT_DIR):
-        if unreal.EditorAssetLibrary.does_asset_exist(stale):
-            unreal.EditorAssetLibrary.delete_asset(stale)
-            log("  removed stale material %s" % stale)
     for name in MATERIAL_SPECS:
         MATERIALS[name] = ensure_material(name)
+        retint_material(name)
 
 
 def clear_art_pass():
