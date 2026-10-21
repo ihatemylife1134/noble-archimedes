@@ -748,6 +748,26 @@ def assign_enemy_mesh(folder, name, scale=0.95):
         comp.set_editor_property("RelativeScale3D",
                                  unreal.Vector(scale, scale, scale))
         log("  assigned %s mesh to %s" % (mesh_path, name))
+
+    # Without an AnimClass the mesh holds the reference pose, so enemies read as
+    # mannequins sliding around. Reuse Hector's animation blueprint as a
+    # placeholder until enemy montages exist.
+    if not get_prop(comp, "AnimClass"):
+        anim_bp = None
+        for anim_path in ("/Game/Characters/Hector/AB_Hector",
+                          "/Game/Blueprints/Characters/AB_Hector",
+                          "/Game/Blueprints/Animation/AB_Hector"):
+            anim_bp = unreal.EditorAssetLibrary.load_asset(anim_path)
+            if anim_bp:
+                break
+        if not anim_bp:
+            warn("AB_Hector not found; %s will hold the reference pose" % name)
+        else:
+            try:
+                comp.set_editor_property("AnimClass", anim_bp.generated_class())
+                log("  assigned %s to %s" % (anim_bp.get_name(), name))
+            except Exception as exc:
+                warn("could not set AnimClass on %s: %s" % (name, exc))
     unreal.EditorAssetLibrary.save_asset(path, only_if_is_dirty=False)
 
 

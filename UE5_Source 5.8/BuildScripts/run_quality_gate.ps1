@@ -134,6 +134,14 @@ if (-not $SkipContent) {
     Write-Host "substance RESULT=$verdict" -ForegroundColor DarkGray
     if (-not $passed) { Fail-Gate @('NA-SUBSTANCE\] FAILED') }
 
+    Write-Step '3b2/4  Full gameplay debug audit'
+    $r = Invoke-Commandlet -Script (Join-Path $PROJECT_DIR 'Tools\debug_full.py')
+    $verdict = ([regex]::Match($r.Text, 'NA-DEBUG\] RESULT=(\w+)')).Groups[1].Value
+    $passed = ($verdict -eq 'PASS')
+    Add-Result -Name 'Gameplay debug' -Passed $passed -Detail "verdict=$verdict"
+    Write-Host "debug verdict=$verdict" -ForegroundColor DarkGray
+    if (-not $passed) { Fail-Gate @('NA-DEBUG\] RESULT=FAIL') }
+
     Write-Step '3c/4  Fidelity: mechanical timings (F2)'
     $r = Invoke-Commandlet -Script (Join-Path $PROJECT_DIR 'Tools\fidelity_timings.py')
     $m = [regex]::Match($r.Text, 'NA-FID2\] RESULT=(\w+) errors=(\d+) deviations=(\d+)')
