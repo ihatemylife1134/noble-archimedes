@@ -149,10 +149,12 @@ void UNobleArchimedesCombatComponent::LightAttack()
 
 	PlayAttackMontage(CurrentComboStage);
 
-	// Schedule the actual weapon hit just after the swing starts.
+	// Schedule the actual weapon hit on the swing's active frame, derived from
+	// the montage so each attack connects at its own point.
 	FTimerDelegate HitDelegate = FTimerDelegate::CreateUObject(
 		this, &UNobleArchimedesCombatComponent::ApplyAttackHit, CurrentComboStage, false);
-	GetWorld()->GetTimerManager().SetTimer(AttackHitTimer, HitDelegate, AttackHitDelay, false);
+	GetWorld()->GetTimerManager().SetTimer(AttackHitTimer, HitDelegate,
+		GetAttackHitDelay(CurrentComboStage, false), false);
 	GetWorld()->GetTimerManager().SetTimer(
 		AttackStateTimer, this, &UNobleArchimedesCombatComponent::EndAttack, GetAttackDuration(), false);
 
@@ -172,7 +174,8 @@ void UNobleArchimedesCombatComponent::HeavyAttack()
 
 	FTimerDelegate HitDelegate = FTimerDelegate::CreateUObject(
 		this, &UNobleArchimedesCombatComponent::ApplyAttackHit, FinisherStage, true);
-	GetWorld()->GetTimerManager().SetTimer(AttackHitTimer, HitDelegate, AttackHitDelay, false);
+	GetWorld()->GetTimerManager().SetTimer(AttackHitTimer, HitDelegate,
+		GetAttackHitDelay(FinisherStage, true), false);
 	GetWorld()->GetTimerManager().SetTimer(
 		AttackStateTimer, this, &UNobleArchimedesCombatComponent::EndAttack, GetAttackDuration(), false);
 
@@ -425,6 +428,32 @@ void UNobleArchimedesCombatComponent::ApplyAttackHit(int32 ComboStage, bool bHea
 			Candle->BreakCandle();
 		}
 	}
+}
+
+float UNobleArchimedesCombatComponent::GetAttackHitDelay(int32 Stage, bool bHeavyAttack) const
+{
+	const TArray<UAnimMontage*>& Montages = bHeavyAttack
+		? CurrentWeaponData.FinalAttackAnimations
+		: CurrentWeaponData.ComboAnimations;
+
+	const int32 Index = FMath::Max(0, Stage - 1);
+	if (Montages.IsValidIndex(Index) && Montages[Index])
+	{
+		const float Length = Montages[Index]->GetPlayLength();
+		if (Length > 0.0f)
+		{
+			// Hit lands on the first active frame, about a third into the clip.
+			const float Delay = FMath::Clamp(Length * AttackHitFraction, 0.02f, 0.6f);
+			UE_LOG(LogTemp, Log,
+				TEXT("NA-ANIM: %s stage %d hit at %.3fs (clip %.2fs)."),
+				bHeavyAttack ? TEXT("finisher") : TEXT("combo"), Stage, Delay, Length);
+			return Delay;
+		}
+	}
+
+	// No montage for this stage: fall back to the authored delay so the attack
+	// still resolves instead of hitting instantly.
+	return AttackHitDelay;
 }
 
 float UNobleArchimedesCombatComponent::GetComboWindowSeconds(int32 Stage) const

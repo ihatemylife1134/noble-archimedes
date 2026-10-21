@@ -47,8 +47,26 @@ public:
 	 * constants. Exposed so the fidelity tests can compare the shipped values
 	 * against AnimationFrameData.md without duplicating the numbers.
 	 */
+	/**
+	 * Combo window for a 1-based combo stage, mirroring the COMBO_STAGE_*_WINDOW
+	 * constants. Exposed so the fidelity tests can compare the shipped values
+	 * against AnimationFrameData.md without duplicating the numbers.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
 	float GetComboWindowSeconds(int32 Stage) const;
+
+	/**
+	 * When the swing connects, as a delay from the start of the attack.
+	 *
+	 * AnimationFrameData.md puts the first active frame at startup/total of the
+	 * clip (6/18, 5/16, 6/20, 8/24 - about a third in every case), so the delay
+	 * is derived from the montage length instead of a single global constant.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	float GetAttackHitDelay(int32 Stage, bool bHeavyAttack) const;
+
+	/** Fraction of the clip at which the swing connects (first active frame). */
+	static constexpr float AttackHitFraction = 0.33f;
 
 	//=============================================================================
 	// GUARD SYSTEM
