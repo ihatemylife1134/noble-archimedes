@@ -493,7 +493,19 @@ void UNobleArchimedesCombatComponent::PlayAttackMontage(int32 Stage)
 	{
 		if (CurrentWeaponData.ComboAnimations.IsValidIndex(Stage - 1))
 		{
-			Char->PlayAnimMontage(CurrentWeaponData.ComboAnimations[Stage - 1]);
+			UAnimMontage* Montage = CurrentWeaponData.ComboAnimations[Stage - 1];
+			if (Montage)
+			{
+				Char->PlayAnimMontage(Montage);
+				UE_LOG(LogTemp, Log, TEXT("NA-ANIM: combo stage %d -> %s."),
+					Stage, *Montage->GetName());
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning,
+					TEXT("NA-ANIM: %s has no combo montage for stage %d."),
+					*CurrentWeaponData.WeaponName.ToString(), Stage);
+			}
 		}
 	}
 }
@@ -504,7 +516,19 @@ void UNobleArchimedesCombatComponent::PlayFinalAttackMontage(int32 Stage)
 	{
 		if (CurrentWeaponData.FinalAttackAnimations.IsValidIndex(Stage - 1))
 		{
-			Char->PlayAnimMontage(CurrentWeaponData.FinalAttackAnimations[Stage - 1]);
+			UAnimMontage* Montage = CurrentWeaponData.FinalAttackAnimations[Stage - 1];
+			if (Montage)
+			{
+				Char->PlayAnimMontage(Montage);
+				UE_LOG(LogTemp, Log, TEXT("NA-ANIM: finisher stage %d -> %s."),
+					Stage, *Montage->GetName());
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning,
+					TEXT("NA-ANIM: %s has no finisher montage for stage %d."),
+					*CurrentWeaponData.WeaponName.ToString(), Stage);
+			}
 		}
 	}
 }
