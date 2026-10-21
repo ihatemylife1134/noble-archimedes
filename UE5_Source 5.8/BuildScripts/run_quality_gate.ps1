@@ -107,6 +107,17 @@ if (-not $SkipContent) {
     Write-Host $summary.Trim() -ForegroundColor DarkGray
     if (-not $passed) { Fail-Gate @('NA-CONTENT\] ERROR', 'LogPython: Error') }
 
+    # The content build regenerates the blockout, which removes every art-pass
+    # actor. Re-apply the art pass before QA, otherwise level checks report
+    # missing dais/shrine dressing that only exists in the presentation pass.
+    Write-Step '2b/4  Art pass (materials and set dressing)'
+    $r = Invoke-Commandlet -Script (Join-Path $PROJECT_DIR 'Tools\ue5_art_pass.py')
+    $artErrors = ([regex]::Match($r.Text, 'Presentation pass complete')).Value
+    $passed = ($artErrors -ne '')
+    Add-Result -Name 'Art pass' -Passed $passed -Detail $(if ($passed) { 'applied' } else { 'did not complete' })
+    Write-Host $(if ($passed) { 'art pass complete' } else { 'art pass FAILED' }) -ForegroundColor DarkGray
+    if (-not $passed) { Fail-Gate @('LogPython: Error') }
+
     Write-Step '3/4  Content QA'
     $r = Invoke-Commandlet -Script (Join-Path $PROJECT_DIR 'Tools\ue5_verify_content.py')
     $errors = ([regex]::Match($r.Text, 'NA-QA\] errors=(\d+)')).Groups[1].Value

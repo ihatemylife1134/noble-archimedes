@@ -339,6 +339,32 @@ def find_actors(prefix):
     return result
 
 
+def dress_lock_barriers():
+    """Give ARoom's lock barriers the glowing red material.
+
+    Room.cpp creates four barrier components per room, hidden until the room
+    locks. They had no material, so the "red bars" the design calls for rendered
+    as default grey cubes. Barriers are components rather than actors, so they
+    are found by component name.
+    """
+    barrier_material = MATERIALS.get("Barrier")
+    if not barrier_material:
+        warn("Barrier material unavailable; lock barriers stay untextured")
+        return 0
+
+    dressed = 0
+    for actor in EAS.get_all_level_actors():
+        try:
+            components = actor.get_components_by_class(unreal.StaticMeshComponent)
+        except Exception:
+            continue
+        for component in components:
+            if str(component.get_name()).startswith("LockBarrier"):
+                component.set_material(0, barrier_material)
+                dressed += 1
+    return dressed
+
+
 def style_shell(style):
     wall = MATERIALS.get(style["wall"])
     floor = MATERIALS.get(style["floor"])
@@ -649,6 +675,9 @@ def build_chapter(chapter):
                           (x, y, 260.0), (1.0, 0.55, 0.20), 400.0, 550.0)
 
     dress_existing_actors(chapter, style)
+    barriers = dress_lock_barriers()
+    if barriers:
+        log("  chapter %d: dressed %d lock barriers" % (chapter, barriers))
     save_map()
     log("Dressed chapter %d (%s)" % (chapter, map_name))
     return True
