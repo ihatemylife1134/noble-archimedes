@@ -1413,7 +1413,8 @@ def spawn_room(name, center, size, flags, enemy_classes, enemy_locations, bp_roo
     return actor
 
 
-def build_room_shell(name, center, size, height, cube, material, light_color=None):
+def build_room_shell(name, center, size, height, cube, material, light_color=None,
+                     light_intensity=6000.0):
     cx, cy = center.x, center.y
     sx, sy = size[0], size[1]
     gap = 360.0
@@ -1442,7 +1443,7 @@ def build_room_shell(name, center, size, height, cube, material, light_color=Non
         light.set_editor_property("tags", [BLOCKOUT_TAG])
         comp = light.get_component_by_class(unreal.PointLightComponent)
         if comp:
-            set_prop(comp, "Intensity", 6000.0)
+            set_prop(comp, "Intensity", light_intensity)
             set_prop(comp, "AttenuationRadius", max(sx, sy) * 1.1)
             if light_color:
                 set_prop(comp, "LightColor", rgb_color(
@@ -1483,8 +1484,19 @@ def build_chapter_one():
         "Boss Arena": (unreal.Vector(0, 5600, 0), (2800, 2800), 620),
     }
 
+    # Lighting follows LevelDesignSpec_Extended.md: dim torches in the hall,
+    # flickering candlelight in the chapel, a warm glow in the save room and a
+    # dark boss arena lit by a single spotlight.
+    lighting = {
+        "Entrance Hall": ((1.0, 0.72, 0.42), 3200.0),   # torches, dim
+        "Chapel": ((1.0, 0.62, 0.30), 2400.0),          # candles, warm
+        "Save Room": ((1.0, 0.85, 0.62), 4200.0),       # warm glow
+        "Boss Arena": ((0.28, 0.30, 0.40), 900.0),      # dark, cold
+    }
+
     for name, (center, size, height) in rooms.items():
-        build_room_shell(name, center, size, height, cube, material)
+        color, intensity = lighting.get(name, (None, 6000.0))
+        build_room_shell(name, center, size, height, cube, material, color, intensity)
 
     build_corridor("HallToChapel", (0, 1450), (620, 700), cube, material)
     build_corridor("HallToSave", (-1550, 0), (1700, 500), cube, material)
@@ -1536,26 +1548,48 @@ def build_chapter_one():
             set_prop(save_actor, "bIsSaveRoom", True)
             set_prop(save_actor, "bIsLocked", False)
 
+    # Loot per LevelDesignSpec_Extended.md chapter 1:
+    #   Entrance Hall -> Short Sword recipe + hidden alcove of Iron Shards
+    #   Chapel        -> Potion x2, with breakable candles that also drop
     bp_item = bp_class("/Game/Blueprints/World", "BP_ItemDrop")
     if bp_item:
-        for index, item in enumerate(("Potion", "Potion", "Potion",
-                                      "Iron Shard", "Iron Shard", "Silver Ingot")):
-            drop = EAS.spawn_actor_from_class(bp_item, unreal.Vector(400 + index * 150, -400, 80),
+        hall_loot = (("Short Sword", 0, -900),      # recipe reward
+                     ("Iron Shard", -1400, -1150), ("Iron Shard", -1250, -1150),
+                     ("Iron Shard", -1100, -1150))  # hidden alcove
+        for index, (item, x, y) in enumerate(hall_loot):
+            drop = EAS.spawn_actor_from_class(bp_item, unreal.Vector(x, y, 80),
                                               unreal.Rotator(0, 0, 0))
             if drop:
-                drop.set_actor_label("Item_%s_%d" % (item, index))
+                drop.set_actor_label("Item_Chap01_%s_%d" % (item.replace(" ", ""), index))
                 drop.set_editor_property("tags", [BLOCKOUT_TAG])
                 set_prop(drop, "ItemName", item)
 
+        # Two potions in the chapel, as the spec's item list calls for.
+        for index, x in enumerate((-450, 450)):
+            drop = EAS.spawn_actor_from_class(bp_item, unreal.Vector(x, 2800, 80),
+                                              unreal.Rotator(0, 0, 0))
+            if drop:
+                drop.set_actor_label("Item_Chap01_Potion_%d" % index)
+                drop.set_editor_property("tags", [BLOCKOUT_TAG])
+                set_prop(drop, "ItemName", "Potion")
+
+    # Breakable candles: the spec puts them in the Chapel; two more light the hall.
     bp_candle = bp_class("/Game/Blueprints/World", "BP_CandleBreakable")
     if bp_candle:
-        for index, location in enumerate(((-900, 900), (900, 900), (-900, -900), (900, -900))):
-            candle = EAS.spawn_actor_from_class(bp_candle, unreal.Vector(location[0], location[1], 50),
+        candles = [(-1400, 2200, "Chapel"), (-600, 2400, "Chapel"),
+                   (600, 2400, "Chapel"), (1400, 2200, "Chapel"),
+                   (-900, 900, "Hall"), (900, 900, "Hall")]
+        for index, (x, y, where) in enumerate(candles):
+            candle = EAS.spawn_actor_from_class(bp_candle, unreal.Vector(x, y, 50),
                                                 unreal.Rotator(0, 0, 0))
             if candle:
-                candle.set_actor_label("Candle_%d" % index)
+                candle.set_actor_label("Candle_%s_%d" % (where, index))
                 candle.set_editor_property("tags", [BLOCKOUT_TAG])
-                set_prop(candle, "PossibleDrops", ["Iron Shard", "Potion", "Silver Ingot"])
+                if where == "Chapel":
+                    # Chapel candles drop potions per the secrets list.
+                    set_prop(candle, "PossibleDrops", ["Potion", "Potion"])
+                else:
+                    set_prop(candle, "PossibleDrops", ["Iron Shard", "Potion", "Silver Ingot"])
                 set_prop(candle, "DropChance", 1.0)
                 if bp_item:
                     set_prop(candle, "ItemDropClass", bp_item)
@@ -1569,6 +1603,31 @@ def build_chapter_one():
         comp = sun.get_component_by_class(unreal.DirectionalLightComponent)
         if comp:
             set_prop(comp, "Intensity", 4.0)
+
+    # Boss Arena: dark room with a single spotlight on the Sentinel Knight.
+    spot = EAS.spawn_actor_from_class(unreal.SpotLight, unreal.Vector(0, 5900, 560),
+                                      unreal.Rotator(roll=0.0, pitch=-90.0, yaw=0.0))
+    if spot:
+        spot.set_actor_label("Spot_BossArena")
+        spot.set_editor_property("tags", [BLOCKOUT_TAG])
+        comp = spot.get_component_by_class(unreal.SpotLightComponent)
+        if comp:
+            set_prop(comp, "Intensity", 26000.0)
+            set_prop(comp, "AttenuationRadius", 1800.0)
+            set_prop(comp, "InnerConeAngle", 16.0)
+            set_prop(comp, "OuterConeAngle", 30.0)
+
+    # Navigation bounds so enemy AI can path through the chapter. Without this
+    # the enemies spawn but never move, which makes the chapter untestable.
+    nav = EAS.spawn_actor_from_class(unreal.NavMeshBoundsVolume,
+                                     unreal.Vector(0, 2900, 300),
+                                     unreal.Rotator(0, 0, 0))
+    if nav:
+        nav.set_actor_label("NavBounds_Chap01")
+        nav.set_editor_property("tags", [BLOCKOUT_TAG])
+        nav.set_actor_scale3d(unreal.Vector(30.0, 42.0, 6.0))
+    else:
+        warn("Could not spawn NavMeshBoundsVolume; enemy AI will not path")
 
     # Exit to Chapter 2. The portal unlocks once the Sentinel Knight dies.
     spawn_chapter_portal(1, unreal.Vector(0, 6650, 120), bp_portal)
