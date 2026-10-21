@@ -2,6 +2,7 @@
 
 #include "EnemyBase.h"
 #include "AnimVariableBridge.h"
+#include "Animation/AnimMontage.h"
 #include "HectorCharacter.h"
 #include "ItemDrop.h"
 #include "NobleArchimedesItemSystem.h"
@@ -205,7 +206,27 @@ void AEnemyBase::MoveToPatrolPoint()
 
 void AEnemyBase::PlayAttackAnimation()
 {
-	// Animation montage would be played here via Blueprint
+	// Enemies share AB_Hector and have no clips of their own yet, so play a Hector
+	// swing. This is the hook the class always documented but never implemented,
+	// which is why enemies damaged the player without any visible attack.
+	static TObjectPtr<UAnimMontage> SharedAttackMontage = nullptr;
+	if (!SharedAttackMontage)
+	{
+		SharedAttackMontage = LoadObject<UAnimMontage>(
+			nullptr, TEXT("/Game/Characters/Hector/Montages/AM_Hector_Light1"));
+		if (!SharedAttackMontage)
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("AEnemyBase: no attack montage found; %s swings with no animation."),
+				*GetNameSafe(this));
+			return;
+		}
+	}
+
+	if (UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+	{
+		AnimInstance->Montage_Play(SharedAttackMontage, 1.0f);
+	}
 }
 
 void AEnemyBase::PlayChaseAnimation()
