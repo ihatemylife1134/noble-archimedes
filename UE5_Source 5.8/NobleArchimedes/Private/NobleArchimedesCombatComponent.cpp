@@ -427,6 +427,19 @@ void UNobleArchimedesCombatComponent::ApplyAttackHit(int32 ComboStage, bool bHea
 	}
 }
 
+float UNobleArchimedesCombatComponent::GetComboWindowSeconds(int32 Stage) const
+{
+	switch (Stage)
+	{
+	case 2:
+		return COMBO_STAGE_2_WINDOW;
+	case 3:
+		return COMBO_STAGE_3_WINDOW;
+	default:
+		return COMBO_STAGE_1_WINDOW;
+	}
+}
+
 void UNobleArchimedesCombatComponent::UpdateCombo(float DeltaTime)
 {
 	if (bComboWindowOpen)

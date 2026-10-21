@@ -42,6 +42,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
 	bool IsAttacking() const { return bIsAttacking; }
 
+	/**
+	 * Combo window for a 1-based combo stage, mirroring the COMBO_STAGE_*_WINDOW
+	 * constants. Exposed so the fidelity tests can compare the shipped values
+	 * against AnimationFrameData.md without duplicating the numbers.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	float GetComboWindowSeconds(int32 Stage) const;
+
 	//=============================================================================
 	// GUARD SYSTEM
 	//=============================================================================
