@@ -6,19 +6,19 @@ public class NobleArchimedes : ModuleRules
 {
 	public NobleArchimedes(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = PCHUsageMode::UseExplicitOrSharedPCHs;
-
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",
 			"CoreUObject",
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
-			"HeadMountedDisplay",
 			"NavigationSystem",
 			"AIModule",
 			"GameplayTasks",
-			"LevelStreaming"
+			"Niagara",
+			"UMG",
+			"Slate",
+			"SlateCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {

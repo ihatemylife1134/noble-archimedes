@@ -2,8 +2,14 @@
 
 #include "NobleArchimedesCombatComponent.h"
 #include "HectorCharacter.h"
+#include "EnemyBase.h"
+#include "CandleBreakable.h"
+#include "Engine/DataTable.h"
+#include "Engine/EngineTypes.h"
+#include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "TimerManager.h"
 
 UNobleArchimedesCombatComponent::UNobleArchimedesCombatComponent()
 {
@@ -15,59 +21,107 @@ void UNobleArchimedesCombatComponent::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentHealth = MaxHealth;
+	Mana = MaxMana;
+	LoadWeaponData();
+}
 
-	// Initialize default weapon data
-	FWeaponData SwordData;
-	SwordData.WeaponName = "Short Sword";
-	SwordData.WeaponType = EWeaponType::Sword;
-	SwordData.AttackRange = 200.0f;
-	SwordData.AttackSpeed = 1.0f;
-	SwordData.BaseDamage = 15.0f;
-	SwordData.DamageType = EDamageType::Slash;
-	SwordData.EvoCrystalColor = EInnocentDevilType::Light;
-	WeaponDataTable.Add(EWeaponType::Sword, SwordData);
+void UNobleArchimedesCombatComponent::LoadWeaponData()
+{
+	WeaponDataByName.Empty();
+	WeaponDataTable.Empty();
 
-	FWeaponData AxeData;
-	AxeData.WeaponName = "Battle Axe";
-	AxeData.WeaponType = EWeaponType::Axe;
-	AxeData.AttackRange = 180.0f;
-	AxeData.AttackSpeed = 0.7f;
-	AxeData.BaseDamage = 25.0f;
-	AxeData.DamageType = EDamageType::Blunt;
-	AxeData.EvoCrystalColor = EInnocentDevilType::Dark;
-	WeaponDataTable.Add(EWeaponType::Axe, AxeData);
+	if (WeaponDataTableAsset)
+	{
+		TArray<FWeaponData*> Rows;
+		WeaponDataTableAsset->GetAllRows<FWeaponData>(TEXT("Combat"), Rows);
+		for (const FWeaponData* Row : Rows)
+		{
+			if (!Row || Row->WeaponName.IsNone())
+			{
+				continue;
+			}
 
-	FWeaponData SpearData;
-	SpearData.WeaponName = "Long Spear";
-	SpearData.WeaponType = EWeaponType::Spear;
-	SpearData.AttackRange = 350.0f;
-	SpearData.AttackSpeed = 0.8f;
-	SpearData.BaseDamage = 18.0f;
-	SpearData.DamageType = EDamageType::Slash;
-	SpearData.EvoCrystalColor = EInnocentDevilType::Fire;
-	WeaponDataTable.Add(EWeaponType::Spear, SpearData);
+			WeaponDataByName.Add(Row->WeaponName, *Row);
 
-	FWeaponData KnucklesData;
-	KnucklesData.WeaponName = "Punch Rings";
-	KnucklesData.WeaponType = EWeaponType::Knuckles;
-	KnucklesData.AttackRange = 100.0f;
-	KnucklesData.AttackSpeed = 1.3f;
-	KnucklesData.BaseDamage = 12.0f;
-	KnucklesData.DamageType = EDamageType::Blunt;
-	KnucklesData.EvoCrystalColor = EInnocentDevilType::Ice;
-	WeaponDataTable.Add(EWeaponType::Knuckles, KnucklesData);
+			// Keep the strongest weapon of each type as the default for that
+			// type; exact forged weapons are equipped by name.
+			FWeaponData& Existing = WeaponDataTable.FindOrAdd(Row->WeaponType);
+			if (Existing.WeaponName.IsNone() || Row->BaseDamage > Existing.BaseDamage)
+			{
+				Existing = *Row;
+			}
+		}
+	}
 
-	FWeaponData SpecialData;
-	SpecialData.WeaponName = "Shuriken";
-	SpecialData.WeaponType = EWeaponType::Special;
-	SpecialData.AttackRange = 400.0f;
-	SpecialData.AttackSpeed = 0.5f;
-	SpecialData.BaseDamage = 10.0f;
-	SpecialData.DamageType = EDamageType::Magic;
-	SpecialData.EvoCrystalColor = EInnocentDevilType::None;
-	WeaponDataTable.Add(EWeaponType::Special, SpecialData);
+	// Safe fallback so the character is playable before the DataTable is
+	// assigned (e.g. in a bare C++ test map).
+	if (WeaponDataByName.Num() == 0)
+	{
+		FWeaponData SwordData;
+		SwordData.WeaponName = "Short Sword";
+		SwordData.WeaponType = EWeaponType::Sword;
+		SwordData.AttackRange = 200.0f;
+		SwordData.AttackSpeed = 1.0f;
+		SwordData.BaseDamage = 15.0f;
+		SwordData.DamageType = EDamageType::Slash;
+		SwordData.EvoCrystalColor = EEvolutionCrystalType::Light;
+		WeaponDataByName.Add(SwordData.WeaponName, SwordData);
+		WeaponDataTable.Add(EWeaponType::Sword, SwordData);
 
-	CurrentWeaponData = SwordData;
+		FWeaponData AxeData;
+		AxeData.WeaponName = "Battle Axe";
+		AxeData.WeaponType = EWeaponType::Axe;
+		AxeData.AttackRange = 180.0f;
+		AxeData.AttackSpeed = 0.7f;
+		AxeData.BaseDamage = 25.0f;
+		AxeData.DamageType = EDamageType::Blunt;
+		AxeData.EvoCrystalColor = EEvolutionCrystalType::Dark;
+		WeaponDataByName.Add(AxeData.WeaponName, AxeData);
+		WeaponDataTable.Add(EWeaponType::Axe, AxeData);
+
+		FWeaponData SpearData;
+		SpearData.WeaponName = "Long Spear";
+		SpearData.WeaponType = EWeaponType::Spear;
+		SpearData.AttackRange = 350.0f;
+		SpearData.AttackSpeed = 0.8f;
+		SpearData.BaseDamage = 18.0f;
+		SpearData.DamageType = EDamageType::Slash;
+		SpearData.EvoCrystalColor = EEvolutionCrystalType::Fire;
+		WeaponDataByName.Add(SpearData.WeaponName, SpearData);
+		WeaponDataTable.Add(EWeaponType::Spear, SpearData);
+
+		FWeaponData KnucklesData;
+		KnucklesData.WeaponName = "Punch Rings";
+		KnucklesData.WeaponType = EWeaponType::Knuckles;
+		KnucklesData.AttackRange = 100.0f;
+		KnucklesData.AttackSpeed = 1.3f;
+		KnucklesData.BaseDamage = 12.0f;
+		KnucklesData.DamageType = EDamageType::Blunt;
+		KnucklesData.EvoCrystalColor = EEvolutionCrystalType::Ice;
+		WeaponDataByName.Add(KnucklesData.WeaponName, KnucklesData);
+		WeaponDataTable.Add(EWeaponType::Knuckles, KnucklesData);
+
+		FWeaponData SpecialData;
+		SpecialData.WeaponName = "Shuriken";
+		SpecialData.WeaponType = EWeaponType::Special;
+		SpecialData.AttackRange = 400.0f;
+		SpecialData.AttackSpeed = 0.5f;
+		SpecialData.BaseDamage = 10.0f;
+		SpecialData.DamageType = EDamageType::Magic;
+		SpecialData.EvoCrystalColor = EEvolutionCrystalType::None;
+		WeaponDataByName.Add(SpecialData.WeaponName, SpecialData);
+		WeaponDataTable.Add(EWeaponType::Special, SpecialData);
+	}
+
+	if (const FWeaponData* DefaultData = WeaponDataByName.Find(DefaultWeaponName))
+	{
+		CurrentWeaponData = *DefaultData;
+		CurrentWeaponType = DefaultData->WeaponType;
+	}
+	else if (const FWeaponData* TypeData = WeaponDataTable.Find(CurrentWeaponType))
+	{
+		CurrentWeaponData = *TypeData;
+	}
 }
 
 void UNobleArchimedesCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -83,18 +137,27 @@ void UNobleArchimedesCombatComponent::LightAttack()
 {
 	if (bIsAttacking || bIsInvulnerable) return;
 
+	// After Light Attack 3, the only options are Heavy Attack or return to Idle.
+	// Do not allow Light Attack to loop back to Light 1.
+	if (CurrentComboStage >= 3)
+	{
+		return;
+	}
+
 	bIsAttacking = true;
 	CurrentComboStage++;
 
-	if (CurrentComboStage > 3)
-	{
-		CurrentComboStage = 1;
-	}
-
 	PlayAttackMontage(CurrentComboStage);
 
+	// Schedule the actual weapon hit just after the swing starts.
+	FTimerDelegate HitDelegate = FTimerDelegate::CreateUObject(
+		this, &UNobleArchimedesCombatComponent::ApplyAttackHit, CurrentComboStage, false);
+	GetWorld()->GetTimerManager().SetTimer(AttackHitTimer, HitDelegate, AttackHitDelay, false);
+	GetWorld()->GetTimerManager().SetTimer(
+		AttackStateTimer, this, &UNobleArchimedesCombatComponent::EndAttack, GetAttackDuration(), false);
+
 	// Set combo window for next attack
-	GetWorldTimerManager().SetTimer(ComboResetTimer, this, &UNobleArchimedesCombatComponent::ResetCombo, 
+	GetWorld()->GetTimerManager().SetTimer(ComboResetTimer, this, &UNobleArchimedesCombatComponent::ResetCombo,
 		CurrentComboStage == 1 ? COMBO_STAGE_1_WINDOW :
 		CurrentComboStage == 2 ? COMBO_STAGE_2_WINDOW : COMBO_STAGE_3_WINDOW, false);
 }
@@ -104,7 +167,14 @@ void UNobleArchimedesCombatComponent::HeavyAttack()
 	if (bIsAttacking || bIsInvulnerable) return;
 
 	bIsAttacking = true;
-	PlayFinalAttackMontage(CurrentComboStage);
+	const int32 FinisherStage = FMath::Max(1, CurrentComboStage);
+	PlayFinalAttackMontage(FinisherStage);
+
+	FTimerDelegate HitDelegate = FTimerDelegate::CreateUObject(
+		this, &UNobleArchimedesCombatComponent::ApplyAttackHit, FinisherStage, true);
+	GetWorld()->GetTimerManager().SetTimer(AttackHitTimer, HitDelegate, AttackHitDelay, false);
+	GetWorld()->GetTimerManager().SetTimer(
+		AttackStateTimer, this, &UNobleArchimedesCombatComponent::EndAttack, GetAttackDuration(), false);
 
 	ResetCombo();
 }
@@ -113,7 +183,7 @@ void UNobleArchimedesCombatComponent::ResetCombo()
 {
 	CurrentComboStage = 0;
 	bComboWindowOpen = false;
-	GetWorldTimerManager().ClearTimer(ComboResetTimer);
+	GetWorld()->GetTimerManager().ClearTimer(ComboResetTimer);
 }
 
 void UNobleArchimedesCombatComponent::StartGuard()
@@ -129,15 +199,14 @@ void UNobleArchimedesCombatComponent::EndGuard()
 {
 	if (!bIsGuarding) return;
 
-	float GuardDuration = GetWorld()->GetTimeSeconds() - GuardStartTime;
-
-	// Check perfect guard: release within window before enemy impact
-	if (GuardDuration <= PerfectGuardWindow)
-	{
-		bPerfectGuard = true;
-	}
-
 	bIsGuarding = false;
+	bPerfectGuard = false;
+
+	// Record when guard was released. Perfect guard is determined later by
+	// CheckPerfectGuard() when an enemy attack connects: the player must have
+	// released guard within PerfectGuardWindow (0.1s) before the impact.
+	LastGuardReleaseTime = GetWorld()->GetTimeSeconds();
+	bWasRecentlyGuarding = true;
 }
 
 void UNobleArchimedesCombatComponent::QuickStep(FVector Direction)
@@ -179,10 +248,15 @@ void UNobleArchimedesCombatComponent::TakeDamage(float DamageAmount, EDamageType
 
 	if (bIsGuarding)
 	{
-		FinalDamage *= 0.3f; // 70% damage reduction when guarding
-		if (bPerfectGuard)
+		const float GuardDuration = GetWorld() ? (GetWorld()->GetTimeSeconds() - GuardStartTime) : 1.0f;
+		if (GuardDuration <= PerfectGuardWindow)
 		{
-			FinalDamage = 0.0f; // Perfect guard blocks all damage
+			FinalDamage = 0.0f; // Perfect guard: timed guard start blocks everything
+			bPerfectGuard = true;
+		}
+		else
+		{
+			FinalDamage *= 0.3f; // 70% damage reduction while guarding
 			bPerfectGuard = false;
 		}
 	}
@@ -200,13 +274,33 @@ void UNobleArchimedesCombatComponent::TakeDamage(float DamageAmount, EDamageType
 
 	if (CurrentHealth <= 0.0f)
 	{
-		// Death handled by character
+		if (AHectorCharacter* Char = Cast<AHectorCharacter>(GetOwner()))
+		{
+			Char->HandleDeath();
+		}
 	}
 }
 
 void UNobleArchimedesCombatComponent::SetHealth(float NewHealth)
 {
 	CurrentHealth = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
+}
+
+void UNobleArchimedesCombatComponent::SetMaxHealth(float NewMaxHealth)
+{
+	MaxHealth = FMath::Max(0.0f, NewMaxHealth);
+	CurrentHealth = FMath::Clamp(CurrentHealth, 0.0f, MaxHealth);
+}
+
+void UNobleArchimedesCombatComponent::SetMana(float NewMana)
+{
+	Mana = FMath::Clamp(NewMana, 0.0f, MaxMana);
+}
+
+void UNobleArchimedesCombatComponent::SetMaxMana(float NewMaxMana)
+{
+	MaxMana = FMath::Max(0.0f, NewMaxMana);
+	Mana = FMath::Clamp(Mana, 0.0f, MaxMana);
 }
 
 void UNobleArchimedesCombatComponent::ApplyDeathDoll()
@@ -222,9 +316,114 @@ void UNobleArchimedesCombatComponent::SetDeathDoll(bool bHas)
 void UNobleArchimedesCombatComponent::EquipWeapon(EWeaponType NewWeaponType)
 {
 	CurrentWeaponType = NewWeaponType;
-	if (WeaponDataTable.Contains(NewWeaponType))
+	if (const FWeaponData* Data = WeaponDataTable.Find(NewWeaponType))
 	{
-		CurrentWeaponData = WeaponDataTable[NewWeaponType];
+		CurrentWeaponData = *Data;
+	}
+}
+
+bool UNobleArchimedesCombatComponent::EquipWeaponByName(FName WeaponName)
+{
+	const FWeaponData* Data = WeaponDataByName.Find(WeaponName);
+	if (!Data)
+	{
+		return false;
+	}
+
+	CurrentWeaponData = *Data;
+	CurrentWeaponType = Data->WeaponType;
+	return true;
+}
+
+FWeaponData UNobleArchimedesCombatComponent::GetWeaponDataByName(FName WeaponName) const
+{
+	if (const FWeaponData* Data = WeaponDataByName.Find(WeaponName))
+	{
+		return *Data;
+	}
+	return FWeaponData();
+}
+
+TArray<FName> UNobleArchimedesCombatComponent::GetKnownWeaponNames() const
+{
+	TArray<FName> Names;
+	WeaponDataByName.GetKeys(Names);
+	Names.Sort([](const FName& A, const FName& B)
+	{
+		return A.ToString() < B.ToString();
+	});
+	return Names;
+}
+
+float UNobleArchimedesCombatComponent::GetAttackDuration() const
+{
+	const float Speed = FMath::Max(0.1f, CurrentWeaponData.AttackSpeed);
+	return FMath::Clamp(0.45f / Speed, 0.18f, 1.2f);
+}
+
+void UNobleArchimedesCombatComponent::EndAttack()
+{
+	bIsAttacking = false;
+}
+
+void UNobleArchimedesCombatComponent::ApplyAttackHit(int32 ComboStage, bool bHeavyAttack)
+{
+	UWorld* World = GetWorld();
+	AHectorCharacter* Char = Cast<AHectorCharacter>(GetOwner());
+	if (!World || !Char)
+	{
+		return;
+	}
+
+	const FVector Forward = Char->GetActorForwardVector();
+	const FVector Start = Char->GetActorLocation() + FVector(0.0f, 0.0f, 40.0f)
+		+ Forward * AttackTraceForwardOffset;
+	const FVector End = Start + Forward * FMath::Max(60.0f, CurrentWeaponData.AttackRange);
+
+	TArray<FHitResult> Hits;
+	TArray<AActor*> IgnoreActors;
+	IgnoreActors.Add(Char);
+
+	UKismetSystemLibrary::SphereTraceMulti(
+		World,
+		Start,
+		End,
+		AttackTraceRadius,
+		UEngineTypes::ConvertToTraceType(ECC_Pawn),
+		false,
+		IgnoreActors,
+		EDrawDebugTrace::None,
+		Hits,
+		true);
+
+	TSet<AActor*> HitActors;
+	const float ComboMultiplier = bHeavyAttack
+		? 1.8f
+		: (1.0f + 0.15f * FMath::Max(0, ComboStage - 1));
+	const float Damage = CurrentWeaponData.BaseDamage * ComboMultiplier;
+
+	for (const FHitResult& Hit : Hits)
+	{
+		AActor* HitActor = Hit.GetActor();
+		if (!HitActor || HitActors.Contains(HitActor))
+		{
+			continue;
+		}
+
+		if (AEnemyBase* Enemy = Cast<AEnemyBase>(HitActor))
+		{
+			HitActors.Add(HitActor);
+			Enemy->ApplyDamage(Damage, CurrentWeaponData.DamageType);
+			Enemy->LaunchCharacter(Forward * 200.0f + FVector(0.0f, 0.0f, 120.0f), false, false);
+			UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: %s hit %s for %.1f (%s)."),
+				*CurrentWeaponData.WeaponName.ToString(), *Enemy->GetName(), Damage,
+				*StaticEnum<EDamageType>()->GetNameStringByValue(static_cast<int64>(CurrentWeaponData.DamageType)));
+		}
+		else if (ACandleBreakable* Candle = Cast<ACandleBreakable>(HitActor))
+		{
+			HitActors.Add(HitActor);
+			Candle->BreakCandle();
+		}
 	}
 }
 
@@ -263,18 +462,26 @@ void UNobleArchimedesCombatComponent::UpdateDoubleStep(float DeltaTime)
 
 void UNobleArchimedesCombatComponent::CheckPerfectGuard()
 {
-	// Called by enemy attack system when attack connects
-	// If guard is active and release was within window, trigger perfect guard
+	// Called by an enemy immediately before its hit lands. A guard started
+	// inside the 0.1s window is a perfect guard.
+	if (!bIsGuarding || !GetWorld())
+	{
+		bPerfectGuard = false;
+		return;
+	}
+
+	const float GuardDuration = GetWorld()->GetTimeSeconds() - GuardStartTime;
+	bPerfectGuard = (GuardDuration <= PerfectGuardWindow);
 }
 
 void UNobleArchimedesCombatComponent::ApplyDamageReduction(float& Damage, EDamageType DamageType)
 {
 	// Weakness/tolerance logic
 	// Fire <-> Ice, Light <-> Dark
-	if ((DamageType == EDamageType::Fire && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Ice) ||
-		(DamageType == EDamageType::Ice && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Fire) ||
-		(DamageType == EDamageType::Light && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Dark) ||
-		(DamageType == EDamageType::Dark && CurrentWeaponData.EvoCrystalColor == EInnocentDevilType::Light))
+	if ((DamageType == EDamageType::Fire && CurrentWeaponData.EvoCrystalColor == EEvolutionCrystalType::Ice) ||
+		(DamageType == EDamageType::Ice && CurrentWeaponData.EvoCrystalColor == EEvolutionCrystalType::Fire) ||
+		(DamageType == EDamageType::Light && CurrentWeaponData.EvoCrystalColor == EEvolutionCrystalType::Dark) ||
+		(DamageType == EDamageType::Dark && CurrentWeaponData.EvoCrystalColor == EEvolutionCrystalType::Light))
 	{
 		Damage *= 1.5f; // Weakness bonus
 	}

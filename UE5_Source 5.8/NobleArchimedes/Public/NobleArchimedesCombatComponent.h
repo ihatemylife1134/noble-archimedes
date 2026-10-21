@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "TimerManager.h"
 #include "NobleArchimedesTypes.h"
 #include "NobleArchimedesCombatComponent.generated.h"
 
 class AHectorCharacter;
+class AEnemyBase;
+class UDataTable;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class NOBLEARCHIMEDES_API UNobleArchimedesCombatComponent : public UActorComponent
@@ -56,6 +59,15 @@ public:
 	bool IsPerfectGuard() const { return bPerfectGuard; }
 
 	//=============================================================================
+	// PERFECT GUARD SYSTEM
+	//=============================================================================
+
+	// Called by enemy attack system when attack connects.
+	// If player released guard within PerfectGuardWindow before this moment, triggers perfect guard.
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void CheckPerfectGuard();
+
+	//=============================================================================
 	// QUICK STEP SYSTEM
 	//=============================================================================
 
@@ -85,6 +97,27 @@ public:
 	void SetHealth(float NewHealth);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetMaxHealth(float NewMaxHealth);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	float GetMana() const { return Mana; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	float GetMaxMana() const { return MaxMana; }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetMana(float NewMana);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetMaxMana(float NewMaxMana);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	TArray<FString> GetEquippedWeapons() const { return EquippedWeapons; }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetEquippedWeapons(const TArray<FString>& NewWeapons) { EquippedWeapons = NewWeapons; }
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ApplyDeathDoll();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
@@ -100,13 +133,40 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void EquipWeapon(EWeaponType NewWeaponType);
 
+	/** Equip an exact forged weapon by its data-table row name. */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool EquipWeaponByName(FName WeaponName);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
 	EWeaponType GetCurrentWeaponType() const { return CurrentWeaponType; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
 	FWeaponData GetCurrentWeaponData() const { return CurrentWeaponData; }
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	FWeaponData GetWeaponDataByName(FName WeaponName) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat")
+	TArray<FName> GetKnownWeaponNames() const;
+
 protected:
+	// Weapon rows imported from DT_WeaponDataTable. Assigned on the Hector
+	// Blueprint so combat stats stay data-driven.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Data")
+	TObjectPtr<UDataTable> WeaponDataTableAsset;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Data")
+	FName DefaultWeaponName = "Short Sword";
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Trace")
+	float AttackTraceRadius = 90.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Trace")
+	float AttackTraceForwardOffset = 80.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Trace")
+	float AttackHitDelay = 0.12f;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	float MaxHealth = 100.0f;
 
@@ -133,6 +193,15 @@ private:
 	bool bIsGuarding = false;
 	bool bPerfectGuard = false;
 	float GuardStartTime = 0.0f;
+	float LastGuardReleaseTime = 0.0f;
+	bool bWasRecentlyGuarding = false;
+
+	// Mana
+	float Mana = 100.0f;
+	float MaxMana = 100.0f;
+
+	// Equipped weapons (saved as weapon names)
+	TArray<FString> EquippedWeapons;
 
 	// Quick step state
 	bool bIsInvulnerable = false;
@@ -150,17 +219,25 @@ private:
 	// Weapon
 	EWeaponType CurrentWeaponType = EWeaponType::Sword;
 	FWeaponData CurrentWeaponData;
+	TMap<FName, FWeaponData> WeaponDataByName;
 
 	// Timers
 	FTimerHandle ComboResetTimer;
 	FTimerHandle InvulnerabilityTimerHandle;
 	FTimerHandle DoubleStepTimerHandle;
+	FTimerHandle AttackStateTimer;
+	FTimerHandle AttackHitTimer;
 
+	void LoadWeaponData();
 	void UpdateCombo(float DeltaTime);
 	void UpdateInvulnerability(float DeltaTime);
 	void UpdateDoubleStep(float DeltaTime);
-	void CheckPerfectGuard();
 	void ApplyDamageReduction(float& Damage, EDamageType DamageType);
 	void PlayAttackMontage(int32 Stage);
 	void PlayFinalAttackMontage(int32 Stage);
+
+	/** Sweep the weapon arc and damage every enemy hit once. */
+	void ApplyAttackHit(int32 ComboStage, bool bHeavyAttack);
+	void EndAttack();
+	float GetAttackDuration() const;
 };

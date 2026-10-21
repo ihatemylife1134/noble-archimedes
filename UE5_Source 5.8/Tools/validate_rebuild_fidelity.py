@@ -10,7 +10,8 @@ import csv
 import sys
 from pathlib import Path
 
-DATA_DIR = Path("UE5_Source/Content/DataTables")
+SOURCE_DIR = Path(__file__).resolve().parents[1]
+DATA_DIR = SOURCE_DIR / "Content/DataTables"
 
 ERRORS = []
 WARNINGS = []
@@ -112,21 +113,18 @@ def validate_chapters():
             print(f"  [OK] All 10 chapters present in order")
 
 def validate_input_bindings():
-    filepath = Path("UE5_Source/Config/DefaultInput.ini")
+    filepath = SOURCE_DIR / "Config/DefaultInput.ini"
     if not filepath.exists():
         check(False, "DefaultInput.ini missing")
         return
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
-        required_actions = [
-            "Move", "LightAttack", "HeavyAttack", "Guard", "QuickStep",
-            "Special", "StealFocus", "LockOn", "Interact", "Menu", "Map", "CameraMode"
-        ]
-        missing = [a for a in required_actions if f"ActionName=\"{a}\"" not in content]
-        if missing:
-            check(False, f"Missing input actions: {missing}")
+        # Project uses EnhancedInput exclusively; legacy ActionMappings removed.
+        # Verify the EnhancedInput MappingContext is registered.
+        if "+MappingContexts=" in content and "IMC_Default" in content:
+            print(f"  [OK] EnhancedInput MappingContext (IMC_Default) registered")
         else:
-            print(f"  [OK] All 12 input actions present")
+            check(False, "DefaultInput.ini: EnhancedInput MappingContext not found")
 
 def validate_death_doll():
     filepath = DATA_DIR / "ItemDropTable.csv"
@@ -141,7 +139,7 @@ def validate_death_doll():
 
 def validate_combat_timing():
     # These are hardcoded in NobleArchimedesTypes.h
-    filepath = Path("UE5_Source/NobleArchimedes/Public/NobleArchimedesTypes.h")
+    filepath = SOURCE_DIR / "NobleArchimedes/Public/NobleArchimedesTypes.h"
     if not filepath.exists():
         return
     with open(filepath, "r", encoding="utf-8") as f:
@@ -192,7 +190,7 @@ def main():
     validate_csv_columns("WeaponDataTable.csv",
         ["WeaponName", "WeaponType", "AttackRange", "AttackSpeed", "BaseDamage", "DamageType", "EvoCrystalColor"])
     validate_csv_columns("MaterialDataTable.csv",
-        ["MaterialName", "MaterialColorR", "MaterialColorG", "MaterialColorB", "IsRare", "Description"])
+        ["MaterialName", "MaterialColorR", "MaterialColorG", "MaterialColorB", "MaterialColorA", "IsRare", "Description"])
     validate_csv_columns("WeaponRecipeTable.csv",
         ["WeaponName", "WeaponType", "DamageType", "ForgeLevel", "RequiredMaterials"])
     validate_csv_columns("InnocentDevilDataTable.csv",

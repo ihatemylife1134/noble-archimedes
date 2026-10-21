@@ -1,21 +1,21 @@
 EnemyName,Chapter,Health,Damage,AttackRange,DetectionRange,Weaknesses,Tolerances,ItemDrops,CanBeStolen
-Skeleton,1,50,10,150,600,Holy,Dark,Bone Shard;Iron Shard,true
+Skeleton,1,50,10,150,600,Light,Dark,Bone Shard;Stone Shard,true
 Zombie,1,80,15,120,500,Fire,Poison,Rotten Flesh;Serum,false
-Ghoul,1,60,12,140,550,Holy,Dark,Bone Shard;Uncurse,true
-Harpy,2,45,18,200,800,Ice,Wind,Harpy Feather;Potion,true
-Bat,2,30,8,100,400,Ice,Wind,Small Coin;Serum,false
+Ghoul,1,60,12,140,550,Light,Dark,Bone Shard;Uncurse,true
+Harpy,2,45,18,200,800,Ice,None,Harpy Feather;Potion,true
+Bat,2,30,8,100,400,Ice,None,Small Coin;Serum,false
 Mountain Beast,2,120,25,180,700,Fire,Dark,Mountain Herb;High Potion,true
-Temple Guardian,3,100,20,160,650,Dark,Holy,Temple Key;Potion,true
+Temple Guardian,3,100,20,160,650,Dark,Light,Temple Key;Potion,true
 Cultist,3,70,15,140,600,Light,Dark,Cultist Robe;Serum,true
 Dark Priest,3,90,25,150,700,Light,Dark,Dark Crystal;High Potion,true
-Water Creature,4,85,18,170,600,Lightning,Water,Aqueduct Gem;Potion,true
-Aqueduct Guard,4,95,22,150,550,Fire,Iron,Iron Shard;Guard Key,true
+Water Creature,4,85,18,170,600,Light,None,Aqueduct Gem;Potion,true
+Aqueduct Guard,4,95,22,150,550,Fire,Stone,Stone Shard;Guard Key,true
 Forest Stalker,5,65,16,130,750,Fire,Poison,Forest Mushroom;Serum,true
 Nature Spirit,5,55,14,140,800,Fire,Poison,Nature Essence;High Potion,true
 Town Guard,6,75,14,150,500,Slash,Blunt,Town Key;Potion,true
 Citizen,6,40,5,100,300,None,None,Coin;None,false
-Clockwork Soldier,7,110,28,160,600,Fire,Lightning,Gear Component;Serum,true
-Mechanical Trap,7,60,20,100,400,Fire,Lightning,Scrap Metal;None,false
+Clockwork Soldier,7,110,28,160,600,Fire,Light,Gear Component;Serum,true
+Mechanical Trap,7,60,20,100,400,Fire,Light,Scrap Metal;None,false
 Ruin Guardian,8,95,22,170,650,Light,Dark,Ancient Coin;High Potion,true
 Ancient Construct,8,130,30,180,700,Light,Dark,Ancient Relic;Potion,true
 Corridor Phantom,9,70,18,140,900,Light,Dark,Ethereal Dust;Serum,true

@@ -48,7 +48,7 @@ based on the original Castlevania: Curse of Darkness animation timing at 60 FPS.
 - **Animation**: Light Attack 2
 
 ### Light Attack 2 → Light Attack 3
-- **Condition**: Light attack input pressed within 0.35s of Light Attack 2 start
+- **Condition**: Light attack input pressed within 0.45s of Light Attack 2 start
 - **Blend Time**: 0.05s
 - **Animation**: Light Attack 3
 
@@ -97,7 +97,7 @@ based on the original Castlevania: Curse of Darkness animation timing at 60 FPS.
 - **Blend Time**: 0.05s
 - **Animation**: Quick Step
 
-### Quick Step → Idal
+### Quick Step → Idle
 - **Condition**: Quick step animation complete
 - **Blend Time**: 0.1s
 - **Animation**: Idle

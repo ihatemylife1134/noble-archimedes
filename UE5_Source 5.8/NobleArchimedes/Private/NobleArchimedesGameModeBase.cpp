@@ -3,6 +3,8 @@
 #include "NobleArchimedesGameModeBase.h"
 #include "NobleArchimedesSaveGame.h"
 #include "NobleArchimedesGameInstance.h"
+#include "HectorCharacter.h"
+#include "Engine/DataTable.h"
 #include "Kismet/GameplayStatics.h"
 
 ANobleArchimedesGameModeBase::ANobleArchimedesGameModeBase()
@@ -18,6 +20,37 @@ void ANobleArchimedesGameModeBase::BeginPlay()
 	SaveGameInstance = Cast<UNobleArchimedesSaveGame>(UGameplayStatics::CreateSaveGameObject(UNobleArchimedesSaveGame::StaticClass()));
 
 	InitializeGameState();
+
+	// When a chapter portal saves and opens the next level, the save game stays
+	// alive on the GameInstance. Restore the chapter and unlocks here without
+	// applying the old level's player transform.
+	if (GameInstance && GameInstance->GetCurrentSaveGame())
+	{
+		const UNobleArchimedesSaveGame* Save = GameInstance->GetCurrentSaveGame();
+		CurrentChapter = Save->CurrentChapter;
+		CompletedChapters = Save->CompletedChapters;
+		UnlockedInnocentDevils = Save->UnlockedInnocentDevils;
+		UnlockedWeaponRecipes = Save->UnlockedWeaponRecipes;
+	}
+
+	ApplyChapterUnlocks(CurrentChapter);
+}
+
+namespace
+{
+	EInnocentDevilType DevilTypeFromDisplayName(FName Name)
+	{
+		if (Name == TEXT("Fairy")) return EInnocentDevilType::Fairy;
+		if (Name == TEXT("Griffin")) return EInnocentDevilType::Griffin;
+		if (Name == TEXT("Salamander")) return EInnocentDevilType::Salamander;
+		if (Name == TEXT("Ogre")) return EInnocentDevilType::Ogre;
+		if (Name == TEXT("Skeleton Devil") || Name == TEXT("Skeleton"))
+			return EInnocentDevilType::Skeleton;
+		if (Name == TEXT("Witch Devil") || Name == TEXT("Witch"))
+			return EInnocentDevilType::Witch;
+		if (Name == TEXT("Pumpkin")) return EInnocentDevilType::Pumpkin;
+		return EInnocentDevilType::None;
+	}
 }
 
 void ANobleArchimedesGameModeBase::InitializeGameState()
@@ -30,20 +63,48 @@ void ANobleArchimedesGameModeBase::InitializeGameState()
 	// Always unlocked: Short Sword
 	UnlockedWeaponRecipes.Add("Short Sword");
 
-	// Load existing save if available
-	if (GameInstance && GameInstance->HasSaveGame(0))
-	{
-		LoadSaveData(0);
-	}
+	// A new session starts at Chapter 1. Continue/load is driven by the
+	// GameInstance so the destination level can finish streaming before the
+	// saved transform and inventory are applied.
 }
 
 void ANobleArchimedesGameModeBase::StartChapter(int32 ChapterIndex)
 {
 	CurrentChapter = ChapterIndex;
+	ApplyChapterUnlocks(ChapterIndex);
 
 	if (GameInstance)
 	{
 		GameInstance->SaveGame(0);
+	}
+}
+
+void ANobleArchimedesGameModeBase::ApplyChapterUnlocks(int32 ChapterIndex)
+{
+	if (ChapterProgressionTable)
+	{
+		const FName RowName(*FString::FromInt(ChapterIndex));
+		if (const FChapterProgression* Row =
+			ChapterProgressionTable->FindRow<FChapterProgression>(
+				RowName, TEXT("ApplyChapterUnlocks"), false))
+		{
+			const EInnocentDevilType DevilType =
+				DevilTypeFromDisplayName(Row->InnocentDevilAcquired);
+			if (DevilType != EInnocentDevilType::None)
+			{
+				UnlockedInnocentDevils.AddUnique(DevilType);
+			}
+			if (!Row->WeaponUnlocked.IsNone())
+			{
+				UnlockedWeaponRecipes.AddUnique(Row->WeaponUnlocked);
+			}
+		}
+	}
+
+	if (AHectorCharacter* Player = Cast<AHectorCharacter>(
+		UGameplayStatics::GetPlayerCharacter(this, 0)))
+	{
+		Player->SetUnlockedInnocentDevils(UnlockedInnocentDevils);
 	}
 }
 
@@ -81,11 +142,29 @@ void ANobleArchimedesGameModeBase::LoadGameProgress(int32 SlotIndex)
 
 		if (GameInstance->GetCurrentSaveGame())
 		{
-			CurrentChapter = GameInstance->GetCurrentSaveGame()->CurrentChapter;
-			CompletedChapters = GameInstance->GetCurrentSaveGame()->CompletedChapters;
-			UnlockedInnocentDevils = GameInstance->GetCurrentSaveGame()->UnlockedInnocentDevils;
-			UnlockedWeaponRecipes = GameInstance->GetCurrentSaveGame()->ForgedWeapons;
+			RestoreProgressFromSave(GameInstance->GetCurrentSaveGame());
 		}
+	}
+}
+
+void ANobleArchimedesGameModeBase::RestoreProgressFromSave(const UNobleArchimedesSaveGame* Save)
+{
+	if (!Save)
+	{
+		return;
+	}
+
+	CurrentChapter = Save->CurrentChapter;
+	CompletedChapters = Save->CompletedChapters;
+	UnlockedInnocentDevils = Save->UnlockedInnocentDevils;
+	UnlockedWeaponRecipes = Save->UnlockedWeaponRecipes;
+	if (UnlockedWeaponRecipes.Num() == 0)
+	{
+		UnlockedWeaponRecipes = Save->ForgedWeapons;
+	}
+	if (!UnlockedWeaponRecipes.Contains("Short Sword"))
+	{
+		UnlockedWeaponRecipes.Add("Short Sword");
 	}
 }
 
@@ -97,7 +176,7 @@ void ANobleArchimedesGameModeBase::AutoSave()
 	}
 }
 
-void UNobleArchimedesGameModeBase::UnlockInnocentDevil(EInnocentDevilType Type)
+void ANobleArchimedesGameModeBase::UnlockInnocentDevil(EInnocentDevilType Type)
 {
 	if (!UnlockedInnocentDevils.Contains(Type))
 	{
@@ -110,12 +189,12 @@ void UNobleArchimedesGameModeBase::UnlockInnocentDevil(EInnocentDevilType Type)
 	}
 }
 
-bool UNobleArchimedesGameModeBase::IsInnocentDevilUnlocked(EInnocentDevilType Type) const
+bool ANobleArchimedesGameModeBase::IsInnocentDevilUnlocked(EInnocentDevilType Type) const
 {
 	return UnlockedInnocentDevils.Contains(Type);
 }
 
-void UNobleArchimedesGameModeBase::UnlockWeaponRecipe(FName WeaponName)
+void ANobleArchimedesGameModeBase::UnlockWeaponRecipe(FName WeaponName)
 {
 	if (!UnlockedWeaponRecipes.Contains(WeaponName))
 	{
@@ -128,12 +207,12 @@ void UNobleArchimedesGameModeBase::UnlockWeaponRecipe(FName WeaponName)
 	}
 }
 
-bool UNobleArchimedesGameModeBase::IsWeaponRecipeUnlocked(FName WeaponName) const
+bool ANobleArchimedesGameModeBase::IsWeaponRecipeUnlocked(FName WeaponName) const
 {
 	return UnlockedWeaponRecipes.Contains(WeaponName);
 }
 
-void UNobleArchimedesGameModeBase::LoadSaveData(int32 SlotIndex)
+void ANobleArchimedesGameModeBase::LoadSaveData(int32 SlotIndex)
 {
 	if (GameInstance && GameInstance->GetCurrentSaveGame())
 	{
@@ -144,7 +223,7 @@ void UNobleArchimedesGameModeBase::LoadSaveData(int32 SlotIndex)
 	}
 }
 
-void UNobleArchimedesGameModeBase::SaveCurrentState()
+void ANobleArchimedesGameModeBase::SaveCurrentState()
 {
 	if (GameInstance && GameInstance->GetCurrentSaveGame())
 	{

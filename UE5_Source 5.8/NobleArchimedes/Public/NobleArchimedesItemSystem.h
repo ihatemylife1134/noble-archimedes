@@ -9,6 +9,19 @@
 
 class AHectorCharacter;
 
+// Internal bookkeeping for the steal system. Tracks whether an enemy is in a
+// stealable state, whether it has already been stolen from, and which item it
+// offers when stolen from (set via SetStealable / data table).
+USTRUCT()
+struct FStealLockInfo
+{
+	GENERATED_BODY()
+
+	bool bStealable = false;
+	bool bStolenFrom = false;
+	FName StealItem;
+};
+
 UCLASS()
 class NOBLEARCHIMEDES_API UNobleArchimedesItemSystem : public UObject
 {
@@ -33,6 +46,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Items")
 	void RemoveItem(FName ItemName, int32 Quantity);
 
+	/** Full quantity map, used by save/load and the forge. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Items")
+	TMap<FName, int32> GetAllItems() const { return ItemQuantities; }
+
+	UFUNCTION(BlueprintCallable, Category = "Items")
+	void SetAllItems(const TMap<FName, int32>& NewItems);
+
 	//=============================================================================
 	// DEATH DOLL
 	//=============================================================================
@@ -53,12 +73,18 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Items")
 	bool CanSteal(AActor* Target) const;
 
+	// Register an enemy as stealable (or clear its stealable state). StealItem
+	// is the item that will be stolen when TrySteal succeeds; if it is None,
+	// TrySteal falls back to a random steal-pool item.
+	UFUNCTION(BlueprintCallable, Category = "Items")
+	void SetStealable(AActor* Target, bool bStealable, FName StealItem);
+
 private:
 	UPROPERTY()
 	TMap<FName, int32> ItemQuantities;
 
 	UPROPERTY()
-	TMap<AActor*, bool> StealLockState; // Whether enemy is in stealable state
+	TMap<AActor*, FStealLockInfo> StealLockState; // Per-enemy steal lock state
 
 	float StealLockTimer = 0.0f;
 };

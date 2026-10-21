@@ -1,0 +1,84 @@
+{
+  "format": "UE5 Data Table Import Manifest",
+  "version": "1.0",
+  "total_tables": 11,
+  "tables": [
+    {
+      "csv_file": "WeaponDataTable.csv",
+      "struct_name": "FWeaponData",
+      "suggested_name": "DT_WeaponDataTable",
+      "row_count": 19,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "MaterialDataTable.csv",
+      "struct_name": "FMaterialData",
+      "suggested_name": "DT_MaterialDataTable",
+      "row_count": 40,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "WeaponRecipeTable.csv",
+      "struct_name": "FWeaponRecipe",
+      "suggested_name": "DT_WeaponRecipeTable",
+      "row_count": 19,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "WeaponRecipeTable_Complete.csv",
+      "struct_name": "FWeaponRecipe",
+      "suggested_name": "DT_WeaponRecipeTable_Complete",
+      "row_count": 19,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "WeaponMaterialRequirements.csv",
+      "struct_name": "FWeaponMaterialRequirement",
+      "suggested_name": "DT_WeaponMaterialRequirements",
+      "row_count": 19,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "InnocentDevilDataTable.csv",
+      "struct_name": "FInnocentDevilData",
+      "suggested_name": "DT_InnocentDevilDataTable",
+      "row_count": 7,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "EnemyDataTable.csv",
+      "struct_name": "FEnemyData",
+      "suggested_name": "DT_EnemyDataTable",
+      "row_count": 23,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "EnemyEncounterTable.csv",
+      "struct_name": "FEnemyEncounter",
+      "suggested_name": "DT_EnemyEncounterTable",
+      "row_count": 32,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "ItemDropTable.csv",
+      "struct_name": "FItemDropData",
+      "suggested_name": "DT_ItemDropTable",
+      "row_count": 50,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "InnocentDevilEvolutionTable.csv",
+      "struct_name": "FInnocentDevilEvolution",
+      "suggested_name": "DT_InnocentDevilEvolutionTable",
+      "row_count": 14,
+      "status": "pending_import"
+    },
+    {
+      "csv_file": "ChapterProgressionTable.csv",
+      "struct_name": "FChapterProgression",
+      "suggested_name": "DT_ChapterProgressionTable",
+      "row_count": 10,
+      "status": "pending_import"
+    }
+  ]
+}

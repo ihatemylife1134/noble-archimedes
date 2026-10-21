@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/AnimMontage.h"
 #include "NobleArchimedesTypes.generated.h"
 
 //=============================================================================
@@ -35,7 +36,7 @@ enum class EWeaponType : uint8
 	None
 };
 
-UENUM(BlueprintType)
+UENUM(BlueprintType, meta = (ScriptName = "NobleDamageType"))
 enum class EDamageType : uint8
 {
 	Fire,
@@ -81,6 +82,24 @@ enum class EInnocentDevilType : uint8
 	None
 };
 
+/**
+ * Evolution crystal families. The source guide uses weapon-flavoured crystals
+ * for the non-elemental devils (Ogre = Slash, Witch = Magic, Pumpkin = Special),
+ * so this is deliberately wider than the elemental set.
+ */
+UENUM(BlueprintType)
+enum class EEvolutionCrystalType : uint8
+{
+	None,
+	Light,
+	Dark,
+	Fire,
+	Ice,
+	Slash,
+	Magic,
+	Special
+};
+
 //=============================================================================
 // DATA STRUCTURES (Blueprint-accessible)
 //=============================================================================
@@ -121,13 +140,22 @@ struct FWeaponData
 	EDamageType DamageType = EDamageType::Slash;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	EInnocentDevilType EvoCrystalColor = EInnocentDevilType::None;
+	EEvolutionCrystalType EvoCrystalColor = EEvolutionCrystalType::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	TArray<FAnimMontage> ComboAnimations;
+	TArray<UAnimMontage*> ComboAnimations;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	TArray<FAnimMontage> FinalAttackAnimations;
+	TArray<UAnimMontage*> FinalAttackAnimations;
+
+	// Number of montages required for the combo / finisher. Kept in sync with
+	// ComboAnimations and FinalAttackAnimations so data tables can describe a
+	// weapon before animations are authored.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	int32 ComboAnimCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	int32 FinalAttackAnimCount = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -200,6 +228,10 @@ struct FInnocentDevilData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
 	bool bIsEvolved = false;
+
+	// Crystal family required for evolution (matches the source CSV column).
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	EEvolutionCrystalType EvolutionCrystalColor = EEvolutionCrystalType::None;
 };
 
 USTRUCT(BlueprintType)
@@ -215,6 +247,230 @@ struct FInventoryItem
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	bool bIsEquipped = false;
+};
+
+//=============================================================================
+// ENEMY DATA
+//=============================================================================
+
+USTRUCT(BlueprintType)
+struct FEnemyData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	FName EnemyName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	int32 Chapter = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float Health = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float Damage = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float AttackRange = 150.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float DetectionRange = 600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	FString Weaknesses; // Comma-separated damage type names
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	FString Tolerances; // Comma-separated damage type names
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	FString ItemDrops; // Comma-separated item names
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	bool CanBeStolen = false;
+};
+
+//=============================================================================
+// ENEMY ENCOUNTER
+//=============================================================================
+
+USTRUCT(BlueprintType)
+struct FEnemyEncounter
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	int32 Chapter = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	FName EnemyName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	int32 Count = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	FName SpawnLocation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	float RespawnTime = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	bool IsBoss = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	bool Stealable = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	FName StealItem;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	FString Weakness; // Damage type name
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	FString Tolerance; // Damage type name
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	float Health = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Encounter")
+	float Damage = 10.0f;
+};
+
+//=============================================================================
+// ITEM DROP
+//=============================================================================
+
+USTRUCT(BlueprintType)
+struct FItemDropData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemDrop")
+	FName EnemyName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemDrop")
+	FName ItemName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemDrop")
+	float DropChance = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemDrop")
+	bool IsStealOnly = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemDrop")
+	bool IsRare = false;
+};
+
+//=============================================================================
+// WEAPON MATERIAL REQUIREMENT
+//=============================================================================
+
+USTRUCT(BlueprintType)
+struct FWeaponMaterialRequirement
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponMaterial")
+	FName WeaponName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponMaterial")
+	FName Material1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponMaterial")
+	FName Material2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponMaterial")
+	FName Material3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponMaterial")
+	FName Material4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponMaterial")
+	int32 Material1Count = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponMaterial")
+	int32 Material2Count = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponMaterial")
+	int32 Material3Count = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponMaterial")
+	int32 Material4Count = 0;
+};
+
+//=============================================================================
+// INNOCENT DEVIL EVOLUTION
+//=============================================================================
+
+USTRUCT(BlueprintType)
+struct FInnocentDevilEvolution
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	FName DevilName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	EInnocentDevilType DevilType = EInnocentDevilType::Fairy;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	int32 Level = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	FName BaseForm;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	FName EvolvedForm;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	FName FinalForm;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	FName EvoCrystalRequired;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	int32 EvoCrystalCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Innocent Devil")
+	FString AbilityUnlock;
+};
+
+//=============================================================================
+// CHAPTER PROGRESSION
+//=============================================================================
+
+USTRUCT(BlueprintType)
+struct FChapterProgression
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
+	int32 Chapter = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
+	FName ChapterName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
+	FString UnlockRequirement;
+
+	// The source progression table stores how many save rooms / green-door
+	// rooms a chapter contains rather than their names.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
+	int32 SaveRoomCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
+	int32 GreenDoorRoomCount = 0;
+
+	// Display name of the Innocent Devil acquired in this chapter ("Fairy",
+	// "Skeleton Devil", ...). Kept as a name because the source table uses the
+	// full display name for the two "Devil" companions.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
+	FName InnocentDevilAcquired;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
+	FName WeaponUnlocked;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chapter")
+	FString AreaType;
 };
 
 //=============================================================================

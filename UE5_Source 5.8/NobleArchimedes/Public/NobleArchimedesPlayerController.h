@@ -7,6 +7,7 @@
 #include "NobleArchimedesPlayerController.generated.h"
 
 class AHectorCharacter;
+class AEnemyBase;
 
 UCLASS()
 class NOBLEARCHIMEDES_API ANobleArchimedesPlayerController : public APlayerController
@@ -18,6 +19,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	virtual void PlayerTick(float DeltaTime) override;
 
 	//=============================================================================
 	// INPUT HANDLING
@@ -38,6 +40,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void ToggleLockOn();
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Player")
+	bool IsLockOnActive() const { return bLockOnActive; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Player")
+	AEnemyBase* GetLockedTarget() const { return LockedTarget.Get(); }
+
 	//=============================================================================
 	// PLAYER REFERENCE
 	//=============================================================================
@@ -46,7 +54,11 @@ public:
 	AHectorCharacter* GetHectorCharacter() const;
 
 private:
-	AHectorCharacter* CachedHectorCharacter;
+	mutable AHectorCharacter* CachedHectorCharacter;
+
+	TWeakObjectPtr<AEnemyBase> LockedTarget;
+	bool bLockOnActive = false;
 
 	void CacheHectorCharacter();
+	void ClearLockOn();
 };
