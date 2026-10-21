@@ -154,6 +154,16 @@ if (-not $SkipContent) {
     if (-not $passed) { Fail-Gate @('NA-FID4\] FAILED') }
 }
 
+Write-Step '3f/4  Chapter 1 acceptance'
+$r = Invoke-Commandlet -Script (Join-Path $PROJECT_DIR 'Tools\verify_chapter1.py')
+$m = [regex]::Match($r.Text, 'NA-CH1\] RESULT=(\w+) errors=(\d+)')
+$ch1Errors = $m.Groups[2].Value
+$passed = ($m.Groups[1].Value -eq 'PASS') -and ($ch1Errors -eq '0')
+Add-Result -Name 'Chapter 1 acceptance' -Passed $passed -Detail "errors=$ch1Errors"
+Write-Host "Ch1 verdict=$($m.Groups[1].Value) errors=$ch1Errors" -ForegroundColor DarkGray
+if (-not $passed) { Fail-Gate @('NA-CH1\] FAILED') }
+
+
 Write-Step '4/4  In-game smoke test'
 & python (Join-Path $PROJECT_DIR 'Tools\run_game_smoke_test.py') --seconds $SmokeSeconds
 $passed = ($LASTEXITCODE -eq 0)
