@@ -222,6 +222,360 @@ def create_mapping_context(name):
 
 
 # ---------------------------------------------------------------------------
+# Animation pipeline (FBX -> AnimSequence -> AnimMontage -> AnimBlueprint)
+# ---------------------------------------------------------------------------
+
+PROJECT_DIR = os.path.dirname(CONTENT_DIR.rstrip("/\\"))
+HECTOR_FBX_DIR = os.path.join(PROJECT_DIR, "ArtSource", "Hector", "Export")
+HECTOR_DIR = "/Game/Characters/Hector"
+HECTOR_ANIM_DIR = HECTOR_DIR + "/Animations"
+HECTOR_MONTAGE_DIR = HECTOR_DIR + "/Montages"
+HECTOR_MESH_NAME = "SK_Hector"
+HECTOR_ANIMBP_NAME = "AB_Hector"
+
+# Animations authored by ArtSource/Hector/hector_anims.py (30 fps keyframes).
+HECTOR_ANIMATIONS = (
+    "Idle", "Walk", "Run", "Jump",
+    "Light1", "Light2", "Light3", "Heavy",
+    "Guard", "QuickStep", "HitReaction", "Death",
+)
+
+# Sequences that loop while the state is active.
+HECTOR_LOOPING = {"Idle", "Walk", "Run", "Jump", "Guard"}
+
+# Weapon type -> (combo stage animations, finisher animations).
+# The combat component indexes ComboAnimations[Stage-1] for light attacks and
+# FinalAttackAnimations[Stage-1] for the heavy finisher, so both arrays are
+# authored to three stages.
+WEAPON_ANIM_SETS = {
+    "Sword": (["Light1", "Light2", "Light3"], ["Heavy"]),
+    "Axe": (["Light1", "Light2", "Light3"], ["Heavy"]),
+    "Spear": (["Light1", "Light2", "Light3"], ["Heavy"]),
+    "Knuckles": (["Light1", "Light2", "Light3"], ["Heavy"]),
+    "Special": (["Light1", "Light2"], ["Heavy"]),
+}
+
+COMBO_STAGES = 3
+ANIM_MONTAGES = {}
+
+
+def hector_sequence_name(anim):
+    return "AN_Hector_%s" % anim
+
+
+def hector_montage_name(anim):
+    return "AM_Hector_%s" % anim
+
+
+def hector_sequence_path(anim):
+    return asset_path(HECTOR_ANIM_DIR, hector_sequence_name(anim))
+
+
+def hector_montage_path(anim):
+    return asset_path(HECTOR_MONTAGE_DIR, hector_montage_name(anim))
+
+
+def import_fbx(source_file, folder, asset_name, configure):
+    """Import one FBX as ``folder/asset_name`` and return the created asset.
+
+    ``configure`` receives the FbxImportUI so each caller can pick the import
+    type. Automated type detection must stay off: when it is on, UE re-detects
+    the type from the file and imports a static mesh even though animation-only
+    import was requested.
+    """
+    if not os.path.exists(source_file):
+        error("Missing FBX: %s" % source_file)
+        return None
+
+    task = unreal.AssetImportTask()
+    task.set_editor_property("filename", source_file)
+    task.set_editor_property("destination_path", folder)
+    task.set_editor_property("destination_name", asset_name)
+    task.set_editor_property("automated", True)
+    task.set_editor_property("replace_existing", True)
+    task.set_editor_property("save", True)
+
+    options = unreal.FbxImportUI()
+    options.set_editor_property("automated_import_should_detect_type", False)
+    options.set_editor_property("import_materials", False)
+    options.set_editor_property("import_textures", False)
+    configure(options)
+    task.set_editor_property("options", options)
+
+    try:
+        ASSET_TOOLS.import_asset_tasks([task])
+    except Exception as exc:
+        error("FBX import failed for %s: %r" % (source_file, exc))
+        return None
+
+    return load_asset(asset_path(folder, asset_name))
+
+def import_hector_mesh():
+    """Import SK_Hector.fbx and return (mesh, skeleton)."""
+    def configure(options):
+        options.set_editor_property("import_mesh", True)
+        options.set_editor_property("import_as_skeletal", True)
+        options.set_editor_property("import_animations", False)
+        options.set_editor_property("mesh_type_to_import",
+                                    unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+
+    mesh = import_fbx(os.path.join(HECTOR_FBX_DIR, "SK_Hector.fbx"),
+                      HECTOR_DIR, HECTOR_MESH_NAME, configure)
+    if not mesh:
+        error("Failed to import the Hector skeletal mesh")
+        return None, None
+
+    skeleton = get_prop(mesh, "skeleton")
+    if not skeleton:
+        error("Imported Hector mesh has no skeleton")
+        return mesh, None
+
+    STATS["created"] += 1
+    log("Imported %s (skeleton %s)" % (mesh.get_path_name(),
+                                       skeleton.get_path_name()))
+    return mesh, skeleton
+
+
+def import_hector_animation(anim, skeleton):
+    """Import one A_Hector_<anim>.fbx as an AnimSequence."""
+    def configure(options):
+        options.set_editor_property("import_mesh", False)
+        options.set_editor_property("import_as_skeletal", True)
+        options.set_editor_property("import_animations", True)
+        options.set_editor_property("import_rigid_mesh", False)
+        options.set_editor_property("mesh_type_to_import",
+                                    unreal.FBXImportType.FBXIT_ANIMATION)
+        options.set_editor_property("skeleton", skeleton)
+        # Bone tracks live on the animation import data, not on FbxImportUI.
+        anim_data = unreal.FbxAnimSequenceImportData()
+        anim_data.set_editor_property("import_bone_tracks", True)
+        options.set_editor_property("anim_sequence_import_data", anim_data)
+
+    sequence = import_fbx(os.path.join(HECTOR_FBX_DIR, "A_Hector_%s.fbx" % anim),
+                          HECTOR_ANIM_DIR, hector_sequence_name(anim), configure)
+    if not sequence or sequence.get_class().get_name() != "AnimSequence":
+        error("Failed to import animation %s" % anim)
+        return None
+
+    # The authored root motion is in place for now; attacks stay in place and
+    # locomotion is driven by CharacterMovement.
+    if anim in HECTOR_LOOPING:
+        set_prop(sequence, "loop", True)
+    STATS["created"] += 1
+    return sequence
+
+
+def import_hector_animations(skeleton):
+    sequences = {}
+    for anim in HECTOR_ANIMATIONS:
+        sequence = import_hector_animation(anim, skeleton)
+        if sequence:
+            sequences[anim] = sequence
+    log("Imported %d of %d Hector animations" %
+        (len(sequences), len(HECTOR_ANIMATIONS)))
+    return sequences
+
+
+def create_hector_montage(anim, sequence, skeleton):
+    """Create (or refresh) the montage for one animation.
+
+    The montage is saved immediately: a data table may only reference it once
+    the asset exists on disk, otherwise the reference resolves to None.
+    """
+    path = hector_montage_path(anim)
+    existing = load_asset(path) if unreal.EditorAssetLibrary.does_asset_exist(path) else None
+    if existing:
+        montage = existing
+        set_prop(montage, "sequence_length", get_prop(sequence, "sequence_length"))
+        STATS["updated"] += 1
+    else:
+        factory = unreal.AnimMontageFactory()
+        set_prop(factory, "source_animation", sequence)
+        set_prop(factory, "target_skeleton", skeleton)
+        montage = ASSET_TOOLS.create_asset(hector_montage_name(anim),
+                                           HECTOR_MONTAGE_DIR,
+                                           unreal.AnimMontage, factory)
+        if not montage:
+            error("Failed to create montage for %s" % anim)
+            return None
+        STATS["created"] += 1
+
+    save_asset(path)
+    return montage
+
+
+def create_hector_montages(sequences, skeleton):
+    for anim in HECTOR_ANIMATIONS:
+        sequence = sequences.get(anim)
+        if not sequence:
+            continue
+        montage = create_hector_montage(anim, sequence, skeleton)
+        if montage:
+            ANIM_MONTAGES[anim] = montage
+    log("Created %d Hector montages" % len(ANIM_MONTAGES))
+    return ANIM_MONTAGES
+
+
+def _connect(src_node, dst_node):
+    """Connect src_node's pose output to the first input dst_node accepts.
+
+    Pin names differ between anim nodes (the montage slot's pose input is
+    ``Source`` while the graph root's is ``Result``), so let the graph schema
+    validate each candidate instead of matching names.
+    """
+    if not src_node or not dst_node:
+        return False
+    for out_pin in src_node.list_output_pins():
+        for in_pin in dst_node.list_input_pins():
+            try:
+                if out_pin.try_create_connection(in_pin):
+                    return True
+            except Exception:
+                continue
+    return False
+
+
+def _find_node(graph, class_name):
+    for node in graph.get_graph_nodes_of_class(unreal.AnimGraphNode_Base):
+        if node.get_class().get_name() == class_name:
+            return node
+    return None
+
+
+def create_hector_anim_blueprint(skeleton, sequences):
+    """Create AB_Hector with a Slot node so montages reach the output pose.
+
+    Combat animations are played directly through ``PlayAnimMontage``, so the
+    AnimGraph only needs to forward the base pose through the default slot.
+    Idle is fed into the slot as the resting pose.
+    """
+    path = asset_path(HECTOR_DIR, HECTOR_ANIMBP_NAME)
+    blueprint = load_asset(path) if unreal.EditorAssetLibrary.does_asset_exist(path) else None
+    if blueprint:
+        STATS["updated"] += 1
+    else:
+        factory = unreal.AnimBlueprintFactory()
+        set_prop(factory, "target_skeleton", skeleton)
+        blueprint = ASSET_TOOLS.create_asset(HECTOR_ANIMBP_NAME, HECTOR_DIR,
+                                             unreal.AnimBlueprint, factory)
+        if not blueprint:
+            error("Failed to create %s" % HECTOR_ANIMBP_NAME)
+            return None
+        STATS["created"] += 1
+
+    graphs = blueprint.get_animation_graphs()
+    anim_graph = graphs[0] if graphs else None
+    if not anim_graph:
+        error("%s has no animation graph" % HECTOR_ANIMBP_NAME)
+        return blueprint
+
+    try:
+        editor = unreal.BlueprintGraphEditor.get_graph_editor(anim_graph)
+    except Exception as exc:
+        warn("Could not open the %s graph editor: %r"
+             % (HECTOR_ANIMBP_NAME, exc))
+        editor = None
+
+    if not editor:
+        return blueprint
+
+    slot = _find_node(anim_graph, "AnimGraphNode_Slot")
+    if not slot:
+        for action in ("Animation|Montage|Slot'DefaultSlot'",
+                       "Animation|Montage|Slot'DefaultGroup.DefaultSlot'"):
+            try:
+                slot = editor.create_node_from_name(action,
+                                                    unreal.Vector2D(360, 0), [])
+            except Exception:
+                slot = None
+            if slot:
+                break
+
+    if not slot:
+        warn("Montage slot node is unavailable; montages will not render")
+        save_asset(path)
+        return blueprint
+
+    root = _find_node(anim_graph, "AnimGraphNode_Root")
+    if not _connect(slot, root):
+        warn("Could not connect the montage slot to the AnimGraph output")
+
+    player = _find_node(anim_graph, "AnimGraphNode_SequencePlayer")
+    if not player:
+        try:
+            player = editor.create_node_from_name(
+                "Animation|Sequences|SequencePlayer", unreal.Vector2D(120, 0), [])
+        except Exception:
+            player = None
+
+    idle = sequences.get("Idle")
+    if player and idle:
+        node_struct = get_prop(player, "node")
+        if node_struct is not None and set_prop(node_struct, "sequence", idle):
+            set_prop(player, "node", node_struct)
+        if not _connect(player, slot):
+            warn("Could not connect the idle player to the slot")
+
+    save_asset(path)
+    return blueprint
+
+
+def build_hector_animation():
+    """Run the whole Hector animation pipeline.
+
+    Must run before the data tables so the weapon rows can reference the
+    generated montages.
+    """
+    if not os.path.isdir(HECTOR_FBX_DIR):
+        warn("Hector FBX sources not found at %s; skipping animation build"
+             % HECTOR_FBX_DIR)
+        return False
+
+    mesh, skeleton = import_hector_mesh()
+    if not skeleton:
+        return False
+
+    sequences = import_hector_animations(skeleton)
+    create_hector_montages(sequences, skeleton)
+    create_hector_anim_blueprint(skeleton, sequences)
+    return True
+
+
+def weapon_montage_refs(weapon_type):
+    """Return (combo paths, finisher paths) for a weapon type's data table row."""
+    combo_anims, finisher_anims = WEAPON_ANIM_SETS.get(
+        weapon_type, (["Light1", "Light2", "Light3"], ["Heavy"]))
+
+    def to_paths(anims):
+        paths = []
+        for anim in anims:
+            montage = ANIM_MONTAGES.get(anim)
+            if montage:
+                paths.append(montage.get_path_name())
+        return paths
+
+    combo = to_paths(combo_anims)
+    if combo and len(combo) < COMBO_STAGES:
+        # The combat code always advances to three stages, so repeat the last
+        # authored montage rather than leaving a stage with nothing to play.
+        while len(combo) < COMBO_STAGES:
+            combo.append(combo[-1])
+        warn("%s authors %d combo montages; padded to %d stages"
+             % (weapon_type, len(combo_anims), COMBO_STAGES))
+
+    # The finisher is indexed by the current combo stage, so repeat the heavy
+    # montage across every stage it can be requested from.
+    finisher_source = to_paths(finisher_anims)
+    finisher = []
+    if finisher_source:
+        for stage in range(COMBO_STAGES):
+            finisher.append(finisher_source[stage % len(finisher_source)])
+    return combo, finisher
+
+
+
+
+# ---------------------------------------------------------------------------
 # Data tables
 # ---------------------------------------------------------------------------
 
@@ -361,6 +715,26 @@ def build_rows(csv_file, rows, cfg):
     return result
 
 
+def apply_weapon_montages(entry):
+    """Attach the generated montage references to one weapon table row.
+
+    FWeaponData.ComboAnimations / FinalAttackAnimations are hard object
+    references, so the row carries asset paths that the JSON importer resolves
+    through ImportText.
+    """
+    if not ANIM_MONTAGES:
+        return
+    weapon_type = entry.get("WeaponType")
+    if not weapon_type:
+        return
+
+    combo, finisher = weapon_montage_refs(weapon_type)
+    if combo:
+        entry["ComboAnimations"] = combo
+    if finisher:
+        entry["FinalAttackAnimations"] = finisher
+
+
 def import_data_table(csv_file, struct_name, suggested_name):
     csv_path = os.path.join(DATA_TABLE_DIR, csv_file)
     if not os.path.exists(csv_path):
@@ -410,6 +784,8 @@ def import_data_table(csv_file, struct_name, suggested_name):
     for row_key, payload in payload_rows.items():
         entry = {"Name": row_key}
         entry.update(payload)
+        if csv_file == "WeaponDataTable.csv":
+            apply_weapon_montages(entry)
         json_rows.append(entry)
 
     json_text = json.dumps(json_rows, indent=2)
@@ -672,12 +1048,23 @@ def configure_character_blueprint(input_assets, imc):
     elif not devil_component:
         warn("BP_HectorCharacter has no InnocentDevilComponent default subobject")
 
-    # Placeholder silhouette so the knight is visible during the blockout.
-    skeletal_cube = unreal.load_asset("/Engine/EngineMeshes/SkeletalCube.SkeletalCube")
+    # Use the generated Hector mesh once it exists; otherwise keep a visible
+    # placeholder so the blockout stays readable.
     mesh = get_prop(cdo, "Mesh")
-    if skeletal_cube and mesh:
-        set_prop(mesh, "SkeletalMeshAsset", skeletal_cube)
-        set_prop(mesh, "RelativeScale3D", unreal.Vector(0.9, 0.9, 1.8))
+    hector_mesh = load_asset("/Game/Characters/Hector/SK_Hector")
+    hector_anim = load_asset("/Game/Characters/Hector/AB_Hector")
+    if mesh and hector_mesh:
+        set_prop(mesh, "SkeletalMeshAsset", hector_mesh)
+        set_prop(mesh, "RelativeScale3D", unreal.Vector(1.0, 1.0, 1.0))
+        if hector_anim:
+            anim_class = hector_anim.generated_class()
+            if anim_class:
+                set_prop(mesh, "AnimClass", anim_class)
+    elif mesh:
+        skeletal_cube = load_asset("/Engine/EngineMeshes/SkeletalCube.SkeletalCube")
+        if skeletal_cube:
+            set_prop(mesh, "SkeletalMeshAsset", skeletal_cube)
+            set_prop(mesh, "RelativeScale3D", unreal.Vector(0.9, 0.9, 1.8))
 
     unreal.EditorAssetLibrary.save_asset(asset_path(folder, "BP_HectorCharacter"))
 
@@ -1317,6 +1704,10 @@ def main():
         error("Editor subsystems unavailable; run this as a PythonScript commandlet with the editor modules loaded.")
         return
 
+    # Animations must exist before the weapon table so its rows can reference
+    # the generated montages.
+    build_hector_animation()
+
     import_all_data_tables()
 
     create_all_blueprints()
@@ -1336,7 +1727,8 @@ def main():
         log("ERROR: " + message)
 
 
-try:
-    main()
-except Exception:
-    error("Unhandled exception:\n" + traceback.format_exc())
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception:
+        error("Unhandled exception:\n" + traceback.format_exc())

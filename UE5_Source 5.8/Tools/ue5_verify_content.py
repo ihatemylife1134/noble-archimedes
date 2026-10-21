@@ -356,7 +356,75 @@ for chapter, map_name in CHAPTER_MAPS.items():
                 len(get_prop(room, "EnemyClassesToSpawn") or []),
             ))
 
+log("=== ANIMATION ===")
+HECTOR_ANIMATIONS = (
+    "Idle", "Walk", "Run", "Jump",
+    "Light1", "Light2", "Light3", "Heavy",
+    "Guard", "QuickStep", "HitReaction", "Death",
+)
+ANIM_DIR = "/Game/Characters/Hector/Animations"
+MONTAGE_DIR = "/Game/Characters/Hector/Montages"
+HECTOR_DIR = "/Game/Characters/Hector"
+
+mesh = check_asset(HECTOR_DIR + "/SK_Hector")
+skeleton = get_prop(mesh, "skeleton") if mesh else None
+if mesh and not skeleton:
+    err("SK_Hector has no skeleton")
+
+sequences = {}
+for anim in HECTOR_ANIMATIONS:
+    seq = check_asset("%s/AN_Hector_%s" % (ANIM_DIR, anim))
+    if seq:
+        sequences[anim] = seq
+        length = get_prop(seq, "sequence_length")
+        if not length or length <= 0.0:
+            err("AN_Hector_%s has zero length" % anim)
+        if skeleton and get_prop(seq, "skeleton") != skeleton:
+            err("AN_Hector_%s does not use the Hector skeleton" % anim)
+
+montages = {}
+for anim in HECTOR_ANIMATIONS:
+    mont = check_asset("%s/AM_Hector_%s" % (MONTAGE_DIR, anim))
+    if mont:
+        montages[anim] = mont
+        if mont.get_num_sections() < 1:
+            err("AM_Hector_%s has no sections" % anim)
+        play_length = mont.get_play_length()
+        if not play_length or play_length <= 0.0:
+            err("AM_Hector_%s has zero play length" % anim)
+
+anim_bp = check_asset(HECTOR_DIR + "/AB_Hector")
+if anim_bp:
+    graphs = anim_bp.get_animation_graphs()
+    if not graphs:
+        err("AB_Hector has no animation graph")
+    else:
+        node_classes = [n.get_class().get_name() for n in
+                        graphs[0].get_graph_nodes_of_class(unreal.AnimGraphNode_Base)]
+        log("  AB_Hector nodes = %s" % node_classes)
+        # Without a montage slot, PlayAnimMontage produces no visible pose.
+        if "AnimGraphNode_Slot" not in node_classes:
+            err("AB_Hector has no montage Slot node")
+        if "AnimGraphNode_Root" not in node_classes:
+            err("AB_Hector has no graph output node")
+
+# The combat component reads montage references straight off the weapon rows.
+weapon_table = check_asset("/Game/DataTables/DT_WeaponDataTable")
+if weapon_table:
+    rows = unreal.DataTableFunctionLibrary.export_data_table_to_json_string(weapon_table)
+    import json
+    wired = 0
+    for row in json.loads(rows):
+        combo = row.get("ComboAnimations") or []
+        finisher = row.get("FinalAttackAnimations") or []
+        if combo and finisher:
+            wired += 1
+        else:
+            err("weapon row %s has no montage references" % row.get("Name"))
+    log("  weapon rows with montages = %d" % wired)
+
 log("=== RESULT ===")
+
 log("errors=%d" % len(ERRORS))
 for message in ERRORS:
     log("ERROR: " + message)
