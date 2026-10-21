@@ -65,6 +65,18 @@ if table:
             row.get("WeaponName"), row.get("WeaponType"),
             row.get("ComboAnimations"), row.get("FinalAttackAnimations")))
 
+lib = getattr(unreal, "NobleAnimGraphAuthoring", None)
+abp = unreal.load_asset(build.asset_path(build.HECTOR_DIR, build.HECTOR_ANIMBP_NAME))
+if lib and abp:
+    machine = lib.get_or_create_state_machine(abp, "Locomotion")
+    names = [str(n) for n in lib.get_state_names(machine)]
+    say("state machine graph = %s" % machine)
+    say("states (%d) = %s" % (len(names), sorted(names)))
+    say("transitions = %d" % lib.get_transition_count(machine))
+    missing = sorted(set(build.HECTOR_STATE_CLIPS) - set(names))
+    if missing:
+        say("MISSING STATES = %s" % missing)
+
 with open(OUT, "w", encoding="utf-8") as fh:
     fh.write("\n".join(lines))
 unreal.log_warning("[ANIMSTEP] written %d lines" % len(lines))

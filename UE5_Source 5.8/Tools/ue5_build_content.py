@@ -416,6 +416,54 @@ def create_hector_montages(sequences, skeleton):
     return ANIM_MONTAGES
 
 
+# Spec states (AnimationBlueprintSpec.md §1) mapped to the authored clips.
+# States whose dedicated clip is not authored yet reuse the closest clip and are
+# reported, so the art gap stays visible instead of looking finished.
+HECTOR_STATE_CLIPS = {
+    "Idle": "Idle",
+    "Walk": "Walk",
+    "Run": "Run",
+    "JumpStart": "Jump",
+    "JumpLoop": "Jump",
+    "JumpLand": "Jump",
+    "Light1": "Light1",
+    "Light2": "Light2",
+    "Light3": "Light3",
+    "Heavy": "Heavy",
+    "GuardStart": "Guard",
+    "GuardLoop": "Guard",
+    "GuardRelease": "Guard",
+    "PerfectGuard": "Guard",
+    "QuickStep": "QuickStep",
+    "HitReaction": "HitReaction",
+    "Death": "Death",
+}
+
+# States that must not loop.
+HECTOR_ONESHOT_STATES = {
+    "JumpStart", "JumpLand", "Light1", "Light2", "Light3", "Heavy",
+    "GuardStart", "GuardRelease", "PerfectGuard", "QuickStep",
+    "HitReaction", "Death",
+}
+
+# One-shot states return to Idle when their clip finishes. Combo chaining and
+# input-driven transitions need the AnimBlueprint event graph (see the warning
+# logged by build_hector_state_machine).
+HECTOR_RETURN_TO_IDLE = (
+    "JumpLand", "Light1", "Light2", "Light3", "Heavy", "GuardRelease",
+    "PerfectGuard", "QuickStep", "HitReaction",
+)
+
+# Locomotion switches are driven by bool variables the event graph sets.
+HECTOR_LOCOMOTION_RULES = (
+    ("Idle", "Walk", 0.10, "bIsMoving"),
+    ("Idle", "Run", 0.10, "bIsRunning"),
+    ("Walk", "Run", 0.10, "bIsRunning"),
+    ("Run", "Walk", 0.10, "bIsMoving"),
+    ("Walk", "Idle", 0.10, "bIsIdle"),
+    ("Run", "Idle", 0.10, "bIsIdle"),
+)
+
 def _connect(src_node, dst_node):
     """Connect src_node's pose output to the first input dst_node accepts.
 
@@ -440,6 +488,70 @@ def _find_node(graph, class_name):
         if node.get_class().get_name() == class_name:
             return node
     return None
+
+
+def build_hector_state_machine(blueprint, sequences):
+    """Author the Hector state machine through the editor authoring bridge.
+
+    UE 5.8 does not let Python add nodes to an AnimationStateMachineGraph (the
+    graph's node list and UAnimStateNode::BoundGraph are not script-visible), so
+    this delegates to the NobleArchimedesEditor module.
+    """
+    library = getattr(unreal, "NobleAnimGraphAuthoring", None)
+    if not library:
+        warn("NobleAnimGraphAuthoring is unavailable; skipping the state machine")
+        return False
+
+    machine = library.get_or_create_state_machine(blueprint, "Locomotion")
+    if not machine:
+        error("Could not create the Hector state machine")
+        return False
+
+    states = {}
+    aliased = []
+    for state_name, clip in HECTOR_STATE_CLIPS.items():
+        sequence = sequences.get(clip)
+        if not sequence:
+            warn("State %s has no clip (%s missing)" % (state_name, clip))
+            continue
+        state = library.add_state(machine, state_name, sequence,
+                                  state_name not in HECTOR_ONESHOT_STATES)
+        if state:
+            states[state_name] = state
+        if clip != state_name:
+            aliased.append("%s->%s" % (state_name, clip))
+
+    if not states:
+        error("No Hector states were created")
+        return False
+
+    library.set_entry_state(machine, states.get("Idle"))
+
+    # One-shots return to Idle automatically once their clip ends.
+    for state_name in HECTOR_RETURN_TO_IDLE:
+        source, target = states.get(state_name), states.get("Idle")
+        if source and target:
+            library.add_transition(machine, source, target, 0.10, True)
+
+    # Locomotion switches read bool variables that the event graph will set.
+    for from_name, to_name, blend, variable in HECTOR_LOCOMOTION_RULES:
+        source, target = states.get(from_name), states.get(to_name)
+        if not (source and target):
+            continue
+        library.add_bool_variable(blueprint, variable, False)
+        transition = library.add_transition(machine, source, target, blend, False)
+        if transition:
+            library.set_transition_rule_variable(transition, variable)
+
+    compiled = library.compile_anim_blueprint(blueprint)
+    names = [str(n) for n in library.get_state_names(machine)]
+    log("Hector state machine: %d states, %d transitions, compiled=%s"
+        % (len(names), library.get_transition_count(machine), compiled))
+    if aliased:
+        warn("States reusing another clip (art gap): %s" % ", ".join(sorted(aliased)))
+    warn("Locomotion rules (bIsMoving/bIsRunning/bIsIdle) still need the "
+         "AnimBlueprint event graph; until then the machine rests in Idle.")
+    return compiled
 
 
 def create_hector_anim_blueprint(skeleton, sequences):
@@ -537,7 +649,9 @@ def build_hector_animation():
 
     sequences = import_hector_animations(skeleton)
     create_hector_montages(sequences, skeleton)
-    create_hector_anim_blueprint(skeleton, sequences)
+    blueprint = create_hector_anim_blueprint(skeleton, sequences)
+    if blueprint:
+        build_hector_state_machine(blueprint, sequences)
     return True
 
 

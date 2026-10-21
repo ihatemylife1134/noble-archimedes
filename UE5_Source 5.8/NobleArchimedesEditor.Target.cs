@@ -11,5 +11,6 @@ public class NobleArchimedesEditorTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V7;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
 		ExtraModuleNames.Add("NobleArchimedes");
+		ExtraModuleNames.Add("NobleArchimedesEditor");
 	}
 }

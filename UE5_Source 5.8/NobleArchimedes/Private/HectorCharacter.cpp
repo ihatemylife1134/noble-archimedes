@@ -52,6 +52,8 @@ AHectorCharacter::AHectorCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 	GetCharacterMovement()->JumpZVelocity = 600.0f;
 	GetCharacterMovement()->AirControl = 0.2f;
+	// AnimationFrameData.md: Run is the default gait (350 UU/s); Walk is 150.
+	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
 }
 
 void AHectorCharacter::BeginPlay()
@@ -657,6 +659,15 @@ void AHectorCharacter::Move(float ValueX, float ValueY)
 void AHectorCharacter::Look(float ValueX, float ValueY)
 {
 	LookInputVector = FVector(ValueX, ValueY, 0.0f);
+}
+
+void AHectorCharacter::SetWalkMode(bool bInWalking)
+{
+	bWalking = bInWalking;
+	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+	{
+		Movement->MaxWalkSpeed = bWalking ? WalkSpeed : RunSpeed;
+	}
 }
 
 void AHectorCharacter::SetCameraMode(ECameraMode NewMode)

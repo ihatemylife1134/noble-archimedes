@@ -128,6 +128,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void Look(float ValueX, float ValueY);
 
+	/**
+	 * Locomotion speeds from AnimationFrameData.md: Walk 150, Run 350,
+	 * Sprint 525 UU/s. The locomotion animation states expect these values.
+	 */
+	static constexpr float WalkSpeed = 150.0f;
+	static constexpr float RunSpeed = 350.0f;
+	static constexpr float SprintSpeed = 525.0f;
+
+	/** Switches between the authored gait speeds. */
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void SetWalkMode(bool bWalking);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Movement")
+	bool IsWalking() const { return bWalking; }
+
 	/** Extension hook fired when the player presses Interact (no built-in behaviour yet). */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Input")
 	void OnInteractPressed();
@@ -355,6 +370,7 @@ public:
 private:
 	FVector MoveInputVector;
 	FVector LookInputVector;
+	bool bWalking = false;
 
 	// Development-only combat smoke test, enabled with -NATestCombat.
 	void RunCombatSmokeTest();
