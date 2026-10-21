@@ -351,6 +351,17 @@ def style_shell(style):
     for actor in find_actors("WallEW_"):
         apply_material(actor, wall)
 
+    # Interior dressing built by the content pipeline (ceilings, columns and the
+    # chapel altar) shares the chapter's palette instead of staying grey.
+    for actor in find_actors("Ceiling_"):
+        apply_material(actor, wall)
+    for actor in find_actors("Column_"):
+        apply_material(actor, wall)
+    for actor in find_actors("AltarStep_"):
+        apply_material(actor, floor)
+    for actor in find_actors("Altar_"):
+        apply_material(actor, MATERIALS.get(style["accent"]))
+
     # The generated point lights are intentionally dim fill lights; the art
     # pass adds warmer, localized braziers and window light.
     for actor in find_actors("Light_"):

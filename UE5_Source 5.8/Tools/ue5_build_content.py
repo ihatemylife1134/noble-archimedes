@@ -1484,13 +1484,9 @@ def dress_chapter_one(cube, material, rooms):
     spawn_box("Altar_Chapel", unreal.Vector(0, 3400, 60),
               (900, 300, 80), cube, material)
 
-    # Boss Arena: dais under the Sentinel Knight.
-    spawn_box("Dais_BossArena", unreal.Vector(0, 5900, 30),
-              (700, 700, 60), cube, material)
-
-    # Save Room: pedestal for the save flame.
-    spawn_box("Pedestal_SaveRoom", unreal.Vector(-2800, 0, 40),
-              (300, 300, 80), cube, material)
+    # Boss arena dais and save-room shrine are built by the art pass
+    # (Art_BossDais_* / Art_Save*, see Tools/ue5_art_pass.py) so they are not
+    # duplicated here.
 
 
 def build_chapter_one():

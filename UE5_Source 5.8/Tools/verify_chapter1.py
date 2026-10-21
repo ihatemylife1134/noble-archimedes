@@ -59,8 +59,8 @@ else:
     rooms, save_actors, portals, starts, navs, spots = [], 0, 0, 0, 0, 0
     candles = pickups = lights = 0
     enemy_counts = {}
-    dressing = {"Ceiling": 0, "Column":
-                0, "Altar": 0, "Dais": 0, "Pedestal": 0}
+    dressing = {"Ceiling": 0, "Column": 0, "Altar": 0,
+                "Art_BossDais": 0, "Art_Save": 0}
 
     for actor in EAS.get_all_level_actors():
         cls = actor.get_class().get_name()
@@ -115,10 +115,10 @@ else:
         err("entrance hall has %d columns, expected 4" % dressing["Column"])
     if dressing["Altar"] < 1:
         err("chapel has no altar")
-    if dressing["Dais"] < 1:
-        err("boss arena has no dais")
-    if dressing["Pedestal"] < 1:
-        err("save room has no pedestal")
+    if dressing["Art_BossDais"] < 1:
+        err("boss arena has no art-pass dais")
+    if dressing["Art_Save"] < 1:
+        err("save room has no art-pass shrine")
 
     found_rooms = {str(r) for r in rooms if r}
     if found_rooms != EXPECTED_ROOMS:
