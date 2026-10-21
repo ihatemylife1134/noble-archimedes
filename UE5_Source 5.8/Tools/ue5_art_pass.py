@@ -711,6 +711,46 @@ def tint_blueprint(folder, name, material, mesh_property="Mesh"):
     unreal.EditorAssetLibrary.save_asset(path, only_if_is_dirty=False)
 
 
+def assign_enemy_mesh(folder, name, scale=0.95):
+    """Give an enemy blueprint a skeletal mesh so it is actually visible.
+
+    EnemyBase never creates a mesh component and the content pipeline never
+    assigns a mesh asset, so every enemy has been an invisible capsule: players
+    only noticed them through their health draining. Reuse Hector's mesh, tinted
+    by the per-class material, until dedicated enemy art exists.
+    """
+    mesh_path = "/Game/Characters/Hector/SK_Hector"
+    path = "%s/%s" % (folder, name)
+    if not unreal.EditorAssetLibrary.does_asset_exist(path):
+        warn("enemy blueprint missing: %s" % path)
+        return
+    bp = unreal.EditorAssetLibrary.load_asset(path)
+    cls = None
+    try:
+        cls = bp.generated_class()
+    except Exception:
+        cls = None
+    if not cls:
+        return
+    cdo = unreal.get_default_object(cls)
+    comp = get_prop(cdo, "Mesh")
+    if not comp:
+        warn("%s has no Mesh component" % name)
+        return
+
+    mesh = unreal.load_asset(mesh_path)
+    if not mesh:
+        warn("cannot load %s" % mesh_path)
+        return
+
+    if not get_prop(comp, "SkeletalMeshAsset"):
+        comp.set_editor_property("SkeletalMeshAsset", mesh)
+        comp.set_editor_property("RelativeScale3D",
+                                 unreal.Vector(scale, scale, scale))
+        log("  assigned %s mesh to %s" % (mesh_path, name))
+    unreal.EditorAssetLibrary.save_asset(path, only_if_is_dirty=False)
+
+
 def tint_characters():
     tint_blueprint("/Game/Blueprints/Characters", "BP_HectorCharacter",
                    MATERIALS.get("Armor"))
@@ -777,6 +817,8 @@ def build_chapter(chapter):
 def main():
     load_materials()
     tint_characters()
+    for enemy in ("BP_Skeleton", "BP_Zombie", "BP_Ghoul", "BP_SentinelKnight"):
+        assign_enemy_mesh("/Game/Blueprints/Characters", enemy)
     for chapter in sorted(CHAPTER_MAPS):
         build_chapter(chapter)
     log("Presentation pass complete")
