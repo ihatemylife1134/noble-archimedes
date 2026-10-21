@@ -543,10 +543,29 @@ def build_hector_state_machine(blueprint, sequences):
         if transition:
             library.set_transition_rule_variable(transition, variable)
 
+    # Feed the machine into the graph's Slot. Root <- Slot <- (empty) SequencePlayer
+    # was the shipped wiring, so the machine's pose was discarded: montages (which
+    # override the Slot) animated while walking, idling and enemies stayed on the
+    # reference pose. This must run on every rebuild because the anim blueprint is
+    # regenerated here.
+    if library.is_state_machine_connected(blueprint):
+        log("Hector anim graph: state machine already feeds the Slot")
+    else:
+        wired = library.connect_state_machine_to_slot(blueprint, machine)
+        if wired:
+            log("Hector anim graph: state machine -> Slot connected")
+        else:
+            error("Hector anim graph: could not connect the state machine to the Slot")
+
+    for state_name in states:
+        if not library.ensure_state_output_connected(machine, state_name):
+            warn("State %s is not wired to its result node" % state_name)
+
     compiled = library.compile_anim_blueprint(blueprint)
     names = [str(n) for n in library.get_state_names(machine)]
-    log("Hector state machine: %d states, %d transitions, compiled=%s"
-        % (len(names), library.get_transition_count(machine), compiled))
+    log("Hector state machine: %d states, %d transitions, compiled=%s, pose_driven=%s"
+        % (len(names), library.get_transition_count(machine), compiled,
+           library.is_state_machine_connected(blueprint)))
     if aliased:
         warn("States reusing another clip (art gap): %s" % ", ".join(sorted(aliased)))
     warn("Locomotion rules (bIsMoving/bIsRunning/bIsIdle) still need the "

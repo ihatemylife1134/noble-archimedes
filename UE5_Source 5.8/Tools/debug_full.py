@@ -97,6 +97,15 @@ if check(unreal.EditorAssetLibrary.does_asset_exist(imc_path), "IMC_Default exis
         check(required in names, "%s mapped in IMC_Default" % required,
               "mapped: %s" % names)
 
+# --- anim graph ----------------------------------------------------------
+ab_path = "/Game/Characters/Hector/AB_Hector"
+if check(unreal.EditorAssetLibrary.does_asset_exist(ab_path), "AB_Hector exists"):
+    ab = unreal.EditorAssetLibrary.load_asset(ab_path)
+    # The state machine used to be left dangling, so only montages animated and
+    # every unanimated pose fell back to the reference pose (T-pose).
+    check(unreal.NobleAnimGraphAuthoring.is_state_machine_connected(ab),
+          "AB_Hector state machine drives the pose")
+
 # --- materials -----------------------------------------------------------
 import os  # noqa: E402
 for mat in ("Armor", "Bone", "Flesh"):
