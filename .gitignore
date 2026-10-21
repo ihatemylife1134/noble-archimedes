@@ -1,4 +1,4 @@
-# Unreal Engine generated content (the active project keeps its own copy)
+﻿# Unreal Engine generated content (the active project keeps its own copy)
 UE5_Source/Binaries/
 UE5_Source/Intermediate/
 UE5_Source/Saved/
@@ -94,3 +94,9 @@ __pycache__/
 *.bmp
 *.webp
 *.suprx
+
+# Generated source art is committed so the material kit and previews survive a clone
+
+# Generated source art is committed so the material kit and previews survive a clone
+!UE5_Source 5.8/ArtSource/**/*.png
+
