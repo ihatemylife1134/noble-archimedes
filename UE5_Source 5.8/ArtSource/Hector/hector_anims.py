@@ -5,7 +5,7 @@ running along its own X, a Z rotation sweeps the arm horizontally forward, which
 is why the shipped clips held both arms out in front of the chest. Y pitches the
 arm down to the side."""
 
-ARMS = dict(upperarm_l=(0, -62, 0), upperarm_r=(0, 62, 0), lowerarm_l=(0, -12, 0), lowerarm_r=(0, 18, 0))
+ARMS = dict(upperarm_l=(0, -80, 0), upperarm_r=(0, 80, 0), lowerarm_l=(0, -12, 0), lowerarm_r=(0, 18, 0))
 
 
 def P(base=None, **kw):
@@ -24,10 +24,10 @@ def _cycle(stride, lift, arm, lean, n, bob):
     h, q = n // 2, n // 4
     base = P(ARMS, spine_01=(lean, 0, 0))
     a = P(base, thigh_l=(-stride, 0, 0), calf_l=(8, 0, 0), thigh_r=(stride, 0, 0), calf_r=(10, 0, 0),
-          upperarm_l=(arm, 0, -62), upperarm_r=(-arm, 0, 62), spine_03=(0, 0, 4))
+          upperarm_l=(0, -80, arm), upperarm_r=(0, 80, -arm), spine_03=(0, 0, 4))
     b = P(base, calf_l=(lift, 0, 0), calf_r=(6, 0, 0), root_loc=(0, 0, bob))
     c = P(base, thigh_l=(stride, 0, 0), calf_l=(10, 0, 0), thigh_r=(-stride, 0, 0), calf_r=(8, 0, 0),
-          upperarm_l=(-arm, 0, -62), upperarm_r=(arm, 0, 62), spine_03=(0, 0, -4))
+          upperarm_l=(0, -80, -arm), upperarm_r=(0, 80, arm), spine_03=(0, 0, -4))
     d = P(base, calf_l=(6, 0, 0), calf_r=(lift, 0, 0), root_loc=(0, 0, bob))
     return [(0, a), (q, b), (h, c), (h + q, d), (n, a)]
 

@@ -360,7 +360,27 @@ void AEnemyBase::Die()
 
 	DropLoot();
 
-	// Play death animation (handled in Blueprint)
+	// Play the death clip. The actor already lingers for two seconds before
+	// DestroySelf, which was dead time: the animation was never played.
+	if (UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+	{
+		static TObjectPtr<UAnimMontage> SharedDeathMontage = nullptr;
+		if (!SharedDeathMontage)
+		{
+			SharedDeathMontage = LoadObject<UAnimMontage>(
+				nullptr, TEXT("/Game/Characters/Hector/Montages/AM_Hector_Death"));
+			if (!SharedDeathMontage)
+			{
+				UE_LOG(LogTemp, Warning,
+					TEXT("AEnemyBase: AM_Hector_Death not found; %s dies without an animation."),
+					*GetNameSafe(this));
+			}
+		}
+		if (SharedDeathMontage)
+		{
+			AnimInstance->Montage_Play(SharedDeathMontage, 1.0f);
+		}
+	}
 	// Notify room that this enemy was defeated
 	OnDefeated.Broadcast(this);
 

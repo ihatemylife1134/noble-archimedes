@@ -1,6 +1,87 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 — Enemy combat animation, Blender pipeline, arm pose
+
+### Enemy combat animation
+
+- `AEnemyBase` had three animation hooks that were empty stubs. `PlayAttackAnimation`
+  is called at the start of the attack windup — exactly where a swing belongs,
+  because damage lands when that windup expires — so enemies damaged the player
+  with no visible attack. It now plays `AM_Hector_Light1` on the shared
+  `AB_Hector` (cached once) and warns when the montage cannot be resolved.
+- `Die()` already lingered two seconds before `DestroySelf` "to allow death
+  animation" but played nothing. It now plays `AM_Hector_Death`, with the same
+  missing-asset warning.
+- `PlayChaseAnimation` and `PlayIdleAnimation` remain stubs; the locomotion state
+  machine covers those cases.
+
+### Blender: store build cannot run scripts
+
+- The Microsoft Store Blender (`WindowsApps\BlenderFoundation.Blender_5.2.2...`)
+  cannot be invoked from a shell: `Access is denied`, because Windows ACL-locks
+  `WindowsApps`, and no App Execution Alias is installed. `blender -b -P` is
+  therefore impossible with that package. It was uninstalled.
+- A standalone Blender **4.5.13 LTS** was found at
+  `C:\Tools\Blender\blender-4.5.13-windows-x64\blender.exe` and is what the
+  pipeline now uses. 4.5 is the safer target for these scripts than 5.x.
+- `BuildScripts/regenerate_hector_art.ps1` regenerates the 13 FBX and reports
+  which files changed. It auto-discovers Blender on PATH and in the usual install
+  roots.
+- Note: `Start-Process -ArgumentList` does not quote paths, so a Blender path
+  containing spaces was split at the first space and the script reported "Blender
+  not found". The path must be passed pre-quoted.
+
+### Arm pose axis (two iterations, second unverified at time of writing)
+
+- `hector_anims.py` dropped the arms with a **Z** rotation. With the arm bone
+  running along its own X, Z sweeps the arm horizontally forward — which is the
+  "arms out in front" that shipped. Changed to **Y**, the axis that lowers the arm.
+- First iteration used 62 degrees. Playtest confirmed the axis was now right
+  (arms moved up/down instead of forward) but the arms still did not rest at the
+  sides: 62 degrees from a horizontal T-pose leaves them about 28 degrees off
+  vertical. Raised to **80 degrees**, and the walk/run cycle arms were converted
+  to the same convention (drop on Y, swing on Z) so the idle and walk poses agree.
+- No specification documents the rig's bone axes — `AnimationSpec` covers states
+  and combat timings, `AnimationFrameData` covers frame counts, notifies and
+  retargeting. That omission is why the error was not caught by review.
+
+### Level lighting
+
+- Running the content build without the art pass afterwards leaves the map with
+  unbuilt lighting (observed again as "LIGHTING NEEDS TO BE REBUILT (19K unbuilt
+  objects)" and a blown-out white scene), because the build regenerates lights as
+  static. The quality gate already orders art pass after content build; manual
+  content builds must do the same.
+
+### Documentation and repository
+
+- `CHANGELOG.md` and `README.md` now exist in the working project as well as in
+  `UE5_Source 5.8/`, so changes are recorded where the code is edited rather than
+  only in the published tree.
+- Repository audit: `Source/` had 62 files locally but only 14 committed — 21
+  `.cpp`, 23 `.h`, 4 `.cs` were missing and a clone could not have compiled. All
+  committed in `f949790`.
+- 53 generated art files (PBR texture set and Blender previews, 6.35 MB) were
+  excluded by a recomp-era blanket `*.png` rule. Committed in `1fd90ef`; the
+  negation must be scoped `!UE5_Source 5.8/ArtSource/**/*.png`.
+- All PS2 recompilation material was removed or separated: recomp changelog and
+  README content moved into rebuild-specific files, then `src/`, `tests/`,
+  `tools/`, `patches/`, `release/`, `docs/`, `CMakeLists.txt`, the recomp config
+  TOMLs and `BUILDING.md` were deleted (`50668d1`). Everything remains in git
+  history.
+
+### Verified state
+
+- Quality gate PASS after the enemy animation changes: C++ build, content build,
+  art pass, content QA, substance, gameplay debug (58 checks), F2, F3, F4,
+  Chapter 1 acceptance, in-game smoke.
+- Content build after the FBX regeneration logged
+  `Hector state machine: 17 states, 15 transitions, compiled=True, pose_driven=True`.
+
+---
+
+
 ## UE5 Chapter 1 playable rebuild â€” 2026-10-21
 
 Work on the Unreal Engine 5 rebuild in `UE5_Source 5.8`. Everything below was
