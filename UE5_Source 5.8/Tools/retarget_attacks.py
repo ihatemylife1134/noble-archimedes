@@ -70,6 +70,14 @@ try:
         say("retargeted %d" % (len(created) if created else 0))
         for a in (created or []):
             say("  %s" % a.package_name)
+        # Batch-created assets exist only in memory. Without an explicit save the
+        # folder never appears on disk and the next session sees nothing, even
+        # though the operation reported success.
+        saved = unreal.EditorAssetLibrary.save_directory(
+            OUT_DIR, only_if_is_dirty=False, recursive=True)
+        say("save_directory(%s) = %s" % (OUT_DIR, saved))
+        on_disk = unreal.EditorAssetLibrary.does_directory_exist(OUT_DIR)
+        say("directory exists after save = %s" % on_disk)
 except Exception as exc:
     say("FAILED: %s" % exc)
 

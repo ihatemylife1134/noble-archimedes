@@ -10,6 +10,7 @@ class UAnimBlueprint;
 class UAnimSequence;
 class UAnimStateNode;
 class UAnimStateTransitionNode;
+class UAnimGraphNode_Slot;
 class UAnimationStateMachineGraph;
 
 /**
@@ -130,4 +131,31 @@ public:
 	/** True when the state machine actually contributes to the final pose. */
 	UFUNCTION(BlueprintCallable, Category = "Noble|Animation")
 	static bool IsStateMachineConnected(UAnimBlueprint* AnimBlueprint);
+
+	/**
+	 * Returns the anim graph's slot node, creating it when absent.
+	 *
+	 * A factory-created AnimBlueprint has no slot node, so
+	 * ConnectStateMachineToSlot finds nothing to feed and returns false, leaving
+	 * the machine wired straight to the Root. Montages override a slot rather
+	 * than the Root, so without this the base locomotion pose animates but
+	 * attacks never appear.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Noble|Animation")
+	static UAnimGraphNode_Slot* EnsureSlotNode(UAnimBlueprint* AnimBlueprint,
+		FName SlotName = FName("DefaultSlot"));
+
+	/** Reports the slot name an existing slot node uses (None when there is none). */
+	UFUNCTION(BlueprintCallable, Category = "Noble|Animation")
+	static FName GetSlotName(UAnimBlueprint* AnimBlueprint);
+
+	/**
+	 * Wires the full pose path: machine -> slot -> root.
+	 *
+	 * Use this instead of ConnectRootToStateMachine when the AnimBlueprint may
+	 * not have a slot node yet.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Noble|Animation")
+	static bool EnsureSlotPipeline(UAnimBlueprint* AnimBlueprint,
+		UAnimationStateMachineGraph* StateMachine, FName SlotName);
 };

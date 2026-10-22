@@ -9,6 +9,7 @@
 #include "AnimationStateMachineGraph.h"
 #include "AnimGraphNode_Root.h"
 #include "AnimGraphNode_Slot.h"
+#include "AnimGraphNode_Root.h"
 #include "AnimGraphNode_SequencePlayer.h"
 #include "AnimGraphNode_StateMachine.h"
 #include "AnimGraphNode_StateResult.h"
@@ -460,6 +461,108 @@ bool UNobleAnimGraphAuthoring::IsStateMachineConnected(UAnimBlueprint* AnimBluep
 		}
 	}
 	return false;
+}
+
+UAnimGraphNode_Slot* UNobleAnimGraphAuthoring::EnsureSlotNode(UAnimBlueprint* AnimBlueprint,
+	FName SlotName)
+{
+	UEdGraph* AnimGraph = GetAnimGraph(AnimBlueprint);
+	if (!AnimGraph)
+	{
+		return nullptr;
+	}
+
+	for (UEdGraphNode* Node : AnimGraph->Nodes)
+	{
+		if (UAnimGraphNode_Slot* Existing = Cast<UAnimGraphNode_Slot>(Node))
+		{
+			return Existing;
+		}
+	}
+
+	// Same construction sequence the editor's own "Add Slot" action performs.
+	UAnimGraphNode_Slot* NewNode = NewObject<UAnimGraphNode_Slot>(AnimGraph);
+	AnimGraph->AddNode(NewNode, true, false);
+	NewNode->CreateNewGuid();
+	NewNode->PostPlacedNewNode();
+	NewNode->Node.SlotName = SlotName;
+	NewNode->AllocateDefaultPins();
+	NewNode->NodePosX = 160;
+	NewNode->NodePosY = 0;
+
+	FBlueprintEditorUtils::MarkBlueprintAsModified(AnimBlueprint);
+	UE_LOG(LogNobleAnimAuthoring, Log, TEXT("Created slot node '%s'."),
+		*SlotName.ToString());
+	return NewNode;
+}
+
+FName UNobleAnimGraphAuthoring::GetSlotName(UAnimBlueprint* AnimBlueprint)
+{
+	UEdGraph* AnimGraph = GetAnimGraph(AnimBlueprint);
+	if (!AnimGraph)
+	{
+		return NAME_None;
+	}
+
+	for (UEdGraphNode* Node : AnimGraph->Nodes)
+	{
+		if (UAnimGraphNode_Slot* Slot = Cast<UAnimGraphNode_Slot>(Node))
+		{
+			return Slot->Node.SlotName;
+		}
+	}
+	return NAME_None;
+}
+
+bool UNobleAnimGraphAuthoring::EnsureSlotPipeline(UAnimBlueprint* AnimBlueprint,
+	UAnimationStateMachineGraph* StateMachine, FName SlotName)
+{
+	UEdGraph* AnimGraph = GetAnimGraph(AnimBlueprint);
+	if (!AnimGraph || !StateMachine)
+	{
+		return false;
+	}
+
+	UAnimGraphNode_Slot* SlotNode = EnsureSlotNode(AnimBlueprint, SlotName);
+	if (!SlotNode)
+	{
+		return false;
+	}
+
+	// machine -> slot, then slot -> root. The root input is re-targeted at the
+	// slot because montages override the slot, not the root.
+	const bool bToSlot = ConnectStateMachineToSlot(AnimBlueprint, StateMachine);
+
+	UAnimGraphNode_Root* RootNode = nullptr;
+	for (UEdGraphNode* Node : AnimGraph->Nodes)
+	{
+		if (UAnimGraphNode_Root* Candidate = Cast<UAnimGraphNode_Root>(Node))
+		{
+			RootNode = Candidate;
+			break;
+		}
+	}
+	if (!RootNode)
+	{
+		UE_LOG(LogNobleAnimAuthoring, Warning, TEXT("No root node in the anim graph."));
+		return false;
+	}
+
+	const bool bToRoot = Connect(AnimGraph,
+		FindPin(SlotNode, EGPD_Output),
+		FindPin(RootNode, EGPD_Input));
+
+	if (bToRoot)
+	{
+		FBlueprintEditorUtils::MarkBlueprintAsModified(AnimBlueprint);
+	}
+
+	UE_LOG(LogNobleAnimAuthoring, Log,
+		TEXT("Slot pipeline '%s': machine->slot %s, slot->root %s."),
+		*SlotName.ToString(),
+		bToSlot ? TEXT("ok") : TEXT("failed"),
+		bToRoot ? TEXT("ok") : TEXT("failed"));
+	return bToRoot;
 }
 
 void UNobleAnimGraphAuthoring::DumpAnimGraph(UAnimBlueprint* AnimBlueprint)

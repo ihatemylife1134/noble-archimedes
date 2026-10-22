@@ -1,6 +1,99 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — Hector swapped onto the new mesh with a working animation graph
+
+### Retargeted clips were never reaching disk
+
+Both retarget batches reported success and produced nothing. `duplicate_and_retarget`
+creates assets **in memory only**: the folder `/Game/Characters/HectorBase/Retargeted`
+did not exist on disk at all, so `AB_HectorBase` found no clips to play. Added an
+explicit `save_directory(OUT_DIR, recursive=True)` after the batch operation, which
+now reports `True`, and the 12 procedural clips are on disk.
+
+This is the second time this trap has bitten: the earlier instance was the imported
+`survival_character_Skeleton` never being saved, which produced *"Unable to retrieve
+target USkeleton"* while every in-session check passed. Commandlet-created assets
+must always be saved explicitly.
+
+### `AB_HectorBase` built on `survival_character_Skeleton`
+
+| Item | Value |
+| --- | --- |
+| States | `Idle`, `Walk`, `Run` |
+| Transitions | 4 — `bIsMoving`, `bIsRunning`, `bIsIdle`, `bIsIdle` |
+| Blend times | 0.1s, per `AnimationBlueprintSpec.md` |
+| Variables | `bIsMoving`, `bIsRunning`, `bIsIdle` (the exact names `AnimVariableBridge` writes) |
+| Entry / root / pose | connected / connected / contributing |
+| Compiled | yes |
+
+The clip candidates fall back to the procedural `RTG_AN_Hector_*` set, because the
+five **mocap** clips (`RTG_anim_Idle`, `Walk_Fwd_Loop_L/_R`, `Jog_Loop_Fwd/_Bwd`) are
+still absent from disk — that earlier batch hit the same unsaved-asset bug. They
+need re-running to get mocap rather than the procedural placeholder animation.
+
+### The missing slot node
+
+A factory-created `AnimBlueprint` has no **slot** node. `ConnectStateMachineToSlot`
+searches for one, finds none, and returns false — leaving the state machine wired
+straight to the Root. Since montages override a **slot** and not the Root, the
+locomotion pose would animate while attacks stayed invisible.
+
+Added three functions to `NobleAnimGraphAuthoring`:
+
+- `EnsureSlotNode(AnimBlueprint, SlotName)` — returns the slot node, creating it
+  with the same construction sequence the editor's "Add Slot" action uses
+  (`NewObject` → `AddNode` → `CreateNewGuid` → `PostPlacedNewNode` → set
+  `Node.SlotName` → `AllocateDefaultPins`).
+- `GetSlotName(AnimBlueprint)` — reports the existing slot's name.
+- `EnsureSlotPipeline(AnimBlueprint, StateMachine, SlotName)` — wires
+  machine → slot → root in one call.
+
+The slot name is **read from the existing `AB_Hector`** (`DefaultSlot`) rather than
+guessed, so the montages already built against that name keep working.
+
+Result: `ensure_slot_pipeline = True`, root connected, machine contributing,
+compiled.
+
+### Player mesh swapped
+
+`BP_HectorCharacter`'s mesh component now points at the new character:
+
+```
+mesh before = /Game/Characters/Hector/SK_Hector.SK_Hector
+mesh after  = /Game/Characters/HectorBase/SK_HectorBase.SK_HectorBase
+anim class  = AB_HectorBase_C
+```
+
+Editing the component archetype on the Blueprint's CDO and saving the Blueprint
+persists the change — the archetype *is* the Blueprint's component template.
+
+### New tools
+
+- `Tools/retarget_attacks.py` — stub rig → new rig, with the save fix.
+- `Tools/build_ab_hectorbase.py` — creates the AnimBlueprint, states, transitions,
+  variables, slot pipeline, and performs the mesh swap.
+- `Tools/fix_ab_base_slot.py` — applies the slot pipeline and reports state.
+- `Tools/diag_ab_base.py` — dumps the anim graph for diagnosis.
+- `Tools/blender_open_character.py`, `Tools/dump_gasp_camera.py` — inspection aids.
+
+### Game Animation Sample reviewed (not integrated)
+
+Fab's **Game Animation Sample** (5.8, 7.1 GB) was downloaded. Its camera is UE 5.8's
+data-driven **Camera Rig** system — `CameraRigAsset` assets (`Close`/`Medium`/`Far` ×
+`Aim`/`Freecam`/`Strafe`), a `CameraAsset`, a `CameraDirector` and a `ChooserTable`
+for runtime selection — not a spring arm with hard-coded numbers. `CameraRigAsset`
+exposes **no reflected properties to Python**, so its values could not be read out
+for comparison; adopting it would also mean taking on the `Chooser` plugin and a
+different camera architecture from our C++ `CameraBoom`.
+
+Its locomotion is motion matching (PoseSearch + Chooser + AnimationWarping), whereas
+`AnimationBlueprintSpec.md` specifies a state machine plus a `BS_Locomotion` blend
+space. The state machine we built is therefore the spec-compliant choice; GASP's
+value was the camera architecture as a reference, not a drop-in.
+
+---
+
 ## 2026-10-22 (cont.) — Removed the pre-5.8 source tree; single tree remains
 
 The repository carried two copies of the project source: the current
