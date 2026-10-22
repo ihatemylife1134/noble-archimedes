@@ -41,16 +41,27 @@ AHectorCharacter::AHectorCharacter()
 	// Setup camera boom
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 350.0f;
+	CameraBoom->TargetArmLength = 300.0f;
 	CameraBoom->bUsePawnControlRotation = true;
+
+	// Camera lag smooths the follow in both position and rotation. Epic's own
+	// TP_ThirdPerson template enables both (CameraLagSpeed 8), which is what
+	// gives a modern third-person camera its weight; without it the boom snaps
+	// rigidly to the character and reads as an old fixed follow cam.
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 10.0f;
+	CameraBoom->bEnableCameraRotationLag = true;
+	CameraBoom->CameraRotationLagSpeed = 12.0f;
 
 	// The collision probe kept jamming the boom against walls and the lock
 	// barriers, pinning the camera inside geometry and rendering the screen
 	// black. In a tight blockout it is better to clip through architecture than
-	// to blind the player, so the probe is off and the camera rides high enough
-	// to see over Hector.
+	// to blind the player, so the probe stays off.
 	CameraBoom->bDoCollisionTest = false;
-	CameraBoom->SocketOffset = FVector(0.0f, 0.0f, 70.0f);
+
+	// Shoulder bias (+Y) and a raised pivot (+Z): the modern over-the-shoulder
+	// framing, offset so Hector sits left of centre rather than dead-centre.
+	CameraBoom->SocketOffset = FVector(0.0f, 50.0f, 75.0f);
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -837,23 +848,25 @@ void AHectorCharacter::SetCameraMode(ECameraMode NewMode)
 {
 	// The mode camera no longer drives the view (its tick is disabled), so the
 	// camera modes now adjust the spring arm instead of doing nothing.
-	float ArmLength = 350.0f;
+	// Modern over-the-shoulder framing: closer than the old 350 boom, with a
+	// lateral shoulder bias so the character sits off-centre.
+	float ArmLength = 300.0f;
 	float FOV = 90.0f;
-	FVector SocketOffset(0.0f, 0.0f, 70.0f);
+	FVector SocketOffset(0.0f, 50.0f, 75.0f);
 
 	switch (NewMode)
 	{
 	case ECameraMode::Classic:
 		break;
 	case ECameraMode::ActionOrbit:
-		ArmLength = 450.0f;
-		FOV = 80.0f;
-		SocketOffset = FVector(0.0f, 0.0f, 110.0f);
+		ArmLength = 420.0f;
+		FOV = 85.0f;
+		SocketOffset = FVector(0.0f, 0.0f, 120.0f);
 		break;
 	case ECameraMode::OverTheShoulder:
-		ArmLength = 250.0f;
-		FOV = 75.0f;
-		SocketOffset = FVector(0.0f, 60.0f, 90.0f);
+		ArmLength = 180.0f;
+		FOV = 80.0f;
+		SocketOffset = FVector(0.0f, 70.0f, 80.0f);
 		break;
 	}
 

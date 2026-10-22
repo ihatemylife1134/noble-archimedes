@@ -20,6 +20,16 @@ void ANobleArchimedesPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	CacheHectorCharacter();
+
+	// Modern third-person cameras clamp the pitch range so the player cannot
+	// tip the view straight up or down. Epic's TP_ThirdPerson template relies on
+	// the per-controller defaults for this; we set them explicitly because the
+	// rebuild's controller never did, leaving pitch unbounded.
+	if (APlayerCameraManager* CameraManager = PlayerCameraManager)
+	{
+		CameraManager->ViewPitchMin = -60.0f;
+		CameraManager->ViewPitchMax = 40.0f;
+	}
 }
 
 void ANobleArchimedesPlayerController::SetupInputComponent()

@@ -1,6 +1,95 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — New player character imported, retarget pipeline unblocked, camera retuned
+
+### The retarget blocker from the previous entry is resolved
+
+The earlier session concluded an `IKRigDefinition` could not be given a skeletal
+mesh, so auto-chains never generated. That was wrong. `set_editor_property(
+"preview_skeletal_mesh", mesh)` works fine — `get_editor_property` throws on that
+property, and the throw was mistaken for the setter being unsupported. With the
+mesh set, `apply_auto_generated_retarget_definition()` populates bones and chains
+normally.
+
+Second, subtler failure: an asset created by a commandlet lives in memory until
+explicitly saved. The imported Skeleton was never persisted, so the retargeter
+reported *"Unable to retrieve target USkeleton"* while every in-session check
+passed. Every created asset now goes through `save_asset` / `save_directory`.
+
+### `SK_HectorBase`: the real player character
+
+- `survival_character.fbx` (9 MB) imported to
+  `/Game/Characters/HectorBase/`: 11 skinned parts, one 160-bone armature.
+- Measured **1.88 m** tall, eyes at 1.73 m — correct human scale, no 100× unit
+  surprise. Stands upright, faces **−Y** in Blender (to be confirmed in-engine).
+- **Bone names are UE-mannequin naming, not Mixamo.** Mannequin vs new character
+  shares **45 bones with 0 new-only**; old stub `SK_Hector` vs new shares only 13.
+  That is why the retarget maps 29→29 instead of the lossy 29→9 the stub gave.
+- `IKRig_HectorBase` built with 29 chains, `RTG_HectorBase` retargeter against the
+  mannequin.
+
+### Clips on the new skeleton
+
+| Source | Result |
+| --- | --- |
+| Mocap (mannequin) → new character | `RTG_anim_Idle`, `Walk_Fwd_Loop_L/_R`, `Jog_Loop_Fwd/_Bwd` |
+| Procedural `AN_Hector_*` (stub) → new character | 12 clips: Idle, Walk, Run, Light1–3, Heavy, Guard, QuickStep, Jump, HitReaction, Death |
+
+The procedural pass matters: attack montages are bound to the old stub skeleton,
+so swapping the mesh without it would have silently broken combat. A second
+retargeter `RTG_StubToBase` (stub rig → new rig) carried all 12 across through
+the 13 shared bone names.
+
+`Tools/retarget_attacks.py` does this batch; `Tools/retarget_to_base.py` builds
+the rig and retargeter.
+
+### Camera retuned toward a modern over-the-shoulder rig
+
+No numeric camera spec exists anywhere in the project docs — only the
+`ECameraMode` enum, the spring arm and a note that modes must drive the boom. The
+reference therefore came from the engine's own free `TP_ThirdPerson` template,
+whose `CombatCharacter` uses a 100 cm boom (pulling to 400 for death), with both
+position and rotation lag enabled.
+
+| Mode | Before | After |
+| --- | --- | --- |
+| Classic | arm 350, offset (0,0,70), FOV 90 | **arm 300, offset (0,50,75), FOV 90** |
+| ActionOrbit | arm 450, offset (0,0,110), FOV 80 | **arm 420, offset (0,0,120), FOV 85** |
+| OverTheShoulder | arm 250, offset (0,60,90), FOV 75 | **arm 180, offset (0,70,80), FOV 80** |
+
+- **Camera lag added** (`CameraLagSpeed` 10, `CameraRotationLagSpeed` 12). Its
+  absence is why the follow felt rigid: the boom snapped to the character instead
+  of trailing it.
+- **Shoulder bias** (`SocketOffset.Y` 50) so the character sits off-centre rather
+  than dead-centre. Y was 0 in every mode before.
+- `bDoCollisionTest` left **off** on purpose; the probe jammed the boom against
+  walls and lock barriers in the tight blockout. Revisit once rooms have real
+  collision.
+- **Pitch clamp added** in `ANobleArchimedesPlayerController::BeginPlay`:
+  `ViewPitchMin = -60`, `ViewPitchMax = 40`. There was none, so the view could be
+  tipped straight up or down.
+
+### Tooling lessons
+
+- **`--no-splash` is not a valid Blender 4.5 flag.** Blender parsed it as a
+  filename, failed with *"cannot read file .../--no-splash"* and exited — which
+  looked exactly like the import script crashing on startup.
+- `bpy.ops.wm.read_factory_settings()` inside a `-P` script reinitialises Blender
+  mid-launch and must not be used to open a file; delete the default objects
+  instead.
+- `Start-Process -ArgumentList` does not quote arguments, and flags must be valid
+  or they are consumed as paths.
+
+### Still open
+
+- `AB_Hector` remains bound to the stub skeleton, so the new mesh needs
+  `AB_HectorBase`; no anim blueprint exists for it yet.
+- `BP_HectorCharacter` still points at the old mesh.
+- 4K UDIM textures (~250 MB) not imported or downscaled.
+
+---
+
 ## 2026-10-22 (cont.) — Fab content integration: animation library and sword audio
 
 ### Packs reviewed
