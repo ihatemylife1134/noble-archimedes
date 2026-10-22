@@ -1,6 +1,51 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — Fab content integration: animation library and sword audio
+
+### Packs reviewed
+
+- **Free Animation Library** (Fab, 189 MB, 517 files) copied to
+  `Content/FreeAnimationLibrary`. Covers Idle, Walk, Jog, Jump, FallLoop,
+  LandingRoll, Slide, Vault, Mantle, LedgeClimb, Crouch, Swim, Ladder and more.
+  It must sit at the pack's own content root: copying it under
+  `Content/Fab/FreeAnimationLibrary` broke every clip, because animation assets
+  resolve their skeleton by absolute `/Game/FreeAnimationLibrary/...` path. The
+  failure surfaced as "Unable to retrieve target USkeleton".
+- **Free Spells** VFX (471 MB) and **Procedural Building Generator** (682 MB) are
+  downloaded and available, not yet integrated.
+- **Sword SFX pack**: 30 wav in four categories imported to
+  `/Game/Audio/SFX/Sword/{SwordAttack,SwordSwoosh,SwordUnsheathe,SwordSharpening}`
+  via `Tools/import_audio.py`. Wired into combat: swoosh plays when a light or
+  heavy attack starts, impact plays when a hit lands on an enemy. Sounds are
+  resolved once per session and skipped silently if missing.
+- **8 roll FBX** (`RM_Roll_*`, eight directions) extracted, not yet imported.
+- `replacements.zip` (6.4 GB, 5033 hashed PNGs) is unidentified and was left
+  untouched rather than guessed into the project.
+
+### Retargeting API: scriptable, one blocker
+
+Confirmed available: `IKRigDefinitionFactory`, `IKRetargetFactory`,
+`IKRetargetBatchOperation.run_batch_retarget`, `IKRetargeterController`,
+`IKRigController`, plus ops for stride warping, floor constraint and speed
+planting. Actual signatures differ from the obvious guesses:
+
+| Call | Real signature |
+| --- | --- |
+| `set_ik_rig` | second argument is `RetargetSourceOrTarget` enum, not a bool |
+| `auto_map_chains` | `(auto_map_type, force_remap)` |
+| `run_op_initial_setup` | `(op_index)` |
+| batch inputs | `assets_to_retarget` needs `AssetData`, not `AnimSequence` |
+
+Blocker: no scriptable way to give an `IKRigDefinition` its skeletal mesh
+(`set_preview_mesh` exists on `IKRetargeterController`, not `IKRigController`), so
+`apply_auto_generated_retarget_definition()` returns `ok=False, count=0` and there
+are no chains to map. Separately, `.../Meshes/SK_Mannequin` loads as a **Skeleton**,
+not a SkeletalMesh, which the batch operation rejects.
+
+---
+
+
 ## 2026-10-22 (cont.) — Arms rest at the sides: axes derived from the rig
 
 - Three attempts failed because the axes were guessed. `hector_rig.py` defines the

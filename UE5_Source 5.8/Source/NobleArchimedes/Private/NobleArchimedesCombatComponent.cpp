@@ -8,6 +8,38 @@
 #include "Engine/EngineTypes.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+
+namespace
+{
+	/** Loaded once per session; imported from the free sword SFX pack. */
+	USoundBase* SwingSound()
+	{
+		static TObjectPtr<USoundBase> Cached;
+		static bool bTried = false;
+		if (!bTried)
+		{
+			bTried = true;
+			Cached = LoadObject<USoundBase>(nullptr,
+				TEXT("/Game/Audio/SFX/Sword/SwordSwoosh/Swoosh_1.Swoosh_1"));
+		}
+		return Cached;
+	}
+
+	USoundBase* ImpactSound()
+	{
+		static TObjectPtr<USoundBase> Cached;
+		static bool bTried = false;
+		if (!bTried)
+		{
+			bTried = true;
+			Cached = LoadObject<USoundBase>(nullptr,
+				TEXT("/Game/Audio/SFX/Sword/SwordAttack/Sword_Attack_1.Sword_Attack_1"));
+		}
+		return Cached;
+	}
+}
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
 
@@ -149,6 +181,11 @@ void UNobleArchimedesCombatComponent::LightAttack()
 
 	PlayAttackMontage(CurrentComboStage);
 
+	if (USoundBase* Swing = SwingSound())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, Swing, GetOwner()->GetActorLocation());
+	}
+
 	// Schedule the actual weapon hit on the swing's active frame, derived from
 	// the montage so each attack connects at its own point.
 	FTimerDelegate HitDelegate = FTimerDelegate::CreateUObject(
@@ -171,6 +208,11 @@ void UNobleArchimedesCombatComponent::HeavyAttack()
 	bIsAttacking = true;
 	const int32 FinisherStage = FMath::Max(1, CurrentComboStage);
 	PlayFinalAttackMontage(FinisherStage);
+
+	if (USoundBase* Swing = SwingSound())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, Swing, GetOwner()->GetActorLocation());
+	}
 
 	FTimerDelegate HitDelegate = FTimerDelegate::CreateUObject(
 		this, &UNobleArchimedesCombatComponent::ApplyAttackHit, FinisherStage, true);
@@ -424,6 +466,11 @@ void UNobleArchimedesCombatComponent::ApplyAttackHit(int32 ComboStage, bool bHea
 		{
 			HitActors.Add(HitActor);
 			Enemy->ApplyDamage(Damage, CurrentWeaponData.DamageType);
+
+			if (USoundBase* Impact = ImpactSound())
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, Impact, Enemy->GetActorLocation());
+			}
 			Enemy->LaunchCharacter(Forward * 200.0f + FVector(0.0f, 0.0f, 120.0f), false, false);
 			UE_LOG(LogTemp, Log, TEXT("NobleArchimedes: %s hit %s for %.1f (%s)."),
 				*CurrentWeaponData.WeaponName.ToString(), *Enemy->GetName(), Damage,
