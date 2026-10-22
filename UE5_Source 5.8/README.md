@@ -19,8 +19,11 @@ Content/               UE assets plus the design specs that generate them
 ArtSource/Hector/      Blender scripts that generate Hector's mesh and 12 clips
 Source/
   NobleArchimedes/     runtime module: character, combat, rooms, save, HUD
-  NobleArchimedesEditor/ editor-only authoring for the animation graph
+  NobleArchimedesEditor/ editor-only authoring: animation graph, data tables
+Plugins/UnrealMCP/     vendored editor tooling (gitignored), see Tools/ANIMATION_PIPELINE.md
 Tools/                 UE Python content pipeline and verifiers
+  ANIMATION_PIPELINE.md  what is verified, what is broken, and how to drive the editor
+  mcp_call.py            client for the UnrealMCP channel (TCP 127.0.0.1:55557)
 ```
 
 ## Requirements
@@ -66,6 +69,11 @@ BuildScripts\regenerate_hector_art.ps1
 This writes FBX into `ArtSource/Hector/Export/`, which the content build imports.
 Re-run the content build afterwards so the clips reach the animation blueprint.
 
+This pipeline generates the original stub character. The player now uses an
+imported character (`SK_HectorBase`) on its own skeleton with its own animation
+blueprint; the stub remains in use by the enemies. Its arms were corrected and
+the FBX regenerated, so the previous "arms held out in front" defect is gone.
+
 ## Controls
 
 | Input | Action |
@@ -82,9 +90,36 @@ Re-run the content build afterwards so the clips reach the animation blueprint.
 
 ## Known open items
 
-- Hector and the enemies hold their arms out in front: `hector_anims.py` rotates
-  the arm on the wrong axis for a T-posed rig. The source is corrected but the FBX
-  has not been regenerated (needs Blender).
-- Enemies reuse Hector's mesh and clips; dedicated enemy art is missing.
-- Asset coverage is 26/75 with no presentation assets (audio, VFX, UI).
+### Blocking: the character's animation clips are static
+
+`IKRetargetBatchOperation.duplicate_and_retarget` reports success and saves clips
+that hold a single pose, so Hector does not animate while the enemies (which use
+the stub skeleton's clips) do. Every clip under
+`Content/Characters/HectorBase/Retargeted` is affected, and the montages, the
+state machine and the weapon DataTable were all built on top of them, so none of
+those layers can be trusted until the clips are replaced. A frozen clip passes
+every structural check — right skeleton, right length, 161 tracks, hundreds of
+keys — so motion has to be sampled over time to detect it.
+
+Working replacement: ActorCore motions exported in Unreal mode import directly
+onto the character's skeleton with real motion, no retarget hop needed. They need
+trimming first, because each FBX also carries a 900-frame reference-pose action
+alongside the motion.
+
+See `Tools/ANIMATION_PIPELINE.md` for the detail, the measurement traps, and how
+to drive the editor over the MCP channel.
+
+### Cleanup outstanding
+
+- `AB_HectorBase` is a stale duplicate that could not be deleted from a
+  commandlet; the live blueprint is `AB_HectorBaseV2`.
+- The 19 static clips under `Retargeted/` should be deleted.
+- The nine `AM_HectorBase_*` montages need rebuilding from working clips.
+- Stray probe leftovers in `Content/FreeAnimationLibrary/Animations/Idle`.
+
+### Still missing
+
+- Enemies reuse Hector's stub mesh and clips; dedicated enemy art is missing.
+- Asset coverage is 26/75. Sword audio is wired into combat; VFX and UI are
+  absent.
 - Four attack clips drift from the 60 fps frame data used for combat timing.
