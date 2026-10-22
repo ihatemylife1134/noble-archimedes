@@ -30,7 +30,14 @@ CLIPS = [
     ("Anim_Sword_Idle", "Sword_Idle", None),
     ("Combat_Blade_Swing_Far", "Sword_Light1", "AM_HectorBase_Sword_Light1"),
     ("Attack03", "Sword_Light2", "AM_HectorBase_Sword_Light2"),
+    ("Anim_Sword_Whirlwind", "Sword_Light3", "AM_HectorBase_Sword_Light3"),
+    ("Male_Anim_Axe_Combat_Swing", "Sword_Heavy1", "AM_HectorBase_Sword_Heavy1"),
+    ("Blunt_Force_Circle1", "Sword_Heavy2", "AM_HectorBase_Sword_Heavy2"),
+    ("Anim_Blunt_Gound_Pound", "Sword_Heavy3", "AM_HectorBase_Sword_Heavy3"),
 ]
+# The combo and finisher arrays the weapon table is pointed at, by clip name.
+COMBO_ORDER = ["Sword_Light1", "Sword_Light2", "Sword_Light3"]
+FINAL_ORDER = ["Sword_Heavy1", "Sword_Heavy2", "Sword_Heavy3"]
 lines = []
 
 
@@ -177,6 +184,27 @@ for source, target, montage_name in CLIPS:
     factory.set_editor_property("source_animation", clip)
     factory.set_editor_property("target_skeleton", skeleton)
     created = tools.create_asset(montage_name, MONTAGE_DIR, unreal.AnimMontage, factory)
+    # create_asset can create the asset and still return falsy, so the result is
+    # re-read from the asset library rather than trusted. Trusting the return
+    # value leaves this dictionary empty while the montages sit on disk.
+    resolved = load(existing)
+    if resolved:
+        slots = []
+        try:
+            for t in resolved.get_editor_property("slot_anim_tracks"):
+                slots.append(str(t.get_editor_property("slot_name")))
+        except Exception:  # noqa: BLE001
+            pass
+        montages[target] = resolved
+        say("%-34s %s, slots=%s" % (
+            montage_name, "created" if created else "created (falsy return)", slots))
+    else:
+        say("%-34s FAILED to create" % montage_name)
+
+unreal.EditorAssetLibrary.save_directory(MONTAGE_DIR, only_if_is_dirty=False, recursive=True)
+unreal.EditorAssetLibrary.save_directory(DEST, only_if_is_dirty=False, recursive=True)
+
+
 # --- 4. repoint the weapon table so the combo plays them --------------
 say("")
 say("=== data table ===")
@@ -188,23 +216,43 @@ try:
         say("cannot repoint: table=%s light1=%s light2=%s" % (
             bool(table), bool(light1), bool(light2)))
     else:
-        combo = [light1.get_path_name(), light2.get_path_name(), light2.get_path_name()]
-        # The heavy finisher still points at a montage built from a static clip;
-        # reusing Light2 keeps heavy attacks visible until Phase 1 items 5-7 land.
-        final = [light2.get_path_name()] * 3
-        rows = unreal.NobleDataTableAuthoring.get_row_names(table)
-        problems = 0
-        for row in rows:
-            error = unreal.NobleDataTableAuthoring.set_weapon_row_montages(
-                table, row, combo, final)
-            if error:
-                problems += 1
-                say("  %-22s %s" % (row, error))
-        say("rows = %d, problems = %d" % (len(rows), problems))
-        say("sample: %s" % unreal.NobleDataTableAuthoring.describe_weapon_row_montages(
-            table, rows[0]))
-        say("saved = %s" % unreal.EditorAssetLibrary.save_loaded_asset(
-            table, only_if_is_dirty=False))
+        combo = []
+        for name in COMBO_ORDER:
+            montage = montages.get(name)
+            if montage:
+                combo.append(montage.get_path_name())
+        final = []
+        for name in FINAL_ORDER:
+            montage = montages.get(name)
+            if montage:
+                final.append(montage.get_path_name())
+
+        # Fall back to whatever exists so a partially built set still plays rather
+        # than leaving the row pointing at a montage from the static retarget.
+        if not combo:
+            say("no combo montages resolved; leaving the table untouched")
+        else:
+            while len(combo) < 3:
+                combo.append(combo[-1])
+            if not final:
+                final = [combo[-1]] * 3
+                say("no heavy montages resolved; finishers reuse %s" % combo[-1])
+            while len(final) < 3:
+                final.append(final[-1])
+
+            rows = unreal.NobleDataTableAuthoring.get_row_names(table)
+            problems = 0
+            for row in rows:
+                error = unreal.NobleDataTableAuthoring.set_weapon_row_montages(
+                    table, row, combo, final)
+                if error:
+                    problems += 1
+                    say("  %-22s %s" % (row, error))
+            say("rows = %d, problems = %d" % (len(rows), problems))
+            say("sample: %s" % unreal.NobleDataTableAuthoring.describe_weapon_row_montages(
+                table, rows[0]))
+            say("saved = %s" % unreal.EditorAssetLibrary.save_loaded_asset(
+                table, only_if_is_dirty=False))
 except Exception as exc:  # noqa: BLE001
     say("data table step failed: %s" % exc)
 

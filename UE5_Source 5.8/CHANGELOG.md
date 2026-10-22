@@ -1,6 +1,58 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — Phase 1 complete: the full sword attack set
+
+Light3 and the three heavy finishers landed, so Phase 1 is done: seven clips, six
+montages, and the weapon table pointed at all of them.
+
+| Clip | Source | Frames | Verified |
+| --- | --- | --- | --- |
+| `Sword_Idle` | `Anim_Sword_Idle` | 120 | MOVES |
+| `Sword_Light1` | `Combat_Blade_Swing_Far` | 31 | MOVES |
+| `Sword_Light2` | `Attack03` | 45 | MOVES |
+| `Sword_Light3` | `Anim_Sword_Whirlwind` | 40 | MOVES |
+| `Sword_Heavy1` | `Male_Anim_Axe_Combat_Swing` | 50 | MOVES |
+| `Sword_Heavy2` | `Blunt_Force_Circle1` | 60 | MOVES |
+| `Sword_Heavy3` | `Anim_Blunt_Gound_Pound` | 100 | MOVES |
+
+Six montages on `survival_character_Skeleton`, slot `DefaultSlot`. All 19 rows of
+`DT_WeaponDataTable` repointed — `ComboAnimations` to Light1/Light2/Light3 and
+`FinalAttackAnimations` to Heavy1/Heavy2/Heavy3 — zero problems, saved. The
+Light2 placeholder for stages 3 and the finishers is gone.
+
+### The bug that held it up was mine, not the API's
+
+The previous entry blamed `create_asset` returning falsy. That was wrong. An
+`insert` edit had landed **inside** the montage block and silently deleted the
+lines that recorded each montage into the dictionary:
+
+```python
+created = tools.create_asset(...)
+# --- 4. repoint the weapon table ...     <- the recording code was gone
+```
+
+So the montages were created on disk, never recorded, and the table quietly kept
+its previous entries. The editor's insert tool reported success; only reading the
+file back showed the truncation.
+
+The fix is to re-read the asset from the asset library rather than trust the
+return value — which is the same rule this project keeps rediscovering:
+
+```python
+created = tools.create_asset(...)
+resolved = load(existing)          # verify, do not trust
+if resolved:
+    montages[target] = resolved
+```
+
+Two lessons worth keeping: an insert that lands inside a block deletes code
+without any error, so a successful edit message is not evidence the file is
+correct; and when a step reports success but the next step sees nothing, check
+the filesystem and the file contents before blaming the API.
+
+---
+
 ## 2026-10-22 (cont.) — Sword vertical slice: idle, Light1, Light2
 
 Phase 1 items 1–3 landed end to end, and for the first time the whole slice ran
