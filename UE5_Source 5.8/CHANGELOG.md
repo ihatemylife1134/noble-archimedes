@@ -1,6 +1,81 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — First playtest of the new character: transform fixed, clips not
+
+First look at `SK_HectorBase` in game. The mesh swap worked and the slot fix
+worked, but three things were wrong.
+
+### Floating: the mesh had no Z offset at all
+
+`BP_HectorCharacter`'s mesh component had `relative_location = (0, 0, 0)`. The
+new mesh's pivot is at the **feet** (mesh Z spans −0.45 to 187.91), so the feet
+sat at the capsule **centre** and he hovered a full 88 cm. The old stub mesh must
+have had a centre pivot, which is why this never showed before.
+
+Fixed: `relative_location.Z = −(capsule half-height) − mesh min Z` = **−95.55**.
+
+### Side-on: the mesh faces +Y, not UE's +X
+
+Measured rather than assumed. Accumulating the parent-relative `AnimPose`
+transforms down the bone chain gives mesh-space positions:
+
+| Bone | Mesh space |
+| --- | --- |
+| root | (0.00, 0.00, 0.00) |
+| pelvis | (0.00, 2.28, 95.90) |
+| foot_l | (14.09, −0.99, 8.24) |
+| foot_r | (−14.09, −0.99, 8.24) |
+| ball_l | (15.78, 13.93, 0.75) |
+| head | (0.00, 0.67, 162.58) |
+
+Left foot at +X and right at −X means left-right runs along X; the ball of the
+foot sits at +Y of the ankle, so **forward is +Y**. Yaw **−90°** maps +Y → +X and
++X → −Y (UE's left), so forward *and* handedness both come out correct.
+
+`AnimPose.get_bone_pose` returns **parent-relative** transforms, so the first
+measurement attempt was meaningless — the chain has to be composed from the root
+down before the numbers mean anything.
+
+### Capsule was the template default
+
+`capsule_half_height` 88 / `capsule_radius` 34 — the stock `ACharacter` values,
+sized for the default mannequin. The spec (`ue5_implementation_checklist.md`)
+calls for **42 / 96**, and this character is 188 cm. Set to 96 / 42.
+
+### A bug in my own fix
+
+`unreal.Rotator(0.0, -90.0, 0.0)` is `(roll, pitch, yaw)` — so the first attempt
+set **pitch −90** (nose-down) instead of yaw. Corrected to
+`unreal.Rotator(0.0, 0.0, yaw)`.
+
+### What is still wrong: the animation content
+
+Confirmed by playtest:
+
+- **No walking animation.** The locomotion states do not produce visible motion.
+- **Attacks play a "falling" pose.** The sword sound fires, so the montage plays,
+  but the pose is mangled.
+
+Both point at the same root cause. The 12 combat clips were retargeted from the
+old stub rig through only **13 shared bone names** (`RTG_StubToBase`), against the
+29 chains the mannequin path maps 1:1. `AB_HectorBase` is currently running those
+procedural `RTG_AN_Hector_*` clips, because the five **mocap** clips
+(`RTG_anim_*`) were lost to the unsaved-asset bug and never re-created.
+
+Next: re-run the mocap retarget with the save fix so locomotion comes from
+mannequin mocap (29→29) instead of the 13-bone stub path, and re-source the attack
+clips the same way rather than retargeting the procedural ones.
+
+### Confirmed working
+
+- Mesh swap persists — he is the new character in game.
+- Attack montages override the pose (the slot pipeline works; the sword sound
+  fires from combat code independently of the skeleton).
+- Camera: no black screen, pitch clamp and shoulder bias active.
+
+---
+
 ## 2026-10-22 (cont.) — Hector swapped onto the new mesh with a working animation graph
 
 ### Retargeted clips were never reaching disk
