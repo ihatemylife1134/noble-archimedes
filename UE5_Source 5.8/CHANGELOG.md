@@ -1,6 +1,30 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — Arms rest at the sides: axes derived from the rig
+
+- Three attempts failed because the axes were guessed. `hector_rig.py` defines the
+  rig as **Z up, −Y forward, +X = character's left, roll = 0 on every bone**, and
+  Blender aligns a roll-0 bone's local Z to world up. For `upperarm_l` (head
+  16,0,147 → tail 44,0,147, along +X) that gives local X = world −Y, local Y along
+  the bone, local Z = world +Z; for `upperarm_r` (along −X) local X = world +Y.
+- The mapping is therefore: **local X raises/lowers the arm, local Z sweeps it
+  forward/back, local Y is twist.** The original code used Z for the drop (so the
+  arms swept forward) and X for the swing (so nothing moved vertically). The
+  62° and 80° Y attempts rotated about the twist axis, which is why the arms never
+  lowered no matter the angle.
+- Fix: both upper arms drop on **local X at −78°** — the same sign on each side
+  because left local X is world −Y and right is world +Y, so the sign cancels —
+  with lower arms at −8°. Walk and run swing moved to **local Z with mirrored
+  signs**.
+- Confirmed by playtest: arms rest at the sides standing still and while walking.
+- Still using the old swapped convention, so expect odd arm positions and should be
+  corrected the same way: Guard, Light1–3, Heavy, Jump, QuickStep, HitReaction and
+  Death.
+
+---
+
+
 ## 2026-10-22 — Enemy combat animation, Blender pipeline, arm pose
 
 ### Enemy combat animation
@@ -157,11 +181,9 @@ verified either by the quality gate or by a live playtest.
 
 ### Known open items
 
-- **Arms held out in front on both rigs.** `hector_anims.py` drops the arms with a
-  Z rotation, but with the arm bone running along its own X, Z sweeps horizontally
-  forward; Y is the axis that lowers the arm. The source is corrected but the FBX
-  has not been regenerated, which requires Blender (not installed).
-  `BuildScripts/regenerate_hector_art.ps1` automates the regeneration once it is.
+- **Arms held out in front on both rigs** — RESOLVED 2026-10-22 (see the entry
+  above): the drop had to be a local-X rotation, not Z or Y. `hector_anims.py` is
+  corrected and the FBX regenerated.
 - Enemy animation reuses Hector's clips and mesh; dedicated enemy art is missing.
 - F4 asset coverage is 26/75, with 0/49 presentation assets (audio, VFX, UI).
 - Four attack clips drift from the 60 fps frame data (F2 reports clip_drift=4).

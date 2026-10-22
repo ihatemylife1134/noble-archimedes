@@ -1,11 +1,17 @@
 """Hector keyframed animations (30 fps). Rotations are bone-local XYZ degrees.
 Root motion is authored on the 'root' bone ('root_loc', cm).
-Arms rest along +/-X in bind pose, so idle drops them with Y, not Z: with the bone
-running along its own X, a Z rotation sweeps the arm horizontally forward, which
-is why the shipped clips held both arms out in front of the chest. Y pitches the
-arm down to the side."""
 
-ARMS = dict(upperarm_l=(0, -80, 0), upperarm_r=(0, 80, 0), lowerarm_l=(0, -12, 0), lowerarm_r=(0, 18, 0))
+Bone axes (from hector_rig.py: Blender Z up, -Y forward, +X = character's left,
+every bone roll = 0, so Blender aligns local Z to world up):
+  local X = forward/back axis  -> rotating here lowers or raises the arm
+  local Y = along the bone     -> twist
+  local Z = world up           -> horizontal sweep = forward/back arm swing
+Both upper arms lower on NEGATIVE local X: left local X is world -Y and right is
+world +Y, and the sign cancels. Swing needs mirrored local Z.
+The first version dropped the arms on Z, which swept them forward, and used X for
+the swing, which is why both rigs held their arms out in front."""
+
+ARMS = dict(upperarm_l=(-78, 0, 0), upperarm_r=(-78, 0, 0), lowerarm_l=(-8, 0, 0), lowerarm_r=(-8, 0, 0))
 
 
 def P(base=None, **kw):
@@ -24,10 +30,10 @@ def _cycle(stride, lift, arm, lean, n, bob):
     h, q = n // 2, n // 4
     base = P(ARMS, spine_01=(lean, 0, 0))
     a = P(base, thigh_l=(-stride, 0, 0), calf_l=(8, 0, 0), thigh_r=(stride, 0, 0), calf_r=(10, 0, 0),
-          upperarm_l=(0, -80, arm), upperarm_r=(0, 80, -arm), spine_03=(0, 0, 4))
+          upperarm_l=(-78, 0, arm), upperarm_r=(-78, 0, -arm), spine_03=(0, 0, 4))
     b = P(base, calf_l=(lift, 0, 0), calf_r=(6, 0, 0), root_loc=(0, 0, bob))
     c = P(base, thigh_l=(stride, 0, 0), calf_l=(10, 0, 0), thigh_r=(-stride, 0, 0), calf_r=(8, 0, 0),
-          upperarm_l=(0, -80, -arm), upperarm_r=(0, 80, arm), spine_03=(0, 0, -4))
+          upperarm_l=(-78, 0, -arm), upperarm_r=(-78, 0, arm), spine_03=(0, 0, -4))
     d = P(base, calf_l=(6, 0, 0), calf_r=(lift, 0, 0), root_loc=(0, 0, bob))
     return [(0, a), (q, b), (h, c), (h + q, d), (n, a)]
 
