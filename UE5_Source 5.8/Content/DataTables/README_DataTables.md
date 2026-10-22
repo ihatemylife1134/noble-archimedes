@@ -38,12 +38,12 @@ Additional structs to create for encounter/drop/evolution data:
 
 ## Validation
 
-Run `UE5_Source/Tools/validate_rebuild_fidelity.py` to verify all data tables
+Run `"UE5_Source 5.8/Tools/validate_rebuild_fidelity.py"` to verify all data tables
 match the original Castlevania: Curse of Darkness design before importing.
 
 ## Conversion
 
-Run `UE5_Source/Tools/convert_csv_to_datatable.py` to generate JSON reference
+Run `"UE5_Source 5.8/Tools/convert_csv_to_datatable.py"` to generate JSON reference
 files for Data Table creation in the UE5 Editor.
 
 ## Asset Naming

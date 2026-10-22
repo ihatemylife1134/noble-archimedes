@@ -3,7 +3,7 @@
 Validate the UE5 Data Table CSV sources and the import manifest.
 
 Run from the repository root:
-    python UE5_Source/Tools/validate_data_tables.py
+    python UE5_Source 5.8/Tools/validate_data_tables.py
 
 Checks:
   * required files and columns
@@ -22,7 +22,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 DATA_TABLES_DIR = HERE.parent / "Content" / "DataTables"
 if not DATA_TABLES_DIR.exists():
-    DATA_TABLES_DIR = Path("UE5_Source/Content/DataTables")
+    DATA_TABLES_DIR = Path("UE5_Source 5.8/Content/DataTables")
 
 ERRORS = []
 WARNINGS = []

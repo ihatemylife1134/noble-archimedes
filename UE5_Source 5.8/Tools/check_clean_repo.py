@@ -4,7 +4,7 @@ Reject build artifacts, generated Unreal content, and game-derived files from
 the repository.
 
 Run from anywhere:
-    python UE5_Source/Tools/check_clean_repo.py
+    python "UE5_Source 5.8/Tools/check_clean_repo.py"
 
 The active project at C:\\Projects\\NobleArchimedes keeps its own Binaries,
 Intermediate, Saved, and Content/*.uasset files. None of those belong in the
@@ -22,8 +22,11 @@ ROOT = Path(__file__).resolve().parents[2]
 # The chapter blockout maps are deliberate, generated assets (small text-only
 # level files without imported art). Everything else under Content is authored
 # as text (CSV / Markdown / JSON) and generated in-editor.
+#
+# Paths are relative to the repository root, which contains exactly one project
+# tree: "UE5_Source 5.8". The older pre-5.8 "UE5_Source" tree was removed.
 ALLOWED_BINARY_PATHS = {
-    Path("UE5_Source/Content/Maps/Chap_%02d_%s.umap" % (chapter, name))
+    Path("UE5_Source 5.8/Content/Maps/Chap_%02d_%s.umap" % (chapter, name))
     for chapter, name in (
         (1, "AbandonedCastle"),
         (2, "BaljhetMountains"),
@@ -142,11 +145,11 @@ def main() -> int:
 
     # Keep the working tree honest too: these directories are never source.
     for directory in (
-        "UE5_Source/Binaries",
-        "UE5_Source/Intermediate",
-        "UE5_Source/Saved",
-        "UE5_Source/DerivedDataCache",
-        "UE5_Source/.vs",
+        "UE5_Source 5.8/Binaries",
+        "UE5_Source 5.8/Intermediate",
+        "UE5_Source 5.8/Saved",
+        "UE5_Source 5.8/DerivedDataCache",
+        "UE5_Source 5.8/.vs",
     ):
         if (ROOT / directory).exists():
             errors.append("generated directory exists in repository: %s" % directory)

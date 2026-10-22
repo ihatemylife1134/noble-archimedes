@@ -9,8 +9,8 @@ import csv
 import json
 from pathlib import Path
 
-DATA_DIR = Path("UE5_Source/Content/DataTables")
-OUTPUT_FILE = Path("UE5_Source/Content/DataTables/ImportManifest.json")
+DATA_DIR = Path("UE5_Source 5.8/Content/DataTables")
+OUTPUT_FILE = Path("UE5_Source 5.8/Content/DataTables/ImportManifest.json")
 
 # Map CSV files to their UE5 Data Table row structures
 CSV_TO_STRUCT = {

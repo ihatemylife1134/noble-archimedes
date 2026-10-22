@@ -7,7 +7,7 @@ This creates the .json localization files that UE5 can import.
 import json
 from pathlib import Path
 
-LOC_DIR = Path("UE5_Source/Content/Localization")
+LOC_DIR = Path("UE5_Source 5.8/Content/Localization")
 
 # English (base)
 EN = {

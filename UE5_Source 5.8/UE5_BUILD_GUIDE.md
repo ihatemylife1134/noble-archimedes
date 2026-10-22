@@ -3,7 +3,7 @@
 ## Prerequisites
 - UE5.8 installed at `C:\Program Files\Epic Games\UE_5.8`
 - Project directory: `C:\Projects\NobleArchimedes`
-- All source files copied from `UE5_Source/` to `C:\Projects\NobleArchimedes\`
+- All source files copied from `UE5_Source 5.8/` to `C:\Projects\NobleArchimedes\`
 - C++ code compiles successfully ✅
 
 ---
@@ -364,26 +364,26 @@ Assign `IMC_Default` to the Enhanced Input Local Player Subsystem in `BP_HectorC
 
 | Asset Type | Source | UE5 Location |
 |------------|--------|--------------|
-| C++ Headers | `UE5_Source/NobleArchimedes/Public/` | `Source/NobleArchimedes/Public/` |
-| C++ Source | `UE5_Source/NobleArchimedes/Private/` | `Source/NobleArchimedes/Private/` |
-| Data Tables | `UE5_Source/Content/DataTables/*.csv` | `Content/DataTables/` (import as Data Table) |
-| Design Specs | `UE5_Source/Content/Blueprints/*.md` | Reference only |
-| Level Specs | `UE5_Source/Content/Blueprints/LevelSpec.md` | Reference only |
-| Audio Spec | `UE5_Source/Content/Blueprints/AudioSpec.md` | Reference for Sound Cue creation |
-| VFX Spec | `UE5_Source/Content/Blueprints/ParticleSpec.md` | Reference for Niagara creation |
-| Animation Spec | `UE5_Source/Content/Blueprints/AnimationBlueprintSpec.md` | Reference for AnimBP creation |
-| AI Spec | `UE5_Source/Content/Blueprints/BehaviorTreeSpec.md` | Reference for BT creation |
-| UI Spec | `UE5_Source/Content/Blueprints/UI_WidgetSpec.md` | Reference for UMG creation |
-| Level Design | `UE5_Source/Content/Blueprints/LevelDesignSpec_Extended.md` | Reference for level layout |
+| C++ Headers | `UE5_Source 5.8/Source/NobleArchimedes/Public/` | `Source/NobleArchimedes/Public/` |
+| C++ Source | `UE5_Source 5.8/Source/NobleArchimedes/Private/` | `Source/NobleArchimedes/Private/` |
+| Data Tables | `UE5_Source 5.8/Content/DataTables/*.csv` | `Content/DataTables/` (import as Data Table) |
+| Design Specs | `UE5_Source 5.8/Content/Blueprints/*.md` | Reference only |
+| Level Specs | `UE5_Source 5.8/Content/Blueprints/LevelSpec.md` | Reference only |
+| Audio Spec | `UE5_Source 5.8/Content/Blueprints/AudioSpec.md` | Reference for Sound Cue creation |
+| VFX Spec | `UE5_Source 5.8/Content/Blueprints/ParticleSpec.md` | Reference for Niagara creation |
+| Animation Spec | `UE5_Source 5.8/Content/Blueprints/AnimationBlueprintSpec.md` | Reference for AnimBP creation |
+| AI Spec | `UE5_Source 5.8/Content/Blueprints/BehaviorTreeSpec.md` | Reference for BT creation |
+| UI Spec | `UE5_Source 5.8/Content/Blueprints/UI_WidgetSpec.md` | Reference for UMG creation |
+| Level Design | `UE5_Source 5.8/Content/Blueprints/LevelDesignSpec_Extended.md` | Reference for level layout |
 
 ---
 
 ## Validation Tools
 
 Run before each build:
-- `python UE5_Source/Tools/validate_rebuild_fidelity.py` — fidelity checks
-- `python UE5_Source/Tools/check_project_readiness.py` — component readiness
-- `python UE5_Source/Tools/validate_data_tables.py` — data table validation
+- `python "UE5_Source 5.8/Tools/validate_rebuild_fidelity.py"` — fidelity checks
+- `python "UE5_Source 5.8/Tools/check_project_readiness.py"` — component readiness
+- `python "UE5_Source 5.8/Tools/validate_data_tables.py"` — data table validation
 
 ---
 

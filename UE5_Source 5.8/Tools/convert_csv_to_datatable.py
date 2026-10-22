@@ -9,8 +9,8 @@ import csv
 import json
 from pathlib import Path
 
-DATA_TABLES_DIR = Path("UE5_Source/Content/DataTables")
-OUTPUT_DIR = Path("UE5_Source/Content/DataTables/Converted")
+DATA_TABLES_DIR = Path("UE5_Source 5.8/Content/DataTables")
+OUTPUT_DIR = Path("UE5_Source 5.8/Content/DataTables/Converted")
 
 CSV_TO_STRUCT = {
     "WeaponDataTable.csv": "FWeaponData",

@@ -1,6 +1,62 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — Removed the pre-5.8 source tree; single tree remains
+
+The repository carried two copies of the project source: the current
+`UE5_Source 5.8/` and a stale pre-5.8 `UE5_Source/`. The old tree is gone.
+
+### What was removed
+
+- `UE5_Source/` — 128 files, 663 KB, plus the one binary it held
+  (`Content/Maps/Chap_01_AbandonedCastle.umap`). All 11 chapter maps remain in
+  the active tree.
+- **26 of its documents were byte-identical duplicates** of the 5.8 tree, so the
+  only content lost was four stale docs and two superseded scripts:
+  - `AI_PASSOFF.md` — declared the project "not ready for a direct compile" with
+    P0 blockers (invalid `Build.cs` syntax, missing `Target.cs`, missing
+    SaveGame implementation). All long fixed.
+  - `CONVERSATION_CONTEXT.md` — declared "all engineering work complete" and
+    referenced files that no longer exist (`SESSION_HANDOFF.md`,
+    `opencode.jsonc`). Directly contradicts `AI_PASSOFF.md` in the same folder.
+  - `TRANSFER_GUIDE.md` — described copying sources into a fresh Third Person
+    template by hand, a workflow superseded by the scripted content pipeline.
+  - `PROJECT_PLAN.md` — phase plan and QA-gate table; superseded by `CHANGELOG.md`
+    as the progress record.
+  - `Tools/ue5_create_blueprints.py`, `Tools/ue5_import_datatables.py` —
+    superseded by `ue5_build_content.py`.
+
+  All six remain recoverable from git history if ever needed.
+
+### Path references repointed
+
+Eleven files referenced the old tree by path and now point at `UE5_Source 5.8/`:
+`check_clean_repo.py`, `check_project_readiness.py`, `convert_csv_to_datatable.py`,
+`generate_localization.py`, `generate_ue5_import_manifest.py`,
+`generate_ue5_project_structure.py`, `build_asset_manifest.py`,
+`validate_data_tables.py`, `ue5_implementation_checklist.md`, `UE5_BUILD_GUIDE.md`
+and `Content/DataTables/README_DataTables.md`.
+
+Two of these were hard-coded path roots that would have resolved to nothing:
+`check_project_readiness.py` had `PROJECT_ROOT = Path("UE5_Source")` and
+`convert_csv_to_datatable.py` had `DATA_TABLES_DIR = Path("UE5_Source/Content/DataTables")`.
+
+### A quiet bug this exposed
+
+`check_clean_repo.py` resolves `ROOT` to the repository root, but its
+`ALLOWED_BINARY_PATHS` and forbidden-directory lists named `UE5_Source/...` — the
+**old** tree. So the repository-cleanliness gate had been inspecting a tree that
+was not the active project. It now names `UE5_Source 5.8/...` and checks the tree
+that actually exists.
+
+### Still outstanding
+
+- `.github/workflows/windows-build.yml` lives inside the project tree rather than
+  at the repository root. GitHub only reads workflows from `<repo>/.github/workflows`,
+  so CI has never run.
+
+---
+
 ## 2026-10-22 (cont.) — New player character imported, retarget pipeline unblocked, camera retuned
 
 ### The retarget blocker from the previous entry is resolved

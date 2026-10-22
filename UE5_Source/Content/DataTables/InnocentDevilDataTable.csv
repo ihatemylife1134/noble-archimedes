@@ -1,8 +1,0 @@
-DevilName,DevilType,Level,Experience,Health,MaxHealth,Attack,bIsUnlocked,bIsEvolved,EvolutionCrystalColor
-Fairy,Fairy,1,0,50,50,8,false,false,Light
-Griffin,Griffin,1,0,80,80,12,false,false,Fire
-Salamander,Salamander,1,0,70,70,10,false,false,Fire
-Ogre,Ogre,1,0,120,120,15,false,false,Slash
-Skeleton Devil,Skeleton,1,0,60,60,9,false,false,Dark
-Witch Devil,Witch,1,0,55,55,11,false,false,Magic
-Pumpkin,Pumpkin,1,0,100,100,20,false,false,Special

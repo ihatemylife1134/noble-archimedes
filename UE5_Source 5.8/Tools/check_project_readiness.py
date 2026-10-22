@@ -7,7 +7,7 @@ Verifies all C++ files, data tables, and documentation are in place.
 import os
 from pathlib import Path
 
-PROJECT_ROOT = Path("UE5_Source")
+PROJECT_ROOT = Path("UE5_Source 5.8")
 REPO_ROOT = PROJECT_ROOT.parent
 
 REQUIRED_FILES = {
@@ -150,7 +150,7 @@ def main():
     all_complete = True
     for category, files in REQUIRED_FILES.items():
         if category == "RepoRootDocs":
-            # Repo root docs live one level above UE5_Source/
+            # Repo root docs live one level above UE5_Source 5.8/
             missing = []
             present = 0
             for f in files:

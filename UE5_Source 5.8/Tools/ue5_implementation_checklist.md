@@ -9,7 +9,7 @@ All code, data tables, and specifications are ready - this checklist tracks the 
 - [ ] Install Unreal Engine 5.5+
 - [ ] Create new C++ Third Person project: `NobleArchimedes`
 - [ ] Location: `C:\Projects\NobleArchimedes\`
-- [ ] Copy `UE5_Source/` contents into project folder
+- [ ] Copy `UE5_Source 5.8/` contents into project folder
 - [ ] Run `tools/setup_project.ps1` to generate Visual Studio files
 - [ ] Open `NobleArchimedes.sln` in Visual Studio 2022
 - [ ] Build Solution (Debug and Shipping configurations)
@@ -31,7 +31,7 @@ All code, data tables, and specifications are ready - this checklist tracks the 
 - [ ] Initialize Git repository
 - [ ] Initialize Git LFS: `git lfs install`
 - [ ] Track binary assets: `git lfs track "*.uasset" "*.umap" "*.psd" "*.tga" "*.png" "*.jpg" "*.wav" "*.fbx" "*.obj"`
-- [ ] Create `.gitignore` (from `UE5_Source/.gitignore`)
+- [ ] Create `.gitignore` (from `UE5_Source 5.8/.gitignore`)
 - [ ] Commit initial project structure
 
 ---

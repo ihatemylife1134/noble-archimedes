@@ -10,7 +10,7 @@ Usage:
 import os
 from pathlib import Path
 
-PROJECT_ROOT = Path("UE5_Source")
+PROJECT_ROOT = Path("UE5_Source 5.8")
 
 DIRECTORIES = [
     # Content directories
