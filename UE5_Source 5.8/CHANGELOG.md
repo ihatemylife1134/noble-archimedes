@@ -1,6 +1,92 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — Sword vertical slice: idle, Light1, Light2
+
+Phase 1 items 1–3 landed end to end, and for the first time the whole slice ran
+inside the **live editor** rather than through one-shot commandlets.
+
+### The source path
+
+The ActionRPG clips are `.uasset` bound to `SK_Mannequin_Skeleton`, and UE has no
+Python API to change an animation's skeleton. So they are exported to FBX and
+re-imported onto the character's skeleton — the route already proven with
+ActorCore.
+
+Three API details cost a round each:
+
+| Call | Reality |
+| --- | --- |
+| `AssetTools.export_assets` | takes `(assets, path)`, **no** options argument |
+| its asset list | wants asset **path strings**, not objects (*"Cannot nativize 'AnimSequence' as 'String'"*) |
+| its `path` | is a **base directory**: the asset's folder structure is appended, so files land at `<base>/Game/Characters/Animations/<Name>.FBX` |
+
+There is no `run_asset_export_task`.
+
+### Result
+
+| Clip | Source | Frames | Verified |
+| --- | --- | --- | --- |
+| `Sword_Idle` | `Anim_Sword_Idle` | 120 | MOVES |
+| `Sword_Light1` | `Combat_Blade_Swing_Far` | 31 | MOVES |
+| `Sword_Light2` | `Attack03` | 45 | MOVES |
+
+Two montages built on the character's skeleton, slot `DefaultSlot`:
+`AM_HectorBase_Sword_Light1`, `AM_HectorBase_Sword_Light2`.
+
+All 19 rows of `DT_WeaponDataTable` repointed — `ComboAnimations` to Light1,
+Light2, Light2 and `FinalAttackAnimations` to Light2 ×3, with zero problems
+reported and the rows saved.
+
+### Deliberate placeholders
+
+- **`Run` has no clip** and borrows the walk loop.
+- **`Sword_Light3` does not exist**, so `ComboAnimations[2]` repeats Light2.
+- **Heavy attacks reuse the Light2 montage.** The alternative was leaving
+  `FinalAttackAnimations` on `AM_HectorBase_Heavy`, which was built from a static
+  retargeted clip, so heavy attacks would have shown a frozen pose. Phase 1 items
+  5–7 replace this.
+- **`Sword_Idle` is imported but not wired.** The `Idle` state still plays
+  `AC_Idle`; an armed/unarmed idle switch is a state machine change, not a clip.
+
+### Tooling: the plugin can now run Python
+
+The vendored UnrealMCP plugin's 123 commands are a fixed whitelist with no generic
+call or code-execution entry point, so project C++ helpers
+(`NobleAnimGraphAuthoring::SetStateSequence`, `NobleDataTableAuthoring`) were
+unreachable over the channel. Verified rather than assumed:
+
+```
+control (plugin cmd)  {"status":"success","result":{"success":true,...}}
+set_state_sequence    {"status":"error","error":"Unknown command: set_state_sequence"}
+execute_python        {"status":"error","error":"Unknown command: execute_python"}
+```
+
+An `execute_python` command was added to the plugin: `PythonScriptPlugin` added to
+its `Build.cs`, `IPythonScriptPlugin.h` included, and a dispatch branch calling
+`ExecPythonCommand` inside the existing game-thread ticker. Confirmed working in
+the live editor, including a call into a project C++ helper:
+
+```
+LogPython: NA-MCP Idle -> AC_Idle
+LogPython: NA-MCP Walk -> AC_Walk_Loop
+LogPython: NA-MCP root connected = True
+```
+
+`Tools/run_in_editor.py` runs a local script file in the editor via a single
+`exec(open(...).read())` line, so scripts stay on disk and versioned instead of
+being escaped into JSON.
+
+### A scripting trap worth remembering
+
+`create_asset` can create an asset **and** return falsy. The montage loop treated
+that as failure, so the follow-up DataTable step saw an empty dictionary and
+skipped the repoint while the montages sat on disk. Re-running worked because the
+script is idempotent (it takes an "already exists" branch), but the lesson is to
+verify against the filesystem rather than a return value.
+
+---
+
 ## 2026-10-22 (cont.) — Idle and walking animate: trimmed ActorCore clips
 
 Hector now idles and walks continuously, with no freeze. Two bugs stood between
