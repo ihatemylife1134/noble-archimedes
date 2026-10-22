@@ -1,6 +1,98 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — Idle and walking animate: trimmed ActorCore clips
+
+Hector now idles and walks continuously, with no freeze. Two bugs stood between
+the clips and working playback, both found by verifying rather than assuming.
+
+### The freeze: a 900-frame reference pose inside every clip
+
+Each ActorCore FBX carries two actions — the motion, and a 900-frame
+`0_Open A_UE5` reference pose. UE's importer merged both into a single 900-frame
+clip, so the motion occupied the opening frames and the rest was a static hold:
+the character animated for about six seconds and then froze. Looping made no
+difference because looping replays all 900 frames.
+
+Trimming in Blender removes the reference action, but the trim failed twice.
+
+### Bug 1 — Blender 4.4+ slotted actions
+
+Assigning `animation_data.action` alone leaves the action **inert**. The armature
+keeps evaluating whatever was bound before, which was the reference pose, so the
+export faithfully baked a static clip while reporting the correct action name and
+frame range. The missing piece:
+
+```python
+target.animation_data.action = keep
+target.animation_data.action_slot = keep.slots[0]   # required in 4.4+
+```
+
+This is why the first trimmed imports came out static and nearly led to the
+conclusion that trimming itself was unworkable.
+
+### Bug 2 — CC3+ helper bones abort the UE import
+
+The walk FBX carried animation curves for 47 `cc_base_*` twist and share bones
+that the character's skeleton does not have. UE aborts the whole import with
+*"Unable to retrieve bone index for track: cc_base_..."*. Only the walk tripped
+it, because walking animates the leg twist bones and idling does not. Stripping
+those bones before export fixed it, taking the file from 1.88 MB to 1.15 MB.
+
+### The process fix that caught both
+
+The trim script now **re-imports its own exported FBX** into a cleared scene and
+samples bones before the file goes anywhere near the project, and the UE-side
+import samples **five** points across each clip.
+
+The earlier failure slipped through because the check sampled only start and
+midpoint, and a walk cycle returns to the same phase at its midpoint — so a
+static reading looked ambiguous rather than wrong, and was moved past. Sampling
+two points cannot distinguish "static" from "same phase of a cycle".
+
+### Result
+
+| Clip | Frames | Verified |
+| --- | --- | --- |
+| `AC_Idle` | 170 | MOVES |
+| `AC_Walk_Loop` | 155 | MOVES |
+
+States rewired with `SetStateSequence`: `Idle → AC_Idle`, `Walk → AC_Walk_Loop`,
+`Run → AC_Walk_Loop` (placeholder, no run clip yet). Read back, compiled, saved.
+Confirmed by playtest: idle and walking animate continuously.
+
+### Cleanup
+
+Eight junk clips deleted from `ActorCore/`: the four `*0_Open_A_UE5` reference
+poses (each exactly 4,492 KB of identical static pose) and the four padded
+900-frame duplicates.
+
+### ActionRPG sample content brought in
+
+Epic's Action RPG sample (upgraded to 5.7 by vahabahmadvand) was inspected via the
+GitHub API and the character content copied in, preserving `/Game/...` paths so
+internal references resolve — no collisions with `Hector/` or `HectorBase/`. The
+git clone stalled with no pack file being written, so the repository ZIP was
+downloaded instead.
+
+34 animations came with it, on the mannequin skeleton:
+
+```
+Montages:   AM_Attack_Sword  AM_Attack_Axe  AM_Attack_Hammer
+            AM_Rolling  AM_React_Hit  AM_Item_Potion  AM_Skill_*
+Locomotion: Anim_Sword_Idle  Sword_Walk_Foward  Sword_Run_Forward
+Attacks:    Combat_Blade_Swing_Far  Anim_Sword_Whirlwind  Attack  Attack03
+Reactions:  Character_HitReact_Left/Right  Death_Front
+Dodge:      Dodge_Small_Forward_Roll  Dodge_Sprint_Blunt
+```
+
+Plus `ABP_Player` (a state machine *plus* blend space locomotion, which
+`AnimationBlueprintSpec.md` calls for and the rebuild lacks) and
+`BS_Sword_Idle_Run`. The repo has **no licence file**, so this content stays local
+and gitignored like every other third-party pack.
+
+---
+
 ## 2026-10-22 (cont.) — Root cause found: the retargeter emits static poses
 
 Hector was frozen while enemies animated normally. The cause was not the graph,

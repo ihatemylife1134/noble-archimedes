@@ -48,10 +48,46 @@ future retarget.
 exports in Unreal mode already carry UE bone names (26/26 of the mannequin names
 present) plus an explicit UE5 reference pose, so no retarget hop is needed.
 
-One catch: the imported clips report **900 frames** because the FBX also contains
-a 900-frame reference-pose action. The real motion sits in roughly the first 180
-frames and the rest is padding, so clips must be trimmed before use or they will
-animate briefly and then hold still. `probe_ac_range.py` reports the active range.
+One catch, now solved: the imported clips report **900 frames** because the FBX
+also contains a 900-frame reference-pose action, so the motion occupies the
+opening frames and the rest is padding. Clips must be trimmed first, or they
+animate briefly and then hold still.
+
+## Trimming ActorCore motions
+
+`Tools/blender_trim_motion.py` removes the reference action and exports a
+motion-only FBX:
+
+```
+blender -b --factory-startup -P Tools/blender_trim_motion.py -- <in.fbx> <out.fbx>
+```
+
+Two things it must do, each of which silently produced a static clip when missing:
+
+**Assign the action slot.** Blender 4.4+ stores animation per action slot.
+Setting `animation_data.action` alone leaves it inert — the armature keeps
+evaluating whatever was bound before, which is the reference pose, so the export
+bakes a static clip while reporting the correct action name and frame range.
+
+```python
+target.animation_data.action = keep
+target.animation_data.action_slot = keep.slots[0]
+```
+
+**Strip the `cc_base_*` helper bones.** The CC3+ rig has 47 twist and share bones
+the character's skeleton lacks. Their curves make UE abort the entire import with
+*"Unable to retrieve bone index for track: cc_base_..."*. Only some clips trip
+this, because walking animates the leg twist bones and idling does not.
+
+The script verifies its own output: it re-imports the exported FBX into a cleared
+scene and samples bones, printing `VERDICT: the exported file animates` or a
+warning not to import it.
+
+## Sampling two frames is not enough
+
+A walk cycle returns to the same phase at its midpoint, so sampling only start and
+midpoint reads as static for a perfectly good clip. Sample **at least five points**
+across the clip, and treat a sampling error as an error rather than as data.
 
 ## Talking to the editor
 

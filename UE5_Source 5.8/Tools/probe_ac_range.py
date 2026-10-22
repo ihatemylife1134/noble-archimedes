@@ -13,10 +13,10 @@ import unreal
 
 OUT = os.path.join(os.environ["TEMP"], "ac_range.txt")
 CLIPS = [
-    "/Game/Characters/HectorBase/ActorCore/AC_Idlemale-idle_279398",
-    "/Game/Characters/HectorBase/ActorCore/AC_Walk_Loopwalk-relaxed-2loop-378986",
-    "/Game/Characters/HectorBase/ActorCore/AC_Walk_Startwalk-relaxed-1start-379003",
-    "/Game/Characters/HectorBase/ActorCore/AC_Walk_Endwalk-relaxed-3end-378968",
+    "/Game/Characters/HectorBase/ActorCore/AC_Idle",
+    "/Game/Characters/HectorBase/ActorCore/AC_Walk_Loop",
+    "/Game/Characters/HectorBase/ActorCore/AC_Idle",
+    "/Game/Characters/HectorBase/ActorCore/AC_Idle",
 ]
 BONE = "thigh_l"
 STEPS = 20
