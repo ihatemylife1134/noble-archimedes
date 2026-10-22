@@ -41,6 +41,18 @@ public:
 	static UAnimStateNode* AddState(UAnimationStateMachineGraph* StateMachine,
 		FName StateName, UAnimSequence* Sequence, bool bLoop);
 
+	/**
+	 * Replaces the sequence an existing state plays.
+	 *
+	 * AddState deliberately returns an existing state unchanged, so pointing a
+	 * state at a different clip needs this. Used to move the locomotion states
+	 * off the retargeted clips, which turned out to be static poses, onto clips
+	 * imported directly from ActorCore that actually animate.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Noble|Animation")
+	static bool SetStateSequence(UAnimationStateMachineGraph* StateMachine, FName StateName,
+		UAnimSequence* Sequence, bool bLoop);
+
 	/** Adds a transition between two states, reusing an existing one if present. */
 	UFUNCTION(BlueprintCallable, Category = "Noble|Animation")
 	static UAnimStateTransitionNode* AddTransition(UAnimationStateMachineGraph* StateMachine,

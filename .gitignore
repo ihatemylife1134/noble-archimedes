@@ -100,3 +100,10 @@ __pycache__/
 # Generated source art is committed so the material kit and previews survive a clone
 !UE5_Source 5.8/ArtSource/**/*.png
 
+
+# Third-party editor tooling, vendored locally and never shipped.
+# UnrealMCP (https://github.com/endlessblink/it-is-unreal) is an MIT-licensed
+# 123-tool MCP server that lets an AI assistant drive the running editor over
+# TCP 127.0.0.1:55557. Editor-only, not part of the game.
+Plugins/UnrealMCP/
+Plugins/GameplayHelpers/

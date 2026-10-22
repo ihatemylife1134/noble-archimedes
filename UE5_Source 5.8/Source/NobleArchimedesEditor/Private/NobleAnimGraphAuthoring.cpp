@@ -252,9 +252,59 @@ bool UNobleAnimGraphAuthoring::EnsureStateOutputConnected(UAnimationStateMachine
 	return false;
 }
 
-FString UNobleAnimGraphAuthoring::GetStateSequenceName(UAnimationStateMachineGraph* StateMachine,
-	FName StateName)
+bool UNobleAnimGraphAuthoring::SetStateSequence(UAnimationStateMachineGraph* StateMachine,
+	FName StateName, UAnimSequence* Sequence, bool bLoop)
 {
+	if (!StateMachine || !Sequence)
+	{
+		return false;
+	}
+
+	for (UEdGraphNode* Node : StateMachine->Nodes)
+	{
+		UAnimStateNode* State = Cast<UAnimStateNode>(Node);
+		if (!State || State->GetStateName() != StateName)
+		{
+			continue;
+		}
+
+		UEdGraph* BoundGraph = State->GetBoundGraph();
+		if (!BoundGraph)
+		{
+			UE_LOG(LogNobleAnimAuthoring, Warning,
+				TEXT("State '%s' has no bound graph to retarget."), *StateName.ToString());
+			return false;
+		}
+
+		for (UEdGraphNode* Inner : BoundGraph->Nodes)
+		{
+			if (UAnimGraphNode_SequencePlayer* Player = Cast<UAnimGraphNode_SequencePlayer>(Inner))
+			{
+				Player->Modify();
+				Player->Node.SetSequence(Sequence);
+				Player->Node.SetLoopAnimation(bLoop);
+				// Keep the player feeding the state result; a player that is not
+				// linked outputs the reference pose and looks like a frozen mesh.
+				EnsureStateOutputConnected(StateMachine, StateName);
+				FBlueprintEditorUtils::MarkBlueprintAsModified(
+					FBlueprintEditorUtils::FindBlueprintForGraph(StateMachine));
+				UE_LOG(LogNobleAnimAuthoring, Log, TEXT("State '%s' now plays '%s'."),
+					*StateName.ToString(), *Sequence->GetName());
+				return true;
+			}
+		}
+
+		UE_LOG(LogNobleAnimAuthoring, Warning,
+			TEXT("State '%s' has no sequence player to retarget."), *StateName.ToString());
+		return false;
+	}
+
+	UE_LOG(LogNobleAnimAuthoring, Warning, TEXT("No state named '%s'."), *StateName.ToString());
+	return false;
+}
+
+FString UNobleAnimGraphAuthoring::GetStateSequenceName(UAnimationStateMachineGraph* StateMachine,
+	FName StateName){
 	if (!StateMachine)
 	{
 		return FString();

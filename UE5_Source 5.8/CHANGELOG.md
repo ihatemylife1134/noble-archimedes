@@ -1,6 +1,108 @@
 ﻿# Changelog - UE5 Chapter 1 rebuild
 
 
+## 2026-10-22 (cont.) — Root cause found: the retargeter emits static poses
+
+Hector was frozen while enemies animated normally. The cause was not the graph,
+the mesh, the skeleton, the montages or the DataTable — it was the clips.
+
+### The finding
+
+`IKRetargetBatchOperation.duplicate_and_retarget` completes, reports its outputs,
+saves them, and produces **static poses**. Sampling bone rotations at two frames
+shows every frame holding the same values, and Idle and Walk share byte-identical
+poses, so the retargeter emits the target's bind pose and never samples the source
+animation:
+
+```
+RTG_anim_Idle          thigh_l f0  = (-2.366, 0.11, -9.969, 0.0724, 0.0295, ...)
+                       thigh_l f85 = (-2.366, 0.11, -9.969, 0.0724, 0.0295, ...)  static
+source anim_Idle       thigh_l f0  = (..., -0.2047, -0.0391, ...)
+                       thigh_l f85 = (..., -0.2052, -0.0413, ...)                  moves
+```
+
+All 19 clips under `Content/Characters/HectorBase/Retargeted` are therefore
+unusable, and the montages, state machine and DataTable repoint were all built on
+top of them — which is why several rounds of structural fixes changed nothing on
+screen.
+
+Structural checks cannot catch this. A frozen clip has the right skeleton, the
+right length, 161 tracks, hundreds of keys, a correct montage slot and a verified
+graph path. Only sampling the data over time reveals it.
+
+Likely cause, not yet confirmed: the retargeter is created from script via
+`IKRetargetFactory` and may have an empty op stack, so no FK-chain retarget op
+ever runs.
+
+### Two measurement mistakes worth recording
+
+The probe that eventually found this gave false answers twice first:
+
+- comparing `repr()` of a `Transform` compares the object's memory address, so two
+  identical poses reported as "different"
+- comparing two identical *exception strings* (from a call missing its
+  `extract_root_motion` argument) reported as "identical", i.e. a failed sample
+  looked like a static clip
+
+Both times a confident verdict was printed for data that was never measured.
+
+### Importing animation directly works
+
+ActorCore motions exported in Unreal mode import **straight onto
+`survival_character_Skeleton`** and produce clips that genuinely move — no
+retarget hop needed, because Reallusion's converter already normalises the rig
+(26/26 UE mannequin bone names present, plus an explicit UE5 reference pose).
+`Tools/import_actorcore.py` imported four motions (idle, walk start/loop/end),
+eight assets with no bone or skeleton warnings.
+
+Caveat: the imported clips report 900 frames because the FBX also carries a
+900-frame reference-pose action. The real motion occupies roughly the first 180
+frames with the remainder padded, so they must be trimmed before use or they will
+animate briefly and then hold still.
+
+### Editor-side helpers added
+
+- `NobleAnimGraphAuthoring::SetStateSequence` — `AddState` returns an existing
+  state unchanged, so repointing a state at a different clip needs this.
+- `NobleDataTableAuthoring` (new file) — `SetWeaponRowMontages`,
+  `DescribeWeaponRowMontages`, `GetRowNames`, editing `FWeaponData`'s two montage
+  arrays in place rather than refilling the whole table through JSON, where any
+  field the conversion fails to reproduce is silently reset to its default.
+- The editor module now depends on the runtime module for `FWeaponData`.
+
+### UnrealMCP adopted as tooling
+
+`it-is-unreal` (MIT) — a 123-tool MCP server that drives the running editor over
+TCP `127.0.0.1:55557` — is vendored to `Plugins/UnrealMCP` and gitignored. It did
+not compile against 5.8: `BPVariables.cpp` called `TMap::FindRef` on
+`FJsonObject`'s internal map with a string literal, which 5.8 both deprecated and
+stopped accepting. Fixed with `TryGetField`, which also collapses a redundant
+`HasField` + lookup pair. Its manifest now declares the `EnhancedInput` and
+`Niagara` plugin dependencies its module needs.
+
+`Tools/mcp_call.py` drives it with raw UTF-8 JSON, bypassing the MCP layer, so the
+editor can be scripted from a shell. Calls must be strictly sequential — each
+spawns an FTSTicker callback and overlapping callbacks crash the engine.
+
+### Cleanup
+
+- 20 one-off probe scripts deleted from `Tools/`.
+- `Tools/ANIMATION_PIPELINE.md` added, recording the above: what is verified,
+  what is broken, the measurement traps, and the open items.
+
+### Open items
+
+- `AB_HectorBase` is a stale duplicate that could not be deleted from a
+  commandlet; the live blueprint is `AB_HectorBaseV2`.
+- The 19 static clips under `Retargeted/` should be deleted once the ActorCore
+  clips are proven in game.
+- The nine `AM_HectorBase_*` montages are bound to the correct skeleton but were
+  built from static clips.
+- Stray probe leftovers sit in `Content/FreeAnimationLibrary/Animations/Idle`
+  (`NewAnimBlueprint`, `RTG_NewRetargeter`, `RTG_NewRetargeter1`).
+
+---
+
 ## 2026-10-22 (cont.) — First playtest of the new character: transform fixed, clips not
 
 First look at `SK_HectorBase` in game. The mesh swap worked and the slot fix

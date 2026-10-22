@@ -13,6 +13,11 @@ public class NobleArchimedesEditor : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
+			// Needed by the data table authoring helper, which reads and writes
+			// FWeaponData rows directly so the montage arrays are edited
+			// type-safely instead of by round-tripping the whole table through
+			// JSON.
+			"NobleArchimedes",
 		});
 
 		// AnimGraph is an editor-only module, which is why this module is an
